@@ -1,0 +1,26 @@
+{
+  "required": true,
+  "package": "de.guntram.mcmod.easiercrafting.mixins",
+  "refmap": "EasierCrafting-refmap.json",
+  "minVersion": "0.6",
+  "client": [
+    "AbstractFurnaceScreenHandlerMixin",
+    "BrewingRecipeRegistryExporter",
+    "BrewingstandRefreshMixin",
+    "DelayedSlotClickContinue",
+    "GuiCraftMixin",
+    "GuiInventoryMixin",
+    "HandledScreenMixin"
+  ],
+  "server": [
+    "BrewingStandCraftedMixin",
+    "GuiActionConfirmDebug",
+    "ServerPlayNetworkHandlerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "mixins": [
+    "CTResourcePackMixin"
+  ]
+}
