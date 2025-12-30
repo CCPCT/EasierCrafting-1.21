@@ -6,7 +6,6 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import me.shedaniel.rei.api.client.config.ConfigObject;
 import net.minecraft.block.Block;
 import net.minecraft.block.ShulkerBoxBlock;
 import net.minecraft.block.SlabBlock;
@@ -153,16 +152,6 @@ public class RecipeBook {
             if (ModConfig.getAutoFocusSearch()) {
                 // doh - in 1.15, changeFocus toggles the focus and ignores the parameter
                 pattern.setFocused(true);
-            }
-        }
-
-        if (ModConfig.hideWhenReiShown()) {
-            try {
-                if (ConfigObject.getInstance().isOverlayVisible()) {
-                    return;
-                }
-            } catch (NoClassDefFoundError ex) {
-                /* do nothing */
             }
         }
 

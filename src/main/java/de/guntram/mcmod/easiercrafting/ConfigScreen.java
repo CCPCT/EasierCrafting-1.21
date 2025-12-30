@@ -61,11 +61,6 @@ public class ConfigScreen extends Screen {
                 .setSaveConsumer(newValue -> ModConfig.getInstance().categorizeRecipes = newValue)
                 .build());
 
-        generalTab.addEntry(entryBuilder.startBooleanToggle(Text.literal("Hide when REI is shown"), ModConfig.getInstance().hideWhenReiShown)
-                .setDefaultValue(true)
-                .setSaveConsumer(newValue -> ModConfig.getInstance().hideWhenReiShown = newValue)
-                .build());
-
         generalTab.addEntry(entryBuilder.startBooleanToggle(Text.literal("Hide Brewing Stand Take Button"), ModConfig.getInstance().hideBrewingStandTakeButton)
                 .setDefaultValue(true)
                 .setSaveConsumer(newValue -> ModConfig.getInstance().hideBrewingStandTakeButton = newValue)

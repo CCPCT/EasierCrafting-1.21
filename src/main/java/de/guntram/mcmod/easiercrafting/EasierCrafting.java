@@ -1,6 +1,5 @@
 package de.guntram.mcmod.easiercrafting;
 
-import de.guntram.mcmod.crowdintranslate.CrowdinTranslate;
 import de.guntram.mcmod.easiercrafting.Loom.LoomRecipeRegistry;
 import de.guntram.mcmod.fabrictools.ConfigurationProvider;
 import java.io.File;
@@ -28,7 +27,6 @@ public class EasierCrafting implements ClientModInitializer
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
-        CrowdinTranslate.downloadTranslations(MODID);
         File localRecipes = extractBundledFile("localrecipes.zip");
 
 
