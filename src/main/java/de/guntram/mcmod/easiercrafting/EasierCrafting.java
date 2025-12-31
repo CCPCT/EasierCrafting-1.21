@@ -1,6 +1,7 @@
 package de.guntram.mcmod.easiercrafting;
 
-import de.guntram.mcmod.easiercrafting.Loom.LoomRecipeRegistry;
+//import de.guntram.mcmod.easiercrafting.Loom.LoomRecipeRegistry;
+import de.guntram.mcmod.easiercrafting.recipe.RecipeHandler;
 import de.guntram.mcmod.fabrictools.ConfigurationProvider;
 import java.io.File;
 import java.io.FileInputStream;
@@ -12,8 +13,12 @@ import java.security.CodeSource;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import net.fabricmc.api.ClientModInitializer;
+import net.minecraft.client.gui.screen.recipebook.RecipeResultCollection;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.recipe.Recipe;
+import net.minecraft.recipe.RecipeDisplayEntry;
+import net.minecraft.util.context.ContextParameterMap;
+import net.minecraft.util.context.ContextType;
 
 public class EasierCrafting implements ClientModInitializer 
 {
@@ -22,31 +27,34 @@ public class EasierCrafting implements ClientModInitializer
 
     @Override
     public void onInitializeClient() {
-        try {
-            Class.forName(BrewingRecipe.class.getName());
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-        File localRecipes = extractBundledFile("localrecipes.zip");
+        System.out.println("EasierCrafting initialised");
+        ModConfig.load();
 
-
-        extractBundledFile("loomrecipes.zip");
-        extractConfigFileContents("loomrecipes.zip", "loomrecipes");
-        LoomRecipeRegistry.loadRecipeCollection(LoomRecipeRegistry.getRecipeCollectionPath());
+//        File localRecipes = extractBundledFile("localrecipes.zip");
+//
+//
+//        extractBundledFile("loomrecipes.zip");
+//        extractConfigFileContents("loomrecipes.zip", "loomrecipes");
+//        LoomRecipeRegistry.loadRecipeCollection(LoomRecipeRegistry.getRecipeCollectionPath());
     }
     
-    public static String recipeDisplayName(Recipe recipe) {
-        String display = recipe.getGroup();
+    public static String recipeDisplayName(RecipeResultCollection recipe) {
+        String display = recipe.getAllRecipes().getFirst().toString();
         if (display.startsWith(MODID+":")) {
             display = I18n.translate(display);
             if (display.startsWith(MODID+":")) {
                 display=display.substring(MODID.length()+1);
             }
         } else {
-            display = recipe.getResult(null).getName().getString();
+            display = recipe.getAllRecipes().getFirst().display().result().getFirst(RecipeHandler.getEmptyContext()).getName().getString();
         }
         return display;
     }
+
+    public static String recipeDisplayName(RecipeDisplayEntry recipe) {
+        return recipe.display().result().getFirst(RecipeHandler.getEmptyContext()).toString();
+    }
+
     
     private void extractConfigFileContents(String filename, String outputDirName) {
         
@@ -117,4 +125,5 @@ public class EasierCrafting implements ClientModInitializer
             }
         }
     }
+
 }

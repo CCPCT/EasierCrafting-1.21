@@ -4,7 +4,7 @@ import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
 
 
-public class MMConfigurationHandler implements ModMenuApi
+public class ModMenuHandler implements ModMenuApi
 {
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {

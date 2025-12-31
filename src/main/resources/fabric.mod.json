@@ -5,7 +5,9 @@
     "environment": "client",
     "entrypoints": {
         "client": [ "de.guntram.mcmod.easiercrafting.EasierCrafting" ],
-        "modmenu": [ "de.guntram.mcmod.easiercrafting.MMConfigurationHandler" ]
+        "modmenu": [
+          "de.guntram.mcmod.easiercrafting.ModMenuHandler"
+        ]
     },
     "mixins": [
       	"mixins.easiercrafting.json",

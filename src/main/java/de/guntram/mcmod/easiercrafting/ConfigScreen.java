@@ -61,10 +61,6 @@ public class ConfigScreen extends Screen {
                 .setSaveConsumer(newValue -> ModConfig.getInstance().categorizeRecipes = newValue)
                 .build());
 
-        generalTab.addEntry(entryBuilder.startBooleanToggle(Text.literal("Hide Brewing Stand Take Button"), ModConfig.getInstance().hideBrewingStandTakeButton)
-                .setDefaultValue(true)
-                .setSaveConsumer(newValue -> ModConfig.getInstance().hideBrewingStandTakeButton = newValue)
-                .build());
 
         generalTab.addEntry(entryBuilder.startIntField(Text.literal("Loom Click Speed"), ModConfig.getInstance().loomClickSpeed)
                 .setDefaultValue(3)

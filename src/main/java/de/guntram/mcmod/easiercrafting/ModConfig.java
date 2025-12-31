@@ -17,7 +17,6 @@ public class ModConfig {
     public boolean allowGeneratedRecipes;
     public int maxEnchantsAllowedForRepair;
     public boolean categorizeRecipes;
-    public boolean hideBrewingStandTakeButton;
     public int loomClickSpeed;
     public int fadeOutTime;
 
@@ -78,9 +77,6 @@ public class ModConfig {
     }
     public static boolean getCategorizeRecipes() {
         return getInstance().categorizeRecipes;
-    }
-    public static boolean hideBrewingStandTakeButton() {
-        return getInstance().hideBrewingStandTakeButton;
     }
     public static int getLoomClickSpeed() {
         return getInstance().loomClickSpeed;

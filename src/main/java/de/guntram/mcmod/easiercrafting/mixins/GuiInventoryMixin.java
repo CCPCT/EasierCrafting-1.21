@@ -5,6 +5,8 @@ import de.guntram.mcmod.easiercrafting.ExtendedGuiInventory;
 import de.guntram.mcmod.easiercrafting.RecipeBook;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
+import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.network.ClientPlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -26,5 +28,19 @@ public class GuiInventoryMixin {
         egi.setRecipeBook(new RecipeBook(egi, 1, 2, 0, 9));
         this.setScreen(egi);
         ci.cancel();
+    }
+
+    @Inject(method = "setScreen", at = @At("HEAD"))
+    private void onSetScreen(Screen screen, CallbackInfo ci) {
+        if (screen != null) {
+            // This tells you exactly what class is opening
+            System.out.println("Opening screen: " + screen.getClass().getSimpleName());
+
+            if (screen instanceof InventoryScreen) {
+                // Logic specifically for the player inventory
+            } else if (screen instanceof GenericContainerScreen) {
+                // Logic for chests
+            }
+        }
     }
 }
