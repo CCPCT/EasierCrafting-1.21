@@ -78,8 +78,6 @@ public class RecipeBook {
     ClientPlayerEntity player;
     MinecraftClient client;
 
-    final ContextParameterMap EMPTY_CONTEXT = new ContextParameterMap.Builder().build(new ContextType.Builder().build());
-
 //    /**
 //     * @param craftScreen        The container the recipe book is attached to - this
 //     *                           can be a GuiCrafting or a GuiInventory container
@@ -99,8 +97,8 @@ public class RecipeBook {
         this.firstInventorySlotNo = firstInventorySlot;
         this.pattern = null;
         this.underMouse = null;
-        player = MinecraftClient.getInstance().player;
         client = MinecraftClient.getInstance();
+        player = client.player;
 
 
         if (screen instanceof ExtendedGuiStonecutter) {
@@ -178,7 +176,7 @@ public class RecipeBook {
             //System.out.println("ypos is now "+ypos);
             if (ypos < -containerTop) {
                 ypos = -containerTop;
-//                MinecraftClient.getInstance().getTextureManager().bindTexture(ARROWS);
+//                client.getTextureManager().bindTexture(ARROWS);
 //                context.drawTexture(ARROWS, xOffset, ypos, 0, 0, 20, 20);
 //                context.drawTexture(ARROWS, xOffset + textBoxSize - 20, ypos, 20, 0, 20, 20);
                 ypos += itemSize;
@@ -290,7 +288,7 @@ public class RecipeBook {
 
     // updated function using slot display instead of ingredients
     public void renderIngredient(DrawContext context, TextRenderer fontRenderer, SlotDisplay ingredient, int x, int y) {
-        assert MinecraftClient.getInstance().world != null;
+        assert client.world != null;
         List<ItemStack> stacks = RecipeHandler.getCraftableStacks(ingredient);
 
         if (stacks.isEmpty()) {
@@ -318,14 +316,14 @@ public class RecipeBook {
 // disabled for 1.19            recipes.addAll(LocalRecipeManager.getInstance().values());
         //todo update
 
-        assert MinecraftClient.getInstance().currentScreen != null;
-//        System.out.println(MinecraftClient.getInstance().currentScreen.getClass().getName());
-//        System.out.println(RecipeHandler.getRecipeBookTypeFromScreenClass(MinecraftClient.getInstance().currentScreen.getClass()).getClass().getName());
+        assert client.currentScreen != null;
+//        System.out.println(client.currentScreen.getClass().getName());
+//        System.out.println(RecipeHandler.getRecipeBookTypeFromScreenClass(client.currentScreen.getClass()).getClass().getName());
 //        System.out.println(RecipeBookType.CRAFTING.getClass().getName());
 
         // initialise recipeHandler
         RecipeHandler.updateAvailableStacks();
-        RecipeHandler.updateRecipes(MinecraftClient.getInstance().currentScreen.getClass());
+        RecipeHandler.updateRecipes(client.currentScreen.getClass());
         List<RecipeDisplayEntry> recipeEntries = RecipeHandler.getCraftableRecipeEntries();
 
         if (wantedRecipeType == RecipeType.CRAFTING && ModConfig.getAllowGeneratedRecipes()) {
@@ -416,7 +414,7 @@ public class RecipeBook {
         patternMatchingRecipes = new RecipeTreeSet(); // Ensure this supports RecipeDisplayEntry
 
         String patternText = getPatternText();
-        if (patternText.length() < 2)
+        if (patternText.isEmpty())
             return;
 
         // 2. 1.21.4 uses RecipeDisplayEntry for the client list
@@ -701,7 +699,7 @@ public class RecipeBook {
 
         // todo stonecutter
 //        if (underMouse.display() instanceof StonecutterRecipeDisplay) {
-//            var interactionManager = MinecraftClient.getInstance().interactionManager;
+//            var interactionManager = client.interactionManager;
 //            var container = (StonecutterScreenHandler) screen.getScreenHandler();
 //
 //            List<CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe>> groups = container.getAvailableRecipes().entries();
@@ -763,7 +761,7 @@ public class RecipeBook {
     private void fillCraftSlotsWithAnyMaterials(RecipeDisplayEntry underMouse) {
         // 1.21.4: Get ingredients safely from craftingRequirements
         // move stuffs onto grid
-        ClientWorld world = MinecraftClient.getInstance().world;
+        ClientWorld world = client.world;
 
         List<Ingredient> recipeInput = underMouse.craftingRequirements().orElse(Collections.emptyList());
         if (recipeInput.isEmpty()) return;
@@ -896,23 +894,24 @@ public class RecipeBook {
 
     // ditch brewingstand
 
-
-    private int getDamage(int slot) {
-        ItemStack stack = screen.getScreenHandler().getSlot(slot + firstInventorySlotNo).getStack();
-        return stack.getDamage();
-    }
+//
+//    private int getDamage(int slot) {
+//        ItemStack stack = screen.getScreenHandler().getSlot(slot + firstInventorySlotNo).getStack();
+//        return stack.getDamage();
+//    }
 
     public boolean keyPressed(int code, int scancode, int modifiers) {
         if (pattern == null)
             return false;
         // System.out.println("key code="+code+", scancode="+scancode+", modifiers="+modifiers);
-        if (code == GLFW.GLFW_KEY_ENTER || code == GLFW.GLFW_KEY_KP_ENTER) {
+        if (code == GLFW.GLFW_KEY_ENTER || code == GLFW.GLFW_KEY_KP_ENTER || code == GLFW.GLFW_KEY_ESCAPE) {
             updatePatternMatch();
             pattern.setFocused(false);
             return true;
         } else if (pattern.isFocused()) {
             // System.out.println("-> sending to pattern");
             pattern.keyPressed(code, scancode, modifiers);
+            updatePatternMatch();
             return true;            // prevent 'e' from closing screen
         } else {
             return false;
@@ -935,7 +934,7 @@ public class RecipeBook {
         if (inventoryItem.isEmpty()) return false;
 
         // Get all valid items for this ingredient slot
-        List<ItemStack> validStacks = ingredient.getStacks(SlotDisplayContexts.createParameters(MinecraftClient.getInstance().world));
+        List<ItemStack> validStacks = ingredient.getStacks(SlotDisplayContexts.createParameters(client.world));
 
         // Check if the item in our inventory matches any of the valid ingredients
         return validStacks.stream()
