@@ -13,5 +13,5 @@ import net.minecraft.screen.slot.SlotActionType;
  * @author gbl
  */
 public interface SlotClickAccepter {
-    public void slotClick(int slot, int mouseButton, SlotActionType clickType);
+    void slotClick(int slot, int mouseButton, SlotActionType clickType);
 }

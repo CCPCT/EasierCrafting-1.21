@@ -1,32 +1,37 @@
-package de.guntram.mcmod.easiercrafting;
+package de.guntram.mcmod.easiercrafting.extendedScreen;
 
+import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
+import de.guntram.mcmod.easiercrafting.SlotClickAccepter;
+import de.guntram.mcmod.easiercrafting.recipe.RecipeBook;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ingame.StonecutterScreen;
-import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.client.gui.screen.ingame.CraftingScreen;
 import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.screen.StonecutterScreenHandler;
+import net.minecraft.screen.CraftingScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
-public class ExtendedGuiStonecutter extends StonecutterScreen implements SlotClickAccepter {
+public class ExtendedGuiCrafting extends CraftingScreen implements SlotClickAccepter {
 
     private RecipeBook recipeBook;
 
-    public ExtendedGuiStonecutter(StonecutterScreenHandler container, PlayerInventory lowerInv, Text title) {
+    public ExtendedGuiCrafting(CraftingScreenHandler container, PlayerInventory lowerInv, Text title) {
         super(container, lowerInv, title);
     }
     
     @Override
     protected void init() {
         super.init();
+        if (!ModConfig.getAllowMinecraftRecipeBook()) {
+            this.children().clear();
+        }
         this.recipeBook.afterInitGui();
     }
 
     public void setRecipeBook(RecipeBook recipeBook) {
         this.recipeBook=recipeBook;
     }
-    
+
     @Override
     protected void drawForeground(DrawContext context, final int mouseX, final int mouseY) {
         super.drawForeground(context, mouseX, mouseY);
@@ -35,7 +40,8 @@ public class ExtendedGuiStonecutter extends StonecutterScreen implements SlotCli
     
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double xdelta, double ydelta) {
-        recipeBook.scrollBy((int) ydelta);
+        recipeBook.scrollBy((int) xdelta);
+        System.out.println("scrolled: "+xdelta);
         return super.mouseScrolled(mouseX, mouseY, xdelta, ydelta);
     }    
     
@@ -65,6 +71,8 @@ public class ExtendedGuiStonecutter extends StonecutterScreen implements SlotCli
 
     @Override
     public void slotClick(int slot, int mouseButton, SlotActionType clickType) {
+        // System.out.println("Clicking slot "+slot+" "+(mouseButton==0 ? "left" : "right")+" type:"+clickType.toString());
         this.onMouseClick(null, slot, mouseButton, clickType);
+        // mc.playerController.windowClick(mc.player.openContainer.windowId, slot, mouseButton, clickType, mc.player);
     }
 }

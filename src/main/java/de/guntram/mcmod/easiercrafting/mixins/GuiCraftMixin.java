@@ -1,17 +1,13 @@
 package de.guntram.mcmod.easiercrafting.mixins;
 
-import de.guntram.mcmod.easiercrafting.ExtendedGuiCrafting;
-import de.guntram.mcmod.easiercrafting.ExtendedGuiStonecutter;
-import de.guntram.mcmod.easiercrafting.RecipeBook;
+import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiCrafting;
+import de.guntram.mcmod.easiercrafting.recipe.RecipeBook;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
-import net.minecraft.screen.BrewingStandScreenHandler;
 import net.minecraft.screen.CraftingScreenHandler;
-import net.minecraft.screen.LoomScreenHandler;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerType;
-import net.minecraft.screen.StonecutterScreenHandler;
 import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -35,15 +31,16 @@ public class GuiCraftMixin {
 
             openScreen(client, handler, screen);
             ci.cancel();
-        } else if (type == ScreenHandlerType.STONECUTTER) {
-            StonecutterScreenHandler handler = ScreenHandlerType.STONECUTTER.create(id, client.player.getInventory());
-            ExtendedGuiStonecutter screen = new ExtendedGuiStonecutter(handler, client.player.getInventory(), title);
-
-            screen.setRecipeBook(new RecipeBook(screen, 0, 1, 1, 2));
-
-            openScreen(client, handler, screen);
-            ci.cancel();
         }
+//        else if (type == ScreenHandlerType.STONECUTTER) {
+//            StonecutterScreenHandler handler = ScreenHandlerType.STONECUTTER.create(id, client.player.getInventory());
+//            ExtendedGuiStonecutter screen = new ExtendedGuiStonecutter(handler, client.player.getInventory(), title);
+//
+//            screen.setRecipeBook(new RecipeBook(screen, 0, 1, 1, 2));
+//
+//            openScreen(client, handler, screen);
+//            ci.cancel();
+//        }
     }
 
     // Helper to mirror vanilla behavior correctly

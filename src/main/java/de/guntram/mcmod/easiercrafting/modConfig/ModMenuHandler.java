@@ -1,4 +1,4 @@
-package de.guntram.mcmod.easiercrafting;
+package de.guntram.mcmod.easiercrafting.modConfig;
 
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;

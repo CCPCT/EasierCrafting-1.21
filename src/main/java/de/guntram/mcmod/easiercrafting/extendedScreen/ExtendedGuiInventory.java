@@ -1,35 +1,35 @@
-package de.guntram.mcmod.easiercrafting;
+package de.guntram.mcmod.easiercrafting.extendedScreen;
 
+import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
+import de.guntram.mcmod.easiercrafting.SlotClickAccepter;
+import de.guntram.mcmod.easiercrafting.recipe.RecipeBook;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ingame.CraftingScreen;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.screen.CraftingScreenHandler;
+import net.minecraft.client.gui.screen.ingame.InventoryScreen;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
-public class ExtendedGuiCrafting extends CraftingScreen implements SlotClickAccepter {
+
+public class ExtendedGuiInventory extends InventoryScreen implements SlotClickAccepter {
 
     private RecipeBook recipeBook;
-
-    public ExtendedGuiCrafting(CraftingScreenHandler container, PlayerInventory lowerInv, Text title) {
-        super(container, lowerInv, title);
+    // temp kludge -- field_2776 and field_2800 seem to have been renamed with 21w13a
+    public ExtendedGuiInventory(PlayerEntity player) {
+        super(player);
     }
     
     @Override
-    protected void init() {
+    public void init() {
         super.init();
-        if (!ModConfig.getAllowMinecraftRecipeBook()) {
+        if (!ModConfig.getAllowMinecraftRecipeBook())
             this.children().clear();
-        }
         this.recipeBook.afterInitGui();
     }
 
     public void setRecipeBook(RecipeBook recipeBook) {
         this.recipeBook=recipeBook;
     }
-
+    
     @Override
     protected void drawForeground(DrawContext context, final int mouseX, final int mouseY) {
         super.drawForeground(context, mouseX, mouseY);
@@ -38,7 +38,7 @@ public class ExtendedGuiCrafting extends CraftingScreen implements SlotClickAcce
     
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double xdelta, double ydelta) {
-        recipeBook.scrollBy((int) xdelta);
+        recipeBook.scrollBy((int) ydelta);
         return super.mouseScrolled(mouseX, mouseY, xdelta, ydelta);
     }    
     
@@ -72,4 +72,5 @@ public class ExtendedGuiCrafting extends CraftingScreen implements SlotClickAcce
         this.onMouseClick(null, slot, mouseButton, clickType);
         // mc.playerController.windowClick(mc.player.openContainer.windowId, slot, mouseButton, clickType, mc.player);
     }
+
 }

@@ -1,4 +1,4 @@
-package de.guntram.mcmod.easiercrafting;
+package de.guntram.mcmod.easiercrafting.modConfig;
 
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;

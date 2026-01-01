@@ -1,4 +1,4 @@
-package de.guntram.mcmod.easiercrafting;
+package de.guntram.mcmod.easiercrafting.modConfig;
 
 import net.fabricmc.loader.api.FabricLoader;
 import com.google.gson.Gson;

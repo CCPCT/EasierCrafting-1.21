@@ -5,7 +5,7 @@
  */
 package de.guntram.mcmod.easiercrafting.delayedslotclicks;
 
-import de.guntram.mcmod.easiercrafting.ModConfig;
+import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.SlotClickAccepter;
 import java.util.LinkedList;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;

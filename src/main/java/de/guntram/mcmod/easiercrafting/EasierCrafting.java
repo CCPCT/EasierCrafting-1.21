@@ -1,6 +1,7 @@
 package de.guntram.mcmod.easiercrafting;
 
 //import de.guntram.mcmod.easiercrafting.Loom.LoomRecipeRegistry;
+import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.recipe.RecipeHandler;
 import de.guntram.mcmod.fabrictools.ConfigurationProvider;
 import java.io.File;
@@ -15,10 +16,7 @@ import java.util.zip.ZipInputStream;
 import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.client.gui.screen.recipebook.RecipeResultCollection;
 import net.minecraft.client.resource.language.I18n;
-import net.minecraft.recipe.Recipe;
 import net.minecraft.recipe.RecipeDisplayEntry;
-import net.minecraft.util.context.ContextParameterMap;
-import net.minecraft.util.context.ContextType;
 
 public class EasierCrafting implements ClientModInitializer 
 {

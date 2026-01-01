@@ -1,4 +1,4 @@
-package de.guntram.mcmod.easiercrafting;
+package de.guntram.mcmod.easiercrafting.recipe;
 
 /*
 this class is used to render ...
@@ -9,9 +9,12 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import de.guntram.mcmod.easiercrafting.recipe.RecipeHandler;
+import de.guntram.mcmod.easiercrafting.*;
+import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiCrafting;
+import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiInventory;
+import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiStonecutter;
+import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import net.minecraft.block.Block;
-import net.minecraft.block.ShulkerBoxBlock;
 import net.minecraft.block.SlabBlock;
 import net.minecraft.block.StairsBlock;
 import net.minecraft.block.WallBlock;
@@ -22,21 +25,16 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.network.ClientPlayerInteractionManager;
-import net.minecraft.client.recipebook.RecipeBookType;
 import net.minecraft.client.resource.language.I18n;
-import net.minecraft.component.DataComponentTypes;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.*;
-import net.minecraft.potion.Potion;
 import net.minecraft.recipe.*;
 import net.minecraft.recipe.display.*;
 import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.StonecutterScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.context.ContextParameterMap;
 import net.minecraft.util.context.ContextType;
 import net.minecraft.util.math.MathHelper;
@@ -223,31 +221,30 @@ public class RecipeBook {
 
         if (underMouse != null) {
             // mouse on sth
+            // update context once per frame
+
             String displayName = EasierCrafting.recipeDisplayName(underMouse);
             context.drawText(fontRenderer, displayName, 0, height + 3, 0xffff00, true);
-            if (underMouse.display() instanceof ShapedCraftingRecipeDisplay shapedCraftingRecipeDisplay) {
-                // todo fix shaped crafting hint
-                if (underMouse.craftingRequirements().isEmpty()){
-                    underMouseIsCraftable = false;
-                } else {
-                    List<Ingredient> ingredients = underMouse.craftingRequirements().get();
+            if (underMouse.display() instanceof ShapedCraftingRecipeDisplay shaped) {
 
-                    // fontRenderer.draw(stack, "sr", left-20, height, 0x202020);
-                    for (int x = 0; x < shapedCraftingRecipeDisplay.width(); x++) {
-                        for (int y = 0; y < shapedCraftingRecipeDisplay.height(); y++) {
-                            if (ingredients.size() <= x + y * shapedCraftingRecipeDisplay.width()) break;
-                            renderIngredient(context, fontRenderer,
-                                    ingredients.get(x + y * shapedCraftingRecipeDisplay.width()),
-                                    itemSize * x, height + itemSize + itemSize * y);
-                        }
+                List<SlotDisplay> ingredients = shaped.ingredients();
+
+                // fontRenderer.draw(stack, "sr", left-20, height, 0x202020);
+                for (int x = 0; x < shaped.width(); x++) {
+                    for (int y = 0; y < shaped.height(); y++) {
+                        SlotDisplay ingredient = ingredients.get(x + y * shaped.width());
+                        renderIngredient(context, fontRenderer,
+                                ingredient,
+                                itemSize * x, height + itemSize + itemSize * y);
                     }
                 }
-            } else if (underMouse.display() instanceof ShapelessCraftingRecipeDisplay) {
+
+            } else if (underMouse.display() instanceof ShapelessCraftingRecipeDisplay recipeDisplay) {
                 if (underMouse.craftingRequirements().isEmpty()){
                     underMouseIsCraftable = false;
                 } else {
                     xpos = 0;
-                    for (Ingredient ingredient : underMouse.craftingRequirements().get()) {
+                    for (SlotDisplay ingredient : recipeDisplay.ingredients()) {
                         renderIngredient(context, fontRenderer, ingredient, itemSize * xpos, height + itemSize);
                         xpos++;
                     }
@@ -291,16 +288,22 @@ public class RecipeBook {
         context.drawItem(items, x, y);
     }
 
-    public void renderIngredient(DrawContext context, TextRenderer fontRenderer, Ingredient ingredient, int x, int y) {
-        List<ItemStack> stacks = ingredient.toDisplay().getStacks(RecipeHandler.getEmptyContext());
+    // updated function using slot display instead of ingredients
+    public void renderIngredient(DrawContext context, TextRenderer fontRenderer, SlotDisplay ingredient, int x, int y) {
+        assert MinecraftClient.getInstance().world != null;
+        List<ItemStack> stacks = RecipeHandler.getCraftableStacks(ingredient);
 
-        if (stacks.isEmpty())
+        if (stacks.isEmpty()) {
+            System.err.println("No stacks can be used");
             return;
+        }
         int toRender = 0;
         if (stacks.size() > 1)
             toRender = (int) ((System.currentTimeMillis() / 333) % stacks.size());
         context.drawItem(stacks.get(toRender), x, y);
     }
+
+
 
     public void updateRecipesIn(int ms) {
         recipeUpdateTime = System.currentTimeMillis() + ms;
@@ -316,9 +319,12 @@ public class RecipeBook {
         //todo update
 
         assert MinecraftClient.getInstance().currentScreen != null;
-        System.out.println(MinecraftClient.getInstance().currentScreen.getClass().getName());
-        System.out.println(RecipeHandler.getRecipeBookTypeFromScreenClass(MinecraftClient.getInstance().currentScreen.getClass()).getClass().getName());
-        System.out.println(RecipeBookType.CRAFTING.getClass().getName());
+//        System.out.println(MinecraftClient.getInstance().currentScreen.getClass().getName());
+//        System.out.println(RecipeHandler.getRecipeBookTypeFromScreenClass(MinecraftClient.getInstance().currentScreen.getClass()).getClass().getName());
+//        System.out.println(RecipeBookType.CRAFTING.getClass().getName());
+
+        // initialise recipeHandler
+        RecipeHandler.updateAvailableStacks();
         RecipeHandler.updateRecipes(MinecraftClient.getInstance().currentScreen.getClass());
         List<RecipeDisplayEntry> recipeEntries = RecipeHandler.getCraftableRecipeEntries();
 
@@ -378,13 +384,13 @@ public class RecipeBook {
                 }
             }
             RecipeTreeSet recipeTreeSet = craftableCategories.get(category);
-            System.out.println("cat size: "+craftableCategories.size());
+            //System.out.println("cat size: "+craftableCategories.size());
             if (recipeTreeSet == null) {
                 // if no other crafting for same cat make new tree set
                 recipeTreeSet = new RecipeTreeSet();
                 craftableCategories.put(category, recipeTreeSet);
             }
-            System.out.println("tree size: "+recipeTreeSet.size());
+            //System.out.println("tree size: "+recipeTreeSet.size());
             LOGGER.log(Level.DEBUG, "adding " + result.getName().getString() + " in " + category);
             recipeTreeSet.add(entry);
         }
@@ -664,7 +670,7 @@ public class RecipeBook {
         // we assume the mouse is clicked where it was when we updated the screen last ...
         if (underMouse == null)
             return;
-
+        // todo brewing
 //        if (underMouse.getType() == BrewingRecipe.recipeType) {
 //            // this is so different from other containers, we handle it now and return
 //            fillBrewingStandSlots((BrewingRecipe) underMouse);
@@ -690,6 +696,7 @@ public class RecipeBook {
 //        } else {
 //            fillCraftSlotsWithAnyMaterials(underMouse);
 //        }
+        // move stuffs to crafting grid
         fillCraftSlotsWithAnyMaterials(underMouse);
 
         // todo stonecutter
@@ -728,25 +735,24 @@ public class RecipeBook {
 
 //            LOGGER.info("Item in result slot is "+screen.getContainer().getSlot(resultSlotNo).getStack().getItem().getName().getString());
 
-
-        if (mouseButton == 0) {
+        // left click or holding control = dont instant craft
+        if (mouseButton == 0 && !Screen.hasControlDown()) {
             slotClick(resultSlotNo, mouseButton, SlotActionType.QUICK_MOVE);     // which is really PICKUP ALL
             updateRecipesIn(ModConfig.getAutoUpdateRecipeTimer()*50);
-        }
 
-        /* Special case honey blocks which leave glass bottles in the input slots */
+            if (underMouse.display().result().getFirst(RecipeHandler.getEmptyContext()).getItem() == Items.HONEY_BLOCK) {
+                slotClick(1, 0, SlotActionType.QUICK_MOVE);
+                slotClick(2, 0, SlotActionType.QUICK_MOVE);
+                slotClick(4, 0, SlotActionType.QUICK_MOVE);
 
-        if (underMouse.display().result().getFirst(RecipeHandler.getEmptyContext()).getItem() == Items.HONEY_BLOCK) {
-            slotClick(1, 0, SlotActionType.QUICK_MOVE);
-            slotClick(2, 0, SlotActionType.QUICK_MOVE);
-            slotClick(4, 0, SlotActionType.QUICK_MOVE);
-            if (gridSize == 2) {
-                slotClick(3, 0, SlotActionType.QUICK_MOVE);
-            } else {
-                slotClick(5, 0, SlotActionType.QUICK_MOVE);
+                // click result slot
+                if (gridSize == 2) {
+                    slotClick(3, 0, SlotActionType.QUICK_MOVE);
+                } else {
+                    slotClick(5, 0, SlotActionType.QUICK_MOVE);
+                }
             }
         }
-
 //            LOGGER.info("mousebutton = "+mouseButton);
 //            LOGGER.info("hasControl = "+Screen.hasControlDown());
 //            LOGGER.info("hasShift = "+Screen.hasShiftDown());
@@ -756,49 +762,103 @@ public class RecipeBook {
 
     private void fillCraftSlotsWithAnyMaterials(RecipeDisplayEntry underMouse) {
         // 1.21.4: Get ingredients safely from craftingRequirements
+        // move stuffs onto grid
+        ClientWorld world = MinecraftClient.getInstance().world;
+
         List<Ingredient> recipeInput = underMouse.craftingRequirements().orElse(Collections.emptyList());
         if (recipeInput.isEmpty()) return;
 
-        int maxCraftableStacks = 64;
-        if (Screen.hasShiftDown()) {
-            // ... (Your existing logic for maxCraftableStacks is mostly fine,
-            // but ensure you use ingr.getMatchingStacks() correctly)
+        int maxCraftableStacks = 1;
 
-            // Note: in 1.21.4, getMatchingStacks returns a stream or array
-            // depending on mappings; check your specific Yarn/Intermediary version.
-        } else {
-            maxCraftableStacks = 1;
-        }
 
         int rowadjust = 0;
         int gridWidth = 3; // Default for your UI grid
 
         // Check if it's a shaped recipe to handle the grid logic
         int recipeWidth = 0;
+        List<SlotDisplay> ingredients;
+
         if (underMouse.display() instanceof ShapedCraftingRecipeDisplay shaped) {
             recipeWidth = shaped.width();
+            ingredients = shaped.ingredients();
+            //1 4 7
+            //2 5 8
+            //3 6 9
+            if (Screen.hasShiftDown()) {
+                // todo craft all...
+                // find out max can craft
+                maxCraftableStacks = 64;
+                Map<Item, Integer> ingredientMap = new HashMap<>();
+                for (SlotDisplay ingredient : ingredients){
+                    List<ItemStack> chosenList = RecipeHandler.getCraftableStacks(ingredient);
+                    if (chosenList.isEmpty()) continue;
+                    Item chosenItem = chosenList.getFirst().getItem();
+
+                    // If chosenItem exists, add 1 to the current value.
+                    // If it doesn't exist, set the value to 1.
+                    ingredientMap.merge(chosenItem, 1, Integer::sum);
+                }
+
+                Map<Item, Integer> itemMap = RecipeHandler.getAvaliableItemMap();
+                for (Map.Entry<Item, Integer> entry : ingredientMap.entrySet()) {
+                    maxCraftableStacks = Math.min(maxCraftableStacks,itemMap.get(entry.getKey())/entry.getValue());
+                }
+                System.out.println("Can max craft " + underMouse.display().result().getFirst(RecipeHandler.getWorldContext()).getName() + ": " + maxCraftableStacks);
+            }
+        } else if (underMouse.display() instanceof ShapelessCraftingRecipeDisplay shapeless) {
+            ingredients = shapeless.ingredients();
+            recipeWidth = ingredients.size()<=4 ? 2 : 3;
+
+            if (Screen.hasShiftDown()) {
+                // todo craft all...
+                // find out max can craft
+                maxCraftableStacks = 64;
+                Map<Item, Integer> ingredientMap = new HashMap<>();
+                for (SlotDisplay ingredient : ingredients){
+                    List<ItemStack> chosenList = RecipeHandler.getCraftableStacks(ingredient);
+                    if (chosenList.isEmpty()) continue;
+                    Item chosenItem = chosenList.getFirst().getItem();
+
+                    // If chosenItem exists, add 1 to the current value.
+                    // If it doesn't exist, set the value to 1.
+                    ingredientMap.merge(chosenItem, 1, Integer::sum);
+                }
+
+                Map<Item, Integer> itemMap = RecipeHandler.getAvaliableItemMap();
+                for (Map.Entry<Item, Integer> entry : ingredientMap.entrySet()) {
+                    maxCraftableStacks = Math.min(maxCraftableStacks,itemMap.get(entry.getKey())/entry.getValue());
+                }
+                System.out.println("Can max craft " + underMouse.display().result().getFirst(RecipeHandler.getWorldContext()).getName() + ": " + maxCraftableStacks);
+            }
+
+        } else {
+            // not shaped or shapeless
+            // todo make other crafting
+            return;
         }
 
-        for (int craftslot = 0; craftslot < recipeInput.size(); craftslot++) {
+
+        for (int i = 0; i < ingredients.size(); i++) {
             int remaining = maxCraftableStacks;
-            Ingredient ingr = recipeInput.get(craftslot);
+            SlotDisplay ingredient = ingredients.get(i);
+            if (RecipeHandler.getAllIngredients(ingredient).isEmpty()) continue;
 
             // Standard inventory search loop
-            for (int slot = 0; remaining > 0 && slot < 36; slot++) {
-                Slot invitem = screen.getScreenHandler().getSlot(slot + firstInventorySlotNo);
-                ItemStack slotcontent = invitem.getStack();
+            for (int slot = firstInventorySlotNo; remaining > 0 && slot < 36+firstInventorySlotNo; slot++) {
+                // firstInventorySlotNo = slot of first main inv
+                ItemStack slotcontent = screen.getScreenHandler().getSlot(slot).getStack();
 
-                if (canActAsIngredient(ingr, slotcontent)) {
-                    transfer(slot + firstInventorySlotNo, craftslot + firstCraftSlot + rowadjust, remaining);
+                if (canActAsIngredient(ingredient, slotcontent)) {
+                    transfer(slot, i + firstCraftSlot + rowadjust, remaining);
 
                     // Refresh remaining count based on what actually moved
-                    ItemStack inCraftSlot = screen.getScreenHandler().getSlot(craftslot + firstCraftSlot + rowadjust).getStack();
+                    ItemStack inCraftSlot = screen.getScreenHandler().getSlot(i + firstCraftSlot + rowadjust).getStack();
                     remaining = maxCraftableStacks - inCraftSlot.getCount();
                 }
             }
 
             // Adjust for shaped grid layout
-            if (recipeWidth > 0 && (craftslot + 1) % recipeWidth == 0) {
+            if (recipeWidth > 0 && (i + 1) % recipeWidth == 0) {
                 rowadjust += gridWidth - recipeWidth;
             }
         }
@@ -835,46 +895,7 @@ public class RecipeBook {
 //    }
 
     // ditch brewingstand
-//    private void fillBrewingStandSlots(BrewingRecipe recipe) {
-//        ScreenHandler container = screen.getScreenHandler();
-//        ItemStack ingredientStack = container.getSlot(3 + firstCraftSlot).getStack();
-//        List<Ingredient> inputs = recipe.getIngredients();
-//        ItemStack inputPotionStack = inputs.get(0).getMatchingStacks()[0];
-//        if (ingredientStack.isEmpty()) {
-//            Item neededItem = ((Ingredient) (recipe.getIngredients().get(1))).getMatchingStacks()[0].getItem();
-//            for (int slot = 0; slot < 36; slot++) {
-//                if (container.getSlot(slot + firstInventorySlotNo).getStack().getItem() == neededItem) {
-//                    LOGGER.debug("transfer from inv slot " + slot + " to ingred. slot " + 3);
-//                    transfer(slot + firstInventorySlotNo, 3 + firstCraftSlot, 1);
-//                    break;
-//                }
-//            }
-//        } else if (ingredientStack.getItem() != recipe.getIngredient().getItem()) {
-//            MinecraftClient.getInstance().inGameHud.setOverlayMessage(
-//                    Text.translatable("easiercrafting.error.removepotions"), true
-//            );
-//            return;
-//        }
-//        for (int potionSlot = 0; potionSlot < 3; potionSlot++) {
-//            if (!container.getSlot(potionSlot + firstCraftSlot).getStack().isEmpty()) {
-//                continue;
-//            }
-//            for (int slot = 0; slot < 36; slot++) {
-//                ItemStack inventoryItemStack = container.getSlot(slot + firstInventorySlotNo).getStack();
-//                if (inventoryItemStack.isEmpty())
-//                    continue;
-//                boolean matches = (PotionUtil.getPotion(inventoryItemStack) == PotionUtil.getPotion(inputPotionStack));
-////                if (recipe.isItemRecipe()) {
-//                matches &= (inventoryItemStack.getItem() == inputPotionStack.getItem());
-////                }
-//                if (matches) {
-//                    LOGGER.debug("transfer from inv slot " + slot + " to potion slot " + potionSlot);
-//                    transfer(slot + firstInventorySlotNo, potionSlot + firstCraftSlot, 1);
-//                    break;
-//                }
-//            }
-//        }
-//    }
+
 
     private int getDamage(int slot) {
         ItemStack stack = screen.getScreenHandler().getSlot(slot + firstInventorySlotNo).getStack();
@@ -909,38 +930,16 @@ public class RecipeBook {
 //        return recipe.getIngredients();
 //    }
 
-    private boolean canActAsIngredient(Ingredient ingredient, ItemStack inventoryItem) {
-//        boolean tagForbidsItem = false;
-//
-////        LOGGER.info("Fuck DAMAGE, " + inventoryItem.get(DataComponentTypes.DAMAGE));
-//        if (inventoryItem.get(DataComponentTypes.DAMAGE) != null) {
-//            if (Objects.requireNonNull(inventoryItem.get(DataComponentTypes.DAMAGE)).intValue() == 0) {
-//                // A damage tag that has "no damage" doesn't prevent using the item
-//            } else if (Block.getBlockFromItem(inventoryItem.getItem()) instanceof ShulkerBoxBlock) {
-//                // Shulker boxes can be dyed even if they have contents
-//            } else {
-//                tagForbidsItem = true;
-//            }
-//        }
-//
-//        if (!tagForbidsItem && ingredient.test(inventoryItem))
-//            return true;
-//
-//        // TagDump.dump(inventoryItem.getTag(), 0);
-//
-//        if (inventoryItem.getItem() != Items.LINGERING_POTION)
-//            return false;
-//
-//        Potion neededType = PotionUtil.getPotion(inventoryItem);
-//        ItemStack[] possiblePotions = ingredient.getMatchingStacks();
-//        for (ItemStack stack : possiblePotions) {
-//            // LOGGER.info("in lingering potion check, component = "+ingredient.getMatchingStacksClient()[0].getTranslationKey()+", invItem = "+inventoryItem.getTranslationKey());
-//            if (PotionUtil.getPotion(stack) == neededType && ingredient.test(inventoryItem)) {
-//                return true;
-//            }
-//        }
-//        return false;
-        return ingredient.test(inventoryItem);
+    private boolean canActAsIngredient(SlotDisplay ingredient, ItemStack inventoryItem) {
+        // todo make shulker box and add damage
+        if (inventoryItem.isEmpty()) return false;
+
+        // Get all valid items for this ingredient slot
+        List<ItemStack> validStacks = ingredient.getStacks(SlotDisplayContexts.createParameters(MinecraftClient.getInstance().world));
+
+        // Check if the item in our inventory matches any of the valid ingredients
+        return validStacks.stream()
+                .anyMatch(validStack -> validStack.getItem() == inventoryItem.getItem());
     }
 
     public void transfer(int from, int to, int amount) {

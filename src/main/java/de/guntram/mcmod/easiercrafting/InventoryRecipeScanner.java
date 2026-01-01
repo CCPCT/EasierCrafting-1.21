@@ -7,9 +7,9 @@ package de.guntram.mcmod.easiercrafting;
 
 import java.util.*;
 
+import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import net.minecraft.block.Block;
 import net.minecraft.block.ShulkerBoxBlock;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.FireworksComponent;
 import net.minecraft.component.type.ItemEnchantmentsComponent;
@@ -18,12 +18,8 @@ import net.minecraft.item.DyeItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtList;
 import net.minecraft.potion.Potion;
-import net.minecraft.recipe.Ingredient;
 import net.minecraft.recipe.NetworkRecipeId;
-import net.minecraft.recipe.Recipe;
 import net.minecraft.recipe.RecipeDisplayEntry;
 import net.minecraft.recipe.book.RecipeBookCategories;
 import net.minecraft.recipe.display.ShapelessCraftingRecipeDisplay;
@@ -35,8 +31,6 @@ import net.minecraft.util.DyeColor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.xml.crypto.Data;
-
 /**
  *
  * @author gbl
@@ -45,7 +39,7 @@ public class InventoryRecipeScanner {
     
     private static final Logger LOGGER = LogManager.getLogger();
     
-    static List<RecipeDisplayEntry> findUnusualRecipes(ScreenHandler inventory, int firstInventorySlotNo) {
+    public static List<RecipeDisplayEntry> findUnusualRecipes(ScreenHandler inventory, int firstInventorySlotNo) {
         ArrayList<RecipeDisplayEntry> result=new ArrayList<>();
 
         // needed for various recipes; count the number of each dye type

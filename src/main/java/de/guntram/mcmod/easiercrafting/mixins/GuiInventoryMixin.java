@@ -1,8 +1,8 @@
 package de.guntram.mcmod.easiercrafting.mixins;
 
 
-import de.guntram.mcmod.easiercrafting.ExtendedGuiInventory;
-import de.guntram.mcmod.easiercrafting.RecipeBook;
+import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiInventory;
+import de.guntram.mcmod.easiercrafting.recipe.RecipeBook;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;

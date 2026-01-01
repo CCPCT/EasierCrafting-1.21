@@ -1,14 +1,10 @@
-package de.guntram.mcmod.easiercrafting;
+package de.guntram.mcmod.easiercrafting.recipe;
 
 import java.util.Comparator;
-import java.util.List;
 import java.util.TreeSet;
-import net.minecraft.item.ItemStack;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.recipe.Recipe;
+
+import de.guntram.mcmod.easiercrafting.EasierCrafting;
 import net.minecraft.recipe.RecipeDisplayEntry;
-import net.minecraft.recipe.RecipeType;
-import net.minecraft.recipe.display.SlotDisplay;
 
 public class RecipeTreeSet extends TreeSet<RecipeDisplayEntry> {
     // set of crafting display recipes for same cat

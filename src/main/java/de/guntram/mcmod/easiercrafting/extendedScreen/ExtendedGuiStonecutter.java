@@ -1,25 +1,26 @@
-package de.guntram.mcmod.easiercrafting;
+package de.guntram.mcmod.easiercrafting.extendedScreen;
 
+import de.guntram.mcmod.easiercrafting.SlotClickAccepter;
+import de.guntram.mcmod.easiercrafting.recipe.RecipeBook;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.client.gui.screen.ingame.StonecutterScreen;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.screen.StonecutterScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
-
-public class ExtendedGuiInventory extends InventoryScreen implements SlotClickAccepter {
+public class ExtendedGuiStonecutter extends StonecutterScreen implements SlotClickAccepter {
 
     private RecipeBook recipeBook;
-    // temp kludge -- field_2776 and field_2800 seem to have been renamed with 21w13a
-    public ExtendedGuiInventory(PlayerEntity player) {
-        super(player);
+
+    public ExtendedGuiStonecutter(StonecutterScreenHandler container, PlayerInventory lowerInv, Text title) {
+        super(container, lowerInv, title);
     }
     
     @Override
-    public void init() {
+    protected void init() {
         super.init();
-        if (!ModConfig.getAllowMinecraftRecipeBook())
-            this.children().clear();
         this.recipeBook.afterInitGui();
     }
 
@@ -65,9 +66,6 @@ public class ExtendedGuiInventory extends InventoryScreen implements SlotClickAc
 
     @Override
     public void slotClick(int slot, int mouseButton, SlotActionType clickType) {
-        // System.out.println("Clicking slot "+slot+" "+(mouseButton==0 ? "left" : "right")+" type:"+clickType.toString());
         this.onMouseClick(null, slot, mouseButton, clickType);
-        // mc.playerController.windowClick(mc.player.openContainer.windowId, slot, mouseButton, clickType, mc.player);
     }
-
 }
