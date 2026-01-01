@@ -10,14 +10,13 @@
         ]
     },
     "mixins": [
-      	"mixins.easiercrafting.json",
-        "mixins.easiercrafting_debug.json"
+      	"mixins.easiercrafting.json"
     ],
     "depends": {
       "fabric-api": "*",
       "fabricloader": "*",
       "fabric": "*",
-      "minecraft": "~1.21",
+      "minecraft": ">=1.21.6 <=1.21.8",
       "java": ">=21",
       "modmenu": "*",
       "cloth-config": "*"

@@ -210,7 +210,7 @@ public class RecipeBook {
             for (String category : craftableCategories.keySet()) {
 //            System.out.println(category+" at "+xOffset+"/"+ypos);
                 if (ypos >= minYtoDraw) {
-                    context.drawText(fontRenderer, category, xOffset, ypos, 0xffff00, true);
+                    context.drawText(fontRenderer, category, xOffset, ypos, 0xFFFFFF00, true);
                 }
                 ypos += itemSize;
                 ypos = drawRecipeOutputs(context, craftableCategories.get(category), fontRenderer, 0, ypos, mouseX, mouseY);
@@ -224,7 +224,7 @@ public class RecipeBook {
             // update context once per frame
 
             String displayName = EasierCrafting.recipeDisplayName(underMouse);
-            context.drawText(fontRenderer, displayName, 0, height + 3, 0xffff00, true);
+            context.drawText(fontRenderer, displayName, 0, height + 3, 0xFFFFFF00, true);
             if (underMouse.display() instanceof ShapedCraftingRecipeDisplay shaped) {
 
                 List<SlotDisplay> ingredients = shaped.ingredients();
@@ -266,7 +266,7 @@ public class RecipeBook {
         if (treeSet==null || treeSet.isEmpty()) return ypos;
         for (RecipeDisplayEntry recipe : treeSet) {
             if (ypos >= minYtoDraw) {
-                renderSingleRecipeOutput(context, fontRenderer, recipe.display().result().getFirst(RecipeHandler.getEmptyContext()), xOffset + xpos, ypos - itemLift);
+                renderSingleRecipeOutput(context, fontRenderer, recipe.display().result().getFirst(RecipeHandler.getWorldContext()), xOffset + xpos, ypos - itemLift);
                 if (mouseX >= xpos + xOffset && mouseX <= xpos + xOffset + itemSize - 1
                         && mouseY >= ypos - itemLift && mouseY <= ypos - itemLift + itemSize - 1) {
                     underMouse = recipe;
@@ -343,7 +343,7 @@ public class RecipeBook {
         for (RecipeDisplayEntry entry : recipeEntries) {
             //System.out.println("grid size is "+gridSize+", recipe needs "+recipe.getRecipeSize());
             // assume craftable in current inventory (todo add check)
-            ItemStack result = entry.display().result().getFirst(RecipeHandler.getEmptyContext());
+            ItemStack result = entry.display().result().getFirst(RecipeHandler.getWorldContext());
             Item item = result.getItem();
             if (item == Items.AIR)
                 continue;
@@ -431,7 +431,7 @@ public class RecipeBook {
 
                 // 4. Get the result stack (The icon shown in the recipe book)
                 // Recipes can have multiple potential results, we check the first one
-                List<ItemStack> results = entry.display().result().getStacks(RecipeHandler.getEmptyContext());
+                List<ItemStack> results = entry.display().result().getStacks(RecipeHandler.getWorldContext());
                 if (results.isEmpty() || results.getFirst().isEmpty()) {
                     continue;
                 }
@@ -740,7 +740,7 @@ public class RecipeBook {
             slotClick(resultSlotNo, mouseButton, SlotActionType.QUICK_MOVE);     // which is really PICKUP ALL
             updateRecipesIn(ModConfig.getAutoUpdateRecipeTimer()*50);
 
-            if (underMouse.display().result().getFirst(RecipeHandler.getEmptyContext()).getItem() == Items.HONEY_BLOCK) {
+            if (underMouse.display().result().getFirst(RecipeHandler.getWorldContext()).getItem() == Items.HONEY_BLOCK) {
                 slotClick(1, 0, SlotActionType.QUICK_MOVE);
                 slotClick(2, 0, SlotActionType.QUICK_MOVE);
                 slotClick(4, 0, SlotActionType.QUICK_MOVE);

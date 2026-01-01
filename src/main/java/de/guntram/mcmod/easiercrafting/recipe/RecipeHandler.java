@@ -50,7 +50,7 @@ public class RecipeHandler {
         avaliableItemMap = new HashMap<>();
         if (player==null) return;
         // Iterate through slots (usually 0-35 for player inventory)
-        for (ItemStack itemStack : player.getInventory().main) {
+        for (ItemStack itemStack : player.getInventory().getMainStacks()) {
             if (itemStack.isEmpty()) continue;
             avaliableItems.add(itemStack.getItem());
             avaliableItemMap.merge(itemStack.getItem(), itemStack.getCount(), Integer::sum);
@@ -151,6 +151,7 @@ public class RecipeHandler {
     }
 
     public static Identifier getCat(RecipeDisplayEntry entry){
+        //System.out.println(MinecraftClient.getInstance().world.getRegistryManager().getOptional(RegistryKeys.RECIPE_BOOK_CATEGORY).get().getId(entry.category()).getPath());
         return MinecraftClient.getInstance().world.getRegistryManager().getOptional(RegistryKeys.RECIPE_BOOK_CATEGORY).get().getId(entry.category());
     }
 
