@@ -1,0 +1,29 @@
+name: release
+on:
+  push:
+    tags:
+      - 'v*' # Trigger only when pushing a tag starting with 'v'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Needed to create the release
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'zulu'
+
+      - name: Build Mod
+        run: ./gradlew build
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/libs/*.jar 
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
