@@ -2,6 +2,7 @@ package de.guntram.mcmod.easiercrafting.recipe;
 
 import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiCrafting;
 import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiInventory;
+import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiStonecutter;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.CraftingScreen;
@@ -37,9 +38,6 @@ public class RecipeHandler {
     static Map<Item, Integer> avaliableItemMap = new HashMap<>();
 
     private static final Map<Class<? extends Screen>, RecipeBookType> screenClassToRecipeBookType = Map.of(
-            InventoryScreen.class, RecipeBookType.CRAFTING,
-            CraftingScreen.class, RecipeBookType.CRAFTING,
-            FurnaceScreen.class, RecipeBookType.FURNACE,
             ExtendedGuiCrafting.class, RecipeBookType.CRAFTING,
             ExtendedGuiInventory.class, RecipeBookType.CRAFTING
     );
@@ -101,7 +99,10 @@ public class RecipeHandler {
     public static void updateRecipes(Class<? extends Screen> screen){
         if (screen==null) return;
         assert MinecraftClient.getInstance().player != null;
-        resultCollections = MinecraftClient.getInstance().player.getRecipeBook().getResultsForCategory(screenClassToRecipeBookType.get(screen));
+        RecipeBookType bookType = screenClassToRecipeBookType.get(screen);
+        // unsupported inventory
+        if (bookType==null) return;
+        resultCollections = MinecraftClient.getInstance().player.getRecipeBook().getResultsForCategory(bookType);
         craftableRecipeEntries.clear();
         // all recipe collection
         System.out.println("all collection count: "+resultCollections.size());

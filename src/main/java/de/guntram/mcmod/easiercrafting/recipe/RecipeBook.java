@@ -4,7 +4,7 @@ package de.guntram.mcmod.easiercrafting.recipe;
 this class is used to render ...
 the recipe handler is moved to recipe.RecipeHandler
 */
-
+// todo fix creative crash on screen
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -389,7 +389,7 @@ public class RecipeBook {
                 craftableCategories.put(category, recipeTreeSet);
             }
             //System.out.println("tree size: "+recipeTreeSet.size());
-            LOGGER.log(Level.DEBUG, "adding " + result.getName().getString() + " in " + category);
+            //LOGGER.log(Level.DEBUG, "adding " + result.getName().getString() + " in " + category);
             recipeTreeSet.add(entry);
         }
         recalcListSize();
