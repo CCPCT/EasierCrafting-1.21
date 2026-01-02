@@ -1,6 +1,6 @@
 {
     "schemaVersion": 1,
-    "id": "easiercrafting",
+    "id": "easiercrafting-updated",
     "version": "${version}",
     "environment": "client",
     "entrypoints": {
