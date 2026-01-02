@@ -3,6 +3,7 @@ on:
   push:
     tags:
       - 'v*' # Trigger only when pushing a tag starting with 'v'
+  workflow_dispatch:
 
 jobs:
   build:
@@ -16,7 +17,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: '21'
-          distribution: 'zulu'
+          distribution: 'temurin'
 
       - name: Build Mod
         run: ./gradlew build
