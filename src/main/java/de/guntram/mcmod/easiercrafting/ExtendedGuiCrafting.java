@@ -38,7 +38,7 @@ public class ExtendedGuiCrafting extends CraftingScreen implements SlotClickAcce
     
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double xdelta, double ydelta) {
-        recipeBook.scrollBy((int) xdelta);
+        recipeBook.scrollBy((int) ydelta);
         return super.mouseScrolled(mouseX, mouseY, xdelta, ydelta);
     }    
     

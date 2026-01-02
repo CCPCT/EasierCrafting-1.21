@@ -452,7 +452,7 @@ public class RecipeBook {
         patternMatchingRecipes = new RecipeTreeSet();
 
         String patternText = getPatternText();
-        if (patternText.length() < 2)
+        if (patternText.isEmpty())
             return;
 
         List<Recipe> recipes = new ArrayList<>();
@@ -916,12 +916,13 @@ public class RecipeBook {
         if (pattern == null)
             return false;
         // System.out.println("key code="+code+", scancode="+scancode+", modifiers="+modifiers);
-        if (code == GLFW.GLFW_KEY_ENTER || code == GLFW.GLFW_KEY_KP_ENTER) {
+        if (code == GLFW.GLFW_KEY_ENTER || code == GLFW.GLFW_KEY_KP_ENTER || code == GLFW.GLFW_KEY_ESCAPE) {
             updatePatternMatch();
             pattern.setFocused(false);
             return true;
         } else if (pattern.isFocused()) {
             // System.out.println("-> sending to pattern");
+            updatePatternMatch();
             pattern.keyPressed(code, scancode, modifiers);
             return true;            // prevent 'e' from closing screen
         } else {
