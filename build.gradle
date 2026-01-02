@@ -24,7 +24,7 @@ targetCompatibility = 21
 
 
 
-archivesBaseName = "easiercrafting"
+archivesBaseName = "easiercrafting-updated"
 
 version = "${project.minecraft_version}-${project.projectVersion}"
 

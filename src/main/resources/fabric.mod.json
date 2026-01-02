@@ -21,13 +21,13 @@
       "modmenu": "*",
       "cloth-config": "*"
     },
-    "name": "EasierCrafting",
+    "name": "EasierCrafting updated",
     "description": "One-click Crafting updated",
     "icon": "icon.png",
     "authors": [ "Giselbaer","CCPCT"],
     "contact": {
-        "homepage": "https://www.curseforge.com/minecraft/mc-mods/easiercrafting",
-        "sources": "https://github.com/gbl/EasierCrafting",
-        "issues": "https://github.com/gbl/EasierCrafting/issues"
+        "homepage": "https://modrinth.com/mod/easiercrafting-updated",
+        "sources": "https://github.com/CCPCT/EasierCrafting-updated",
+        "issues": "https://github.com/CCPCT/EasierCrafting-updated/issues"
     }
 }

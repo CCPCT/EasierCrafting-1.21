@@ -64,7 +64,8 @@ public class RecipeBook {
     private int mouseScroll;
     private int minYtoDraw = 0;               // implements clipping top part of the item list
     private int textBoxSize;
-    private long recipeUpdateTime;
+    private long recipeUpdateTime=0;
+    private long recipeFadeTime=0;
     private final RecipeType wantedRecipeType;
 
     public TextFieldWidget pattern;
@@ -157,12 +158,24 @@ public class RecipeBook {
 
         boolean underMouseIsCraftable = true;
 
+        // see if updated recipe tab
         if (recipeUpdateTime != 0 && System.currentTimeMillis() > recipeUpdateTime) {
-            updateRecipes();
+            // immediate update after timer end
+            if (ModConfig.getFadeoutTime()>0) {
+                List<RecipeDisplayEntry> preUpdate = RecipeHandler.getCraftableRecipeEntries();
+                updateRecipes();
+                if (preUpdate.equals(RecipeHandler.getCraftableRecipeEntries())) {
+                    recipeFadeTime = System.currentTimeMillis()+ModConfig.getFadeoutTime()*50L;
+                    System.out.println("updated");
+                }
+            } else {
+                updateRecipes();
+            }
             recipeUpdateTime = 0;
         }
 
-        if (recipeUpdateTime != 0 && System.currentTimeMillis() > recipeUpdateTime - ModConfig.getFadeoutTime()) {
+        // if update && not yet fade end
+        if (recipeFadeTime > 0 && System.currentTimeMillis() < recipeFadeTime){
             underMouse = null;
             return;
         }

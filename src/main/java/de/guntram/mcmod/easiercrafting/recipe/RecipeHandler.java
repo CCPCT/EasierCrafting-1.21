@@ -31,8 +31,8 @@ import java.util.List;
 import java.util.Map;
 
 public class RecipeHandler {
-    private static List<RecipeResultCollection> resultCollections;
-    private static List<RecipeDisplayEntry> craftableRecipeEntries = new ArrayList<>(); //only craftable
+    private static List<RecipeResultCollection> resultCollections = new ArrayList<>();
+    private static final List<RecipeDisplayEntry> craftableRecipeEntries = new ArrayList<>(); //only craftable
     final static ContextParameterMap EMPTY_CONTEXT = new ContextParameterMap.Builder().build(new ContextType.Builder().build());
     static List<Item> avaliableItems;
     static Map<Item, Integer> avaliableItemMap = new HashMap<>();
@@ -145,12 +145,6 @@ public class RecipeHandler {
         return ingredient.getStacks(getWorldContext());
     }
 
-    public static ItemStack getResult(RecipeResultCollection recipe){
-        World world = MinecraftClient.getInstance().world;
-        assert world != null;
-        return recipe.getAllRecipes().getFirst().display().result().getFirst(SlotDisplayContexts.createParameters(world));
-    }
-
     public static Identifier getCat(RecipeDisplayEntry entry){
         //System.out.println(MinecraftClient.getInstance().world.getRegistryManager().getOptional(RegistryKeys.RECIPE_BOOK_CATEGORY).get().getId(entry.category()).getPath());
         return MinecraftClient.getInstance().world.getRegistryManager().getOptional(RegistryKeys.RECIPE_BOOK_CATEGORY).get().getId(entry.category());
@@ -170,6 +164,7 @@ public class RecipeHandler {
         return screenClassToRecipeBookType.get(screenClass);
     }
     public static ContextParameterMap getWorldContext(){
+        assert MinecraftClient.getInstance().world != null;
         return SlotDisplayContexts.createParameters(MinecraftClient.getInstance().world);
     }
     public static List<Item> getAvailableItems() {
