@@ -14,6 +14,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.recipe.Ingredient;
+import net.minecraft.recipe.NetworkRecipeId;
 import net.minecraft.recipe.RecipeDisplayEntry;
 import net.minecraft.recipe.display.ShapedCraftingRecipeDisplay;
 import net.minecraft.recipe.display.ShapelessCraftingRecipeDisplay;
@@ -25,14 +26,12 @@ import net.minecraft.util.context.ContextParameterMap;
 import net.minecraft.util.context.ContextType;
 import net.minecraft.world.World;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class RecipeHandler {
     private static List<RecipeResultCollection> resultCollections = new ArrayList<>();
-    private static final List<RecipeDisplayEntry> craftableRecipeEntries = new ArrayList<>(); //only craftable
+    private static final Set<RecipeDisplayEntry> craftableRecipeEntries = new HashSet<>(); //only craftable
     final static ContextParameterMap EMPTY_CONTEXT = new ContextParameterMap.Builder().build(new ContextType.Builder().build());
     static List<Item> avaliableItems;
     static Map<Item, Integer> avaliableItemMap = new HashMap<>();
@@ -150,11 +149,31 @@ public class RecipeHandler {
         return MinecraftClient.getInstance().world.getRegistryManager().getOptional(RegistryKeys.RECIPE_BOOK_CATEGORY).get().getId(entry.category());
     }
 
+    public static int getMaxPossibleCraft(List<SlotDisplay> ingredients){
+        int maxCraftableStacks = 64;
+        Map<Item, Integer> ingredientMap = new HashMap<>();
+        for (SlotDisplay ingredient : ingredients){
+            List<ItemStack> chosenList = RecipeHandler.getCraftableStacks(ingredient);
+            if (chosenList.isEmpty()) continue;
+            Item chosenItem = chosenList.getFirst().getItem();
+
+            // If chosenItem exists, add 1 to the current value.
+            // If it doesn't exist, set the value to 1.
+            ingredientMap.merge(chosenItem, 1, Integer::sum);
+        }
+
+        Map<Item, Integer> itemMap = RecipeHandler.getAvaliableItemMap();
+        for (Map.Entry<Item, Integer> ingredientSet : ingredientMap.entrySet()) {
+            maxCraftableStacks = Math.min(Math.min(maxCraftableStacks,itemMap.get(ingredientSet.getKey())/ingredientSet.getValue()),ingredientSet.getKey().getMaxCount());
+        }
+        return maxCraftableStacks;
+    }
+
     // getters
     public static List<RecipeResultCollection> getRecipeCollections() {
         return resultCollections;
     }
-    public static List<RecipeDisplayEntry> getCraftableRecipeEntries() {
+    public static Set<RecipeDisplayEntry> getCraftableRecipeEntries() {
         return craftableRecipeEntries;
     }
     public static ContextParameterMap getEmptyContext(){
