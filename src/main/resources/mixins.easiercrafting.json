@@ -8,10 +8,6 @@
     "GuiCraftMixin",
     "GuiInventoryMixin"
   ],
-  "server": [
-    "GuiActionConfirmDebug",
-    "ServerPlayNetworkHandlerMixin"
-  ],
   "injectors": {
     "defaultRequire": 1
   }

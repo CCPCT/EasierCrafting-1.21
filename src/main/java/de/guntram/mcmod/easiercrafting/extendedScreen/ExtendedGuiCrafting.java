@@ -2,7 +2,9 @@ package de.guntram.mcmod.easiercrafting.extendedScreen;
 
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.SlotClickAccepter;
-import de.guntram.mcmod.easiercrafting.recipe.RecipeBook;
+import de.guntram.mcmod.easiercrafting.recipe.AbstractRecipeBook;
+import de.guntram.mcmod.easiercrafting.recipe.CraftingRecipeBook;
+
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.CraftingScreen;
 import net.minecraft.entity.player.PlayerInventory;
@@ -13,7 +15,7 @@ import org.lwjgl.glfw.GLFW;
 
 public class ExtendedGuiCrafting extends CraftingScreen implements SlotClickAccepter {
 
-    private RecipeBook recipeBook;
+    private CraftingRecipeBook recipeBook;
 
     public ExtendedGuiCrafting(CraftingScreenHandler container, PlayerInventory lowerInv, Text title) {
         super(container, lowerInv, title);
@@ -28,7 +30,7 @@ public class ExtendedGuiCrafting extends CraftingScreen implements SlotClickAcce
         this.recipeBook.afterInitGui();
     }
 
-    public void setRecipeBook(RecipeBook recipeBook) {
+    public void setRecipeBook(CraftingRecipeBook recipeBook) {
         this.recipeBook=recipeBook;
     }
 

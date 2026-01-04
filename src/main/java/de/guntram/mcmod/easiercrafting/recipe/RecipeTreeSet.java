@@ -1,43 +1,32 @@
 package de.guntram.mcmod.easiercrafting.recipe;
 
-import java.util.Comparator;
 import java.util.TreeSet;
 
-import de.guntram.mcmod.easiercrafting.EasierCrafting;
 import net.minecraft.recipe.RecipeDisplayEntry;
 
-public class RecipeTreeSet extends TreeSet<RecipeDisplayEntry> {
-    // set of crafting display recipes for same cat
-    // compare to prevent same recipe?
+import static de.guntram.mcmod.easiercrafting.EasierCrafting.recipeDisplayName;
+
+public class RecipeTreeSet<T> extends TreeSet<T> {
+
     public RecipeTreeSet() {
-        super(new Comparator<RecipeDisplayEntry>() {
-            @Override
-            public int compare(RecipeDisplayEntry a, RecipeDisplayEntry b) {
-                // Use your existing helper for the result name
-                int sameName = EasierCrafting.recipeDisplayName(a)
-                        .compareToIgnoreCase(EasierCrafting.recipeDisplayName(b));
+        super((a, b) -> {
+            // We must treat them as Objects or a common base to compare
+            String nameA = recipeDisplayName(a);
+            String nameB = recipeDisplayName(b);
 
-                if (sameName != 0) {
-                    return sameName;
-                }
+            int sameName = nameA.compareToIgnoreCase(nameB);
 
-                // If names are the same, Stonecutter recipes are sub-sorted by their input ingredient name
-//                if (a.getType() == RecipeType.STONECUTTING && b.getType() == RecipeType.STONECUTTING) {
-//                    return compareFirstIngredient(a, b);
-//                }
-
-                // Fallback to avoid merging different recipes with the same display name
-                // In 1.20.4, use the hashcode or a unique property since getId() is moved to RecipeHolder
-                return Integer.compare(a.hashCode(), b.hashCode());
+            if (sameName != 0) {
+                return sameName;
             }
 
-            private int compareFirstIngredient(RecipeDisplayEntry a, RecipeDisplayEntry b) {
-                if (a.craftingRequirements().isEmpty() || b.craftingRequirements().isEmpty()) return 0;
-                String nameA = a.craftingRequirements().get().getFirst().toString();
-                String nameB = b.craftingRequirements().get().getFirst().toString();
-                return nameA.compareToIgnoreCase(nameB);
-            }
-
+            // Fallback to hashCode to prevent TreeSet from merging
+            // two different recipes with the same name.
+            return Integer.compare(System.identityHashCode(a), System.identityHashCode(b));
         });
+    }
+
+    public void addRecipeEntry(T entry) {
+        this.add(entry); // No cast needed, perfectly safe
     }
 }

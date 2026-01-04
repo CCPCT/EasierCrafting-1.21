@@ -2,7 +2,7 @@ package de.guntram.mcmod.easiercrafting.extendedScreen;
 
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.SlotClickAccepter;
-import de.guntram.mcmod.easiercrafting.recipe.RecipeBook;
+import de.guntram.mcmod.easiercrafting.recipe.CraftingRecipeBook;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.entity.player.PlayerEntity;
@@ -12,8 +12,7 @@ import org.lwjgl.glfw.GLFW;
 
 public class ExtendedGuiInventory extends InventoryScreen implements SlotClickAccepter {
 
-    private RecipeBook recipeBook;
-    // temp kludge -- field_2776 and field_2800 seem to have been renamed with 21w13a
+    private CraftingRecipeBook recipeBook;
     public ExtendedGuiInventory(PlayerEntity player) {
         super(player);
     }
@@ -26,7 +25,7 @@ public class ExtendedGuiInventory extends InventoryScreen implements SlotClickAc
         this.recipeBook.afterInitGui();
     }
 
-    public void setRecipeBook(RecipeBook recipeBook) {
+    public void setRecipeBook(CraftingRecipeBook recipeBook) {
         this.recipeBook=recipeBook;
     }
     
