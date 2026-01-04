@@ -1,13 +1,16 @@
 package de.guntram.mcmod.easiercrafting.mixins;
 
 import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiCrafting;
-import de.guntram.mcmod.easiercrafting.recipe.RecipeBook;
+import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiStonecutter;
+import de.guntram.mcmod.easiercrafting.recipe.CraftingRecipeBook;
+import de.guntram.mcmod.easiercrafting.recipe.StonecutterRecipeBook;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.screen.CraftingScreenHandler;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerType;
+import net.minecraft.screen.StonecutterScreenHandler;
 import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -27,20 +30,20 @@ public class GuiCraftMixin {
             ExtendedGuiCrafting screen = new ExtendedGuiCrafting(handler, client.player.getInventory(), title);
 
             // Your custom recipe book setup
-            screen.setRecipeBook(new RecipeBook(screen, 1, 3, 0, 10));
+            screen.setRecipeBook(new CraftingRecipeBook(screen, 1, 3, 0, 10));
 
             openScreen(client, handler, screen);
             ci.cancel();
         }
-//        else if (type == ScreenHandlerType.STONECUTTER) {
-//            StonecutterScreenHandler handler = ScreenHandlerType.STONECUTTER.create(id, client.player.getInventory());
-//            ExtendedGuiStonecutter screen = new ExtendedGuiStonecutter(handler, client.player.getInventory(), title);
-//
-//            screen.setRecipeBook(new RecipeBook(screen, 0, 1, 1, 2));
-//
-//            openScreen(client, handler, screen);
-//            ci.cancel();
-//        }
+        else if (type == ScreenHandlerType.STONECUTTER) {
+            StonecutterScreenHandler handler = ScreenHandlerType.STONECUTTER.create(id, client.player.getInventory());
+            ExtendedGuiStonecutter screen = new ExtendedGuiStonecutter(handler, client.player.getInventory(), title);
+
+            screen.setRecipeBook(new StonecutterRecipeBook(screen, 0, 1, 1, 2));
+
+            openScreen(client, handler, screen);
+            ci.cancel();
+        }
     }
 
     // Helper to mirror vanilla behavior correctly

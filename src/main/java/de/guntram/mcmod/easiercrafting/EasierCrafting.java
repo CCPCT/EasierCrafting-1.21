@@ -17,6 +17,10 @@ import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.client.gui.screen.recipebook.RecipeResultCollection;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.recipe.RecipeDisplayEntry;
+import net.minecraft.recipe.StonecuttingRecipe;
+import net.minecraft.recipe.display.CuttingRecipeDisplay;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class EasierCrafting implements ClientModInitializer 
 {
@@ -25,7 +29,6 @@ public class EasierCrafting implements ClientModInitializer
 
     @Override
     public void onInitializeClient() {
-        System.out.println("EasierCrafting initialised");
         ModConfig.load();
 
 //        File localRecipes = extractBundledFile("localrecipes.zip");
@@ -35,22 +38,28 @@ public class EasierCrafting implements ClientModInitializer
 //        extractConfigFileContents("loomrecipes.zip", "loomrecipes");
 //        LoomRecipeRegistry.loadRecipeCollection(LoomRecipeRegistry.getRecipeCollectionPath());
     }
-    
-    public static String recipeDisplayName(RecipeResultCollection recipe) {
-        String display = recipe.getAllRecipes().getFirst().toString();
-        if (display.startsWith(MODID+":")) {
-            display = I18n.translate(display);
-            if (display.startsWith(MODID+":")) {
-                display=display.substring(MODID.length()+1);
-            }
-        } else {
-            display = recipe.getAllRecipes().getFirst().display().result().getFirst(RecipeHandler.getEmptyContext()).getName().getString();
-        }
-        return display;
-    }
 
-    public static String recipeDisplayName(RecipeDisplayEntry recipe) {
-        return recipe.display().result().getFirst(RecipeHandler.getEmptyContext()).toString();
+    public static <T> String recipeDisplayName(T recipe) {
+        if (recipe instanceof RecipeDisplayEntry entry){
+            return entry.display().result().getFirst(RecipeHandler.getEmptyContext()).toString();
+        }
+        if (recipe instanceof RecipeResultCollection entry){
+            String display = entry.getAllRecipes().getFirst().toString();
+            if (display.startsWith(MODID+":")) {
+                display = I18n.translate(display);
+                if (display.startsWith(MODID+":")) {
+                    display=display.substring(MODID.length()+1);
+                }
+            } else {
+                display = entry.getAllRecipes().getFirst().display().result().getFirst(RecipeHandler.getEmptyContext()).getName().getString();
+            }
+            return display;
+        }
+        if (recipe instanceof CuttingRecipeDisplay.GroupEntry<?> entry){
+            return entry.recipe().optionDisplay().getFirst(RecipeHandler.getWorldContext()).getName().getString();
+        }
+
+        return "No Name :/";
     }
 
     

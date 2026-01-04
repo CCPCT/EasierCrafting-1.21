@@ -1,7 +1,7 @@
 package de.guntram.mcmod.easiercrafting.extendedScreen;
 
 import de.guntram.mcmod.easiercrafting.SlotClickAccepter;
-import de.guntram.mcmod.easiercrafting.recipe.RecipeBook;
+import de.guntram.mcmod.easiercrafting.recipe.StonecutterRecipeBook;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.StonecutterScreen;
 import net.minecraft.entity.player.PlayerInventory;
@@ -12,7 +12,7 @@ import org.lwjgl.glfw.GLFW;
 
 public class ExtendedGuiStonecutter extends StonecutterScreen implements SlotClickAccepter {
 
-    private RecipeBook recipeBook;
+    private StonecutterRecipeBook recipeBook;
 
     public ExtendedGuiStonecutter(StonecutterScreenHandler container, PlayerInventory lowerInv, Text title) {
         super(container, lowerInv, title);
@@ -24,7 +24,7 @@ public class ExtendedGuiStonecutter extends StonecutterScreen implements SlotCli
         this.recipeBook.afterInitGui();
     }
 
-    public void setRecipeBook(RecipeBook recipeBook) {
+    public void setRecipeBook(StonecutterRecipeBook recipeBook) {
         this.recipeBook=recipeBook;
     }
     

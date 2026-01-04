@@ -2,7 +2,7 @@ package de.guntram.mcmod.easiercrafting.mixins;
 
 
 import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiInventory;
-import de.guntram.mcmod.easiercrafting.recipe.RecipeBook;
+import de.guntram.mcmod.easiercrafting.recipe.CraftingRecipeBook;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
@@ -25,7 +25,7 @@ public class GuiInventoryMixin {
 
     public void displayExtendedInventory(CallbackInfo ci) {
         ExtendedGuiInventory egi = new ExtendedGuiInventory(this.player);
-        egi.setRecipeBook(new RecipeBook(egi, 1, 2, 0, 9));
+        egi.setRecipeBook(new CraftingRecipeBook(egi, 1, 2, 0, 9));
         this.setScreen(egi);
         ci.cancel();
     }
@@ -34,7 +34,7 @@ public class GuiInventoryMixin {
     private void onSetScreen(Screen screen, CallbackInfo ci) {
         if (screen != null) {
             // This tells you exactly what class is opening
-            System.out.println("Opening screen: " + screen.getClass().getSimpleName());
+            //System.out.println("Opening screen: " + screen.getClass().getSimpleName());
 
             if (screen instanceof InventoryScreen) {
                 // Logic specifically for the player inventory

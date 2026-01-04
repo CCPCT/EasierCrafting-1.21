@@ -5,33 +5,31 @@ import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiInventory;
 import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiStonecutter;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.ingame.CraftingScreen;
-import net.minecraft.client.gui.screen.ingame.FurnaceScreen;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.screen.recipebook.RecipeResultCollection;
 import net.minecraft.client.recipebook.RecipeBookType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.recipe.Ingredient;
-import net.minecraft.recipe.NetworkRecipeId;
 import net.minecraft.recipe.RecipeDisplayEntry;
-import net.minecraft.recipe.display.ShapedCraftingRecipeDisplay;
-import net.minecraft.recipe.display.ShapelessCraftingRecipeDisplay;
-import net.minecraft.recipe.display.SlotDisplay;
-import net.minecraft.recipe.display.SlotDisplayContexts;
+import net.minecraft.recipe.StonecuttingRecipe;
+import net.minecraft.recipe.display.*;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.context.ContextParameterMap;
 import net.minecraft.util.context.ContextType;
-import net.minecraft.world.World;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class RecipeHandler {
+    private static final Logger LOGGER = LogManager.getLogger(RecipeHandler.class);
+
     private static List<RecipeResultCollection> resultCollections = new ArrayList<>();
     private static final Set<RecipeDisplayEntry> craftableRecipeEntries = new HashSet<>(); //only craftable
+    private static List<CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe>> stoneCuttingRecipesCollection;
+    private static final Map<CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe>,Integer> craftableStoneCuttingRecipes = new HashMap<>();
     final static ContextParameterMap EMPTY_CONTEXT = new ContextParameterMap.Builder().build(new ContextType.Builder().build());
     static List<Item> avaliableItems;
     static Map<Item, Integer> avaliableItemMap = new HashMap<>();
@@ -94,19 +92,44 @@ public class RecipeHandler {
         return craftCount;
     }
 
+    public static int getMaxCraftable(List<SlotDisplay> ingredients){
+        int maxCraftableStacks = 64;
+        Map<Item, Integer> ingredientMap = new HashMap<>();
+        for (SlotDisplay ingredient : ingredients){
+            List<ItemStack> chosenList = RecipeHandler.getCraftableStacks(ingredient);
+            if (chosenList.isEmpty()) continue;
+            Item chosenItem = chosenList.getFirst().getItem();
+
+            // If chosenItem exists, add 1 to the current value.
+            // If it doesn't exist, set the value to 1.
+            ingredientMap.merge(chosenItem, 1, Integer::sum);
+        }
+
+        Map<Item, Integer> itemMap = RecipeHandler.getAvaliableItemMap();
+        for (Map.Entry<Item, Integer> ingredientSet : ingredientMap.entrySet()) {
+            maxCraftableStacks = Math.min(Math.min(maxCraftableStacks,itemMap.get(ingredientSet.getKey())/ingredientSet.getValue()),ingredientSet.getKey().getMaxCount());
+        }
+        return maxCraftableStacks;
+    }
 
     public static void updateRecipes(Class<? extends Screen> screen){
         if (screen==null) return;
         assert MinecraftClient.getInstance().player != null;
+
+        // initialise var
+        craftableRecipeEntries.clear();
+
+        // special case for stonecutter (and prob other screens...)
+        if (screen==ExtendedGuiStonecutter.class){
+            updateStoneCutterRecipes();
+            return;
+        }
         RecipeBookType bookType = screenClassToRecipeBookType.get(screen);
         // unsupported inventory
         if (bookType==null) return;
         resultCollections = MinecraftClient.getInstance().player.getRecipeBook().getResultsForCategory(bookType);
-        craftableRecipeEntries.clear();
-        // all recipe collection
-        System.out.println("all collection count: "+resultCollections.size());
 
-        //List<ItemStack> availableItems = getAvailableStacks();
+        // all recipe collection
 
         for (RecipeResultCollection result : resultCollections){
             //System.out.println("found collection: "+result.getAllRecipes().getFirst().getStacks(EMPTY_CONTEXT).getFirst().getName());
@@ -134,6 +157,25 @@ public class RecipeHandler {
         }
     }
 
+    public static void updateStoneCutterRecipes(){
+        assert MinecraftClient.getInstance().world != null;
+        stoneCuttingRecipesCollection = MinecraftClient.getInstance().world.getRecipeManager().getStonecutterRecipes().entries();
+        craftableStoneCuttingRecipes.clear();
+        for (CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe> recipe : stoneCuttingRecipesCollection){
+            if (recipe.input().isEmpty()) continue;
+            for (Map.Entry<Item, Integer> avaliable : avaliableItemMap.entrySet()){
+                if (recipe.input().test(avaliable.getKey().getDefaultStack())){
+                    // tested success
+                    craftableStoneCuttingRecipes.put(recipe,Math.min(avaliable.getKey().getMaxCount(),avaliable.getValue()));
+                    break;
+                }
+            }
+        }
+
+
+        LOGGER.info("stonecutter recipe count: {}", stoneCuttingRecipesCollection.size());
+    }
+
     public static List<ItemStack> getCraftableStacks(SlotDisplay ingredient){
         return getAllIngredients(ingredient).stream()
                 .filter(stack -> getAvailableItems().contains(stack.getItem()))
@@ -149,25 +191,7 @@ public class RecipeHandler {
         return MinecraftClient.getInstance().world.getRegistryManager().getOptional(RegistryKeys.RECIPE_BOOK_CATEGORY).get().getId(entry.category());
     }
 
-    public static int getMaxPossibleCraft(List<SlotDisplay> ingredients){
-        int maxCraftableStacks = 64;
-        Map<Item, Integer> ingredientMap = new HashMap<>();
-        for (SlotDisplay ingredient : ingredients){
-            List<ItemStack> chosenList = RecipeHandler.getCraftableStacks(ingredient);
-            if (chosenList.isEmpty()) continue;
-            Item chosenItem = chosenList.getFirst().getItem();
 
-            // If chosenItem exists, add 1 to the current value.
-            // If it doesn't exist, set the value to 1.
-            ingredientMap.merge(chosenItem, 1, Integer::sum);
-        }
-
-        Map<Item, Integer> itemMap = RecipeHandler.getAvaliableItemMap();
-        for (Map.Entry<Item, Integer> ingredientSet : ingredientMap.entrySet()) {
-            maxCraftableStacks = Math.min(Math.min(maxCraftableStacks,itemMap.get(ingredientSet.getKey())/ingredientSet.getValue()),ingredientSet.getKey().getMaxCount());
-        }
-        return maxCraftableStacks;
-    }
 
     // getters
     public static List<RecipeResultCollection> getRecipeCollections() {
@@ -192,5 +216,12 @@ public class RecipeHandler {
     public static Map<Item,Integer> getAvaliableItemMap(){
         return avaliableItemMap;
     }
+    public static List<CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe>> getStoneCuttingRecipesCollection() {
+        return stoneCuttingRecipesCollection;
+    }
+    public static Map<CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe>,Integer> getCraftableStoneCuttingRecipes() {
+        return craftableStoneCuttingRecipes;
+    }
+
 
 }
