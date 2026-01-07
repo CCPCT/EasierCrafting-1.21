@@ -1,23 +1,20 @@
 package de.guntram.mcmod.easiercrafting.recipe;
 
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.recipe.RecipeDisplayEntry;
 import net.minecraft.recipe.StonecuttingRecipe;
 import net.minecraft.recipe.display.CuttingRecipeDisplay;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.StonecutterScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class StonecutterRecipeBook extends AbstractRecipeBook<CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe>> {
 
@@ -28,25 +25,25 @@ public class StonecutterRecipeBook extends AbstractRecipeBook<CuttingRecipeDispl
 
     @Override
     public boolean updateRecipes() {
-        RecipeHandler.updateAvailableStacks();
-        Map<CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe>, Integer> before = new HashMap<>(RecipeHandler.getCraftableStoneCuttingRecipes());
-        RecipeHandler.updateRecipes(client.currentScreen.getClass());
+        updateAvailableStacks();
+        Set<CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe>> before = new HashSet<>(getRecipesForSearch());
+        refreshRecipeVar();
 
         craftableCategories.clear();
-        Map<CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe>, Integer> entries = RecipeHandler.getCraftableStoneCuttingRecipes();
+        Set<CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe>> entries = getRecipesForSearch();
 
 
-        for (Map.Entry<CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe>, Integer> entry : entries.entrySet()) {
+        for (CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe> entry : entries) {
             String category = "Stonecutting";
             // Get the list of valid input items for this recipe
-            for (Map.Entry<Item, Integer> map : RecipeHandler.getAvaliableItemMap().entrySet()) {
+            for (Map.Entry<Item, Integer> map : getAvailableItemMap().entrySet()) {
                 Item item = map.getKey();
-                if (entry.getKey().input().test(item.getDefaultStack())) {
+                if (entry.input().test(item.getDefaultStack())) {
                     category = item.getName().getString();
                 }
             }
 
-            craftableCategories.computeIfAbsent(category, k -> new RecipeTreeSet<>()).add(entry.getKey());
+            craftableCategories.computeIfAbsent(category, k -> new RecipeTreeSet<>(this::recipeDisplayName)).add(entry);
         }
 
         recalcListSize();
@@ -63,7 +60,7 @@ public class StonecutterRecipeBook extends AbstractRecipeBook<CuttingRecipeDispl
 
         LOGGER.info("try to craft");
         // no item -> return
-        if (!RecipeHandler.getAvailableItems().contains(recipe.input().toDisplay().getFirst(worldContext).getItem())) return;
+        if (!getAvailableItemSet().contains(recipe.input().toDisplay().getFirst(worldContext).getItem())) return;
 
         ItemStack resultStack = recipe.recipe().optionDisplay().getFirst(worldContext);
 
@@ -107,13 +104,13 @@ public class StonecutterRecipeBook extends AbstractRecipeBook<CuttingRecipeDispl
 
 
     @Override
-    protected Set<RecipeDisplayEntry> getRecipesForSearch() {
-        return RecipeHandler.getCraftableRecipeEntries();
+    protected Set<CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe>> getRecipesForSearch() {
+        return craftableRecipes;
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    protected int drawRecipeOutputs(DrawContext context, RecipeTreeSet<?> treeSet, TextRenderer fontRenderer, int xpos, int ypos, int mouseX, int mouseY) {
+    protected int drawSetOfRecipes(DrawContext context, RecipeTreeSet<?> treeSet, TextRenderer fontRenderer, int xpos, int ypos, int mouseX, int mouseY) {
         if (treeSet == null || treeSet.isEmpty()) return ypos;
         for (Object generalRecipe : treeSet) {
             if (generalRecipe instanceof CuttingRecipeDisplay.GroupEntry<?> recipe) {
@@ -138,7 +135,33 @@ public class StonecutterRecipeBook extends AbstractRecipeBook<CuttingRecipeDispl
     }
 
     @Override
-    protected void drawRecipeOverlay(DrawContext context, TextRenderer fontRenderer, int height, int mouseX, int mouseY) {
+    protected List<ItemStack> getCraftingResult(CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe> recipe) {
+        return recipe.recipe().optionDisplay().getStacks(worldContext);
+    }
+
+    @Override
+    protected void refreshRecipeVar() {
+        assert MinecraftClient.getInstance().world != null;
+        craftableRecipes.clear();
+        for (CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe> recipe : MinecraftClient.getInstance().world.getRecipeManager().getStonecutterRecipes().entries()){
+            if (recipe.input().isEmpty()) continue;
+            for (Map.Entry<Item, Integer> avaliable : avaliableItemMap.entrySet()){
+                if (recipe.input().test(avaliable.getKey().getDefaultStack())){
+                    // tested success
+                    craftableRecipes.add(recipe);
+                    break;
+                }
+            }
+        }
+    }
+
+    @Override
+    public String recipeDisplayName(CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe> recipe) {
+        return recipe.recipe().optionDisplay().getFirst(worldContext).getName().getString();
+    }
+
+    @Override
+    protected void drawRecipeGridOverlay(DrawContext context, TextRenderer fontRenderer, int height, int mouseX, int mouseY) {
         if (underMouse instanceof CuttingRecipeDisplay.GroupEntry<?> recipe) {
             // assume only exist 1 ingredient? idk
             renderIngredient(context, fontRenderer, recipe.input().toDisplay(), 0, height + itemSize);

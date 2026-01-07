@@ -2,7 +2,6 @@ package de.guntram.mcmod.easiercrafting.extendedScreen;
 
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.SlotClickAccepter;
-import de.guntram.mcmod.easiercrafting.recipe.AbstractRecipeBook;
 import de.guntram.mcmod.easiercrafting.recipe.CraftingRecipeBook;
 
 import net.minecraft.client.gui.DrawContext;
@@ -37,7 +36,7 @@ public class ExtendedGuiCrafting extends CraftingScreen implements SlotClickAcce
     @Override
     protected void drawForeground(DrawContext context, final int mouseX, final int mouseY) {
         super.drawForeground(context, mouseX, mouseY);
-        recipeBook.drawRecipeList(context, textRenderer, backgroundWidth, backgroundHeight, mouseX-x, mouseY-y);
+        recipeBook.drawAllRecipe(context, textRenderer, backgroundWidth, backgroundHeight, mouseX-x, mouseY-y);
     }
     
     @Override
