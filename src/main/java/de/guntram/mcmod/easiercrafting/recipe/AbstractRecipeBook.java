@@ -236,7 +236,7 @@ public abstract class AbstractRecipeBook<T> {
         avaliableItemMap = new HashMap<>();
         if (player==null) return;
         // Iterate through slots (usually 0-35 for player inventory)
-        for (ItemStack itemStack : player.getInventory().getMainStacks()) {
+        for (ItemStack itemStack : ((InventoryAccessor) player.getInventory()).getCompatMain()) {
             if (itemStack.isEmpty()) continue;
             avaliableItemMap.merge(itemStack.getItem(), itemStack.getCount(), Integer::sum);
         }

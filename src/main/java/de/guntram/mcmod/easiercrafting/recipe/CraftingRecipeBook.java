@@ -18,8 +18,6 @@ import net.minecraft.recipe.display.*;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.util.collection.DefaultedList;
-import org.spongepowered.asm.mixin.Shadow;
 
 import java.util.*;
 
