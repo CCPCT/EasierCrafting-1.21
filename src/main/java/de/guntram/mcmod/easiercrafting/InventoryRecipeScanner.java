@@ -19,6 +19,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.potion.Potion;
+import net.minecraft.recipe.Ingredient;
 import net.minecraft.recipe.NetworkRecipeId;
 import net.minecraft.recipe.RecipeDisplayEntry;
 import net.minecraft.recipe.book.RecipeBookCategories;
@@ -38,6 +39,7 @@ import org.apache.logging.log4j.Logger;
 public class InventoryRecipeScanner {
     
     private static final Logger LOGGER = LogManager.getLogger();
+    private static SlotDisplay craftingTable = new SlotDisplay.StackSlotDisplay(new ItemStack(Items.CRAFTING_TABLE));
     
     public static List<RecipeDisplayEntry> findUnusualRecipes(ScreenHandler inventory, int firstInventorySlotNo) {
         ArrayList<RecipeDisplayEntry> result=new ArrayList<>();
@@ -130,38 +132,44 @@ public class InventoryRecipeScanner {
         }
 
         // todo dye shulkbox
-//        if (hasShulkerBox) {
-//            // 1. Get the current box from the player's inventory to preserve its contents (NBT/Components)
-//            // Assuming 'availableShulkerBoxSlot' is the index you stored earlier
-//            MinecraftClient client = MinecraftClient.getInstance();
-//            ItemStack currentBox = client.player.getInventory().getStack(availableShulkerBoxSlot);
+        // ditch shulkerbox :3
+
+        //System.out.println("Arrows: "+availableArrows);
+        // todo make potion arrow
+//        if (availableArrows >= 8) {
+//            // Standard station icon
 //            SlotDisplay station = new SlotDisplay.StackSlotDisplay(new ItemStack(Items.CRAFTING_TABLE));
 //
-//            for (DyeColor dye : hasDye.keySet()) {
-//                // 2. Determine the resulting item
-//                Item coloredBoxItem = ShulkerBoxBlock.get(dye).asItem();
-//                ItemStack resultStack = new ItemStack(coloredBoxItem);
+//            for (Potion type : availablePotions.keySet()) {
+//                // 1. Get the potion stack and its contents
+//                ItemStack potionStack = inventory.getSlot(firstInventorySlotNo + availablePotions.get(type)).getStack();
+//                // In 1.21, we fetch the PotionContentsComponent record
+//                PotionContentsComponent contents = potionStack.get(DataComponentTypes.POTION_CONTENTS);
 //
-//                // 3. IMPORTANT: Copy the contents!
-//                // In 1.21, container contents are stored in the CONTAINER component.
-//                resultStack.applyComponentsFrom(currentBox);
+//                if (contents == null) continue;
 //
-//                // 4. Create Ingredients (The box + the dye)
-//                List<SlotDisplay> ingredients = List.of(
-//                        new SlotDisplay.StackSlotDisplay(currentBox),
-//                        new SlotDisplay.StackSlotDisplay(new ItemStack(DyeItem.byColor(dye)))
-//                );
+//                // 2. Create the Result Arrow (8 qty)
+//                ItemStack resultArrow = new ItemStack(Items.TIPPED_ARROW, 8);
+//                // Apply the potion component directly to the arrow
+//                resultArrow.set(DataComponentTypes.POTION_CONTENTS, contents);
 //
-//                // 5. Build the Display
+//                // 3. Create the Ingredients Display (8 arrows + 1 potion)
+//                List<SlotDisplay> ingredientsDisplay = new ArrayList<>();
+//                for (int i = 0; i < 8; i++) {
+//                    ingredientsDisplay.add(new SlotDisplay.StackSlotDisplay(new ItemStack(Items.ARROW)));
+//                }
+//                ingredientsDisplay.add(new SlotDisplay.StackSlotDisplay(new ItemStack(potionStack.getItem())));
+//
+//                // 4. Build the Display
 //                ShapelessCraftingRecipeDisplay display = new ShapelessCraftingRecipeDisplay(
-//                        ingredients,
-//                        new SlotDisplay.StackSlotDisplay(resultStack),
+//                        ingredientsDisplay,
+//                        new SlotDisplay.StackSlotDisplay(resultArrow),
 //                        station
 //                );
 //
-//                // 6. Add the Entry
-//                // Use a unique ID based on the dye color ID to prevent overlap
-//                int networkId = 8000 + dye.getId();
+//                // 5. Add to results with a unique Network ID
+//                // Using hashCode of the potion name to keep IDs distinct for different types
+//                int networkId = 7000 + type.hashCode();
 //                result.add(new RecipeDisplayEntry(
 //                        new NetworkRecipeId(networkId),
 //                        display,
@@ -172,64 +180,13 @@ public class InventoryRecipeScanner {
 //            }
 //        }
 
-        // do not implement banners at the moment
-        // do not implement colored leather at the moment
-
-        //System.out.println("Arrows: "+availableArrows);
-        // todo make potion arrow
-        if (availableArrows >= 8) {
-            // Standard station icon
-            SlotDisplay station = new SlotDisplay.StackSlotDisplay(new ItemStack(Items.CRAFTING_TABLE));
-
-            for (Potion type : availablePotions.keySet()) {
-                // 1. Get the potion stack and its contents
-                ItemStack potionStack = inventory.getSlot(firstInventorySlotNo + availablePotions.get(type)).getStack();
-                // In 1.21, we fetch the PotionContentsComponent record
-                PotionContentsComponent contents = potionStack.get(DataComponentTypes.POTION_CONTENTS);
-
-                if (contents == null) continue;
-
-                // 2. Create the Result Arrow (8 qty)
-                ItemStack resultArrow = new ItemStack(Items.TIPPED_ARROW, 8);
-                // Apply the potion component directly to the arrow
-                resultArrow.set(DataComponentTypes.POTION_CONTENTS, contents);
-
-                // 3. Create the Ingredients Display (8 arrows + 1 potion)
-                List<SlotDisplay> ingredientsDisplay = new ArrayList<>();
-                for (int i = 0; i < 8; i++) {
-                    ingredientsDisplay.add(new SlotDisplay.StackSlotDisplay(new ItemStack(Items.ARROW)));
-                }
-                ingredientsDisplay.add(new SlotDisplay.StackSlotDisplay(new ItemStack(potionStack.getItem())));
-
-                // 4. Build the Display
-                ShapelessCraftingRecipeDisplay display = new ShapelessCraftingRecipeDisplay(
-                        ingredientsDisplay,
-                        new SlotDisplay.StackSlotDisplay(resultArrow),
-                        station
-                );
-
-                // 5. Add to results with a unique Network ID
-                // Using hashCode of the potion name to keep IDs distinct for different types
-                int networkId = 7000 + type.hashCode();
-                result.add(new RecipeDisplayEntry(
-                        new NetworkRecipeId(networkId),
-                        display,
-                        OptionalInt.empty(),
-                        RecipeBookCategories.CRAFTING_MISC,
-                        Optional.empty()
-                ));
-            }
-        }
-
         //System.out.println("Paper: "+hasPaper);
         //System.out.println("Gunpowder: "+availableGunPowder);
 
         // todo custom firework
         if (hasPaper && availableGunPowder > 0) {
-            // 1. Base ingredient for station icon
-            SlotDisplay station = new SlotDisplay.StackSlotDisplay(new ItemStack(Items.CRAFTING_TABLE));
-
-            for (int power = 1; power <= 3; power++) {
+            // power one is already there
+            for (int power = 2; power <= 3; power++) {
                 if (availableGunPowder >= power) {
                     // 2. Prepare the Result Item
                     ItemStack resultItem = new ItemStack(Items.FIREWORK_ROCKET, 3);
@@ -237,29 +194,34 @@ public class InventoryRecipeScanner {
                     // In 1.21, FireworksComponent is a record: (int flightDuration, List<FireworkExplosionComponent> explosions)
                     // We pass an empty list for explosions if there are none.
                     resultItem.set(DataComponentTypes.FIREWORKS, new FireworksComponent(power, List.of()));
-                    resultItem.set(DataComponentTypes.CUSTOM_NAME, Text.literal("Strength " + power));
+                    resultItem.set(DataComponentTypes.CUSTOM_NAME, Text.literal("Firework strength: " + power));
 
                     // 3. Prepare the Ingredients List for the Display
                     List<SlotDisplay> ingredientsDisplay = new ArrayList<>();
+                    List<Ingredient> ingredients = new ArrayList<>();
+                    ingredients.add(Ingredient.ofItem(Items.PAPER));
                     ingredientsDisplay.add(new SlotDisplay.StackSlotDisplay(new ItemStack(Items.PAPER)));
                     for (int k = 0; k < power; k++) {
                         ingredientsDisplay.add(new SlotDisplay.StackSlotDisplay(new ItemStack(Items.GUNPOWDER)));
+                        ingredients.add(Ingredient.ofItem(Items.GUNPOWDER));
                     }
+
+
 
                     // 4. Create the Display logic
                     ShapelessCraftingRecipeDisplay display = new ShapelessCraftingRecipeDisplay(
                             ingredientsDisplay,
                             new SlotDisplay.StackSlotDisplay(resultItem),
-                            station
+                            craftingTable
                     );
 
                     // 5. Add to your results list
                     result.add(new RecipeDisplayEntry(
-                            new NetworkRecipeId(500 + power), // Use unique IDs to avoid UI glitches
+                            new NetworkRecipeId(670 + power), // Use unique IDs to avoid UI glitches
                             display,
                             OptionalInt.empty(),
-                            RecipeBookCategories.CRAFTING_MISC,
-                            Optional.empty()
+                            RecipeBookCategories.CRAFTING_EQUIPMENT,
+                            Optional.of(ingredients)
                     ));
                 }
             }
