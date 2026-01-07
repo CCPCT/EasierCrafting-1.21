@@ -13,6 +13,7 @@ import java.security.CodeSource;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.screen.recipebook.RecipeResultCollection;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.recipe.RecipeDisplayEntry;
@@ -23,13 +24,32 @@ import org.apache.logging.log4j.Logger;
 
 public class EasierCrafting implements ClientModInitializer 
 {
-    static public final String MODID="easiercrafting";
-    static public final String MODNAME="EasierCrafting";
+    public static final String MODID="easiercrafting";
+    public static final String MODNAME="EasierCrafting";
+    public static int mcVersion;
 
     @Override
     public void onInitializeClient() {
         ModConfig.load();
         System.out.println("[EasierCrafting] Loaded");
+
+        // get version
+        mcVersion= FabricLoader.getInstance().getModContainer("minecraft")
+                .map(container -> {
+                    String versionString = container.getMetadata().getVersion().getFriendlyString();
+                    String[] parts = versionString.split("\\.");
+
+                    // version 1.21.4 -> parts[0]=1, parts[1]=21, parts[2]=4
+                    if (parts.length >= 3) {
+                        try {
+                            return Integer.parseInt(parts[2]);
+                        } catch (NumberFormatException e) {
+                            return 0; // Fallback for snapshots/pre-releases
+                        }
+                    }
+                    return 0; // If version is just "1.21", minor is effectively 0
+                }).orElse(0);
+        System.out.println("determined version: " + mcVersion);
     }
     
     private File extractBundledFile(String name) {

@@ -6,7 +6,8 @@
   "client": [
     "DelayedSlotClickContinue",
     "GuiCraftMixin",
-    "GuiInventoryMixin"
+    "GuiInventoryMixin",
+    "PlayerInventoryMixin"
   ],
   "injectors": {
     "defaultRequire": 1

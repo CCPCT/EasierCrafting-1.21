@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package de.guntram.mcmod.easiercrafting;
+package de.guntram.mcmod.easiercrafting.recipe;
 
 import java.util.*;
 
@@ -13,7 +13,6 @@ import net.minecraft.block.ShulkerBoxBlock;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.FireworksComponent;
 import net.minecraft.component.type.ItemEnchantmentsComponent;
-import net.minecraft.component.type.PotionContentsComponent;
 import net.minecraft.item.DyeItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
