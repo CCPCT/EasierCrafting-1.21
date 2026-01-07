@@ -1,26 +1,29 @@
 package de.guntram.mcmod.easiercrafting.recipe;
 
 import de.guntram.mcmod.easiercrafting.*;
-import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiCrafting;
-import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiInventory;
-import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiStonecutter;
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.gui.screen.recipebook.RecipeResultCollection;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.resource.language.I18n;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.recipe.RecipeDisplayEntry;
+import net.minecraft.recipe.display.CuttingRecipeDisplay;
 import net.minecraft.recipe.display.SlotDisplay;
 import net.minecraft.recipe.display.SlotDisplayContexts;
+import net.minecraft.registry.RegistryKeys;
 import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.context.ContextParameterMap;
+import net.minecraft.util.context.ContextType;
 import net.minecraft.util.math.MathHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,7 +37,9 @@ public abstract class AbstractRecipeBook<T> {
 
     protected final Logger LOGGER;
     static Identifier ARROWS;
+    static Map<Item,Integer> avaliableItemMap;
     ContextParameterMap worldContext;
+    static final ContextParameterMap EMPTY_CONTEXT = new ContextParameterMap.Builder().build(new ContextType.Builder().build());
 
     // Protected fields for subclasses
     public final HandledScreen<? extends ScreenHandler> screen;
@@ -43,6 +48,7 @@ public abstract class AbstractRecipeBook<T> {
     protected final int resultSlotNo;
     public final int firstInventorySlotNo;
 
+    public final Set<T> craftableRecipes = new HashSet<>();
     public final TreeMap<String, RecipeTreeSet<T>> craftableCategories = new TreeMap<>();
     public T underMouse;
 
@@ -65,7 +71,7 @@ public abstract class AbstractRecipeBook<T> {
     protected long recipeUpdateTime = 0;
     protected long recipeFadeTime = 0;
     public TextFieldWidget pattern;
-    public RecipeTreeSet patternMatchingRecipes;
+    public RecipeTreeSet<T> patternMatchingRecipes;
     public int patternListSize;
 
     /**
@@ -106,16 +112,22 @@ public abstract class AbstractRecipeBook<T> {
     /**
      * Called to draw the overlay (e.g. 3x3 grid) when hovering over a recipe.
      */
-    protected abstract void drawRecipeOverlay(DrawContext context, TextRenderer fontRenderer, int height, int mouseX, int mouseY);
+    protected abstract void drawRecipeGridOverlay(DrawContext context, TextRenderer fontRenderer, int height, int mouseX, int mouseY);
 
     /**
      * Returns the list of recipes to search through for the search bar.
      */
-    protected abstract Set<RecipeDisplayEntry> getRecipesForSearch();
+    protected abstract Set<T> getRecipesForSearch();
 
-    // draw outputs
-    protected abstract int drawRecipeOutputs(DrawContext context, RecipeTreeSet<?> treeSet, TextRenderer fontRenderer, int xpos, int ypos, int mouseX, int mouseY);
+    // draw outputs... and set undermouse
+    protected abstract int drawSetOfRecipes(DrawContext context, RecipeTreeSet<?> treeSet, TextRenderer fontRenderer, int xpos, int ypos, int mouseX, int mouseY);
 
+    // return result of recipe
+    protected abstract List<ItemStack> getCraftingResult(T recipe);
+
+    protected abstract void refreshRecipeVar();
+
+    public abstract String recipeDisplayName(T recipe);
 
     // --- Common Logic ---
 
@@ -144,7 +156,7 @@ public abstract class AbstractRecipeBook<T> {
         updateRecipes();
     }
 
-    public void drawRecipeList(DrawContext context, TextRenderer fontRenderer, int left, int height, int mouseX, int mouseY) {
+    public void drawAllRecipe(DrawContext context, TextRenderer fontRenderer, int left, int height, int mouseX, int mouseY) {
         if (pattern == null) {
             pattern = new TextFieldWidget(fontRenderer, xOffset, 0, textBoxSize, 20, Text.literal(""));
             if (ModConfig.getAutoFocusSearch()) {
@@ -199,7 +211,7 @@ public abstract class AbstractRecipeBook<T> {
         ypos -= mouseScroll * itemSize;
 
         // Draw Search Results
-        ypos = drawRecipeOutputs(context, patternMatchingRecipes, fontRenderer, 0, ypos, mouseX, mouseY);
+        ypos = drawSetOfRecipes(context, patternMatchingRecipes, fontRenderer, 0, ypos, mouseX, mouseY);
 
         // Draw Categories
         for (String category : craftableCategories.keySet()) {
@@ -207,27 +219,37 @@ public abstract class AbstractRecipeBook<T> {
                 context.drawText(fontRenderer, category, xOffset, ypos, 0xFFFFFF00, true);
             }
             ypos += itemSize;
-            ypos = drawRecipeOutputs(context, craftableCategories.get(category), fontRenderer, 0, ypos, mouseX, mouseY);
+            ypos = drawSetOfRecipes(context, craftableCategories.get(category), fontRenderer, 0, ypos, mouseX, mouseY);
         }
 
         // Draw crafting ingredient Overlay (Tooltip/Grid)
         if (underMouse != null) {
-            String displayName = EasierCrafting.recipeDisplayName(underMouse);
+            String displayName = recipeDisplayName(underMouse);
             context.drawText(fontRenderer, displayName, 0, height + 3, 0xFFFFFF00, true);
-            drawRecipeOverlay(context, fontRenderer, height, mouseX, mouseY);
+            drawRecipeGridOverlay(context, fontRenderer, height, mouseX, mouseY);
         }
     }
 
 
-
+    public static void updateAvailableStacks() {
+        PlayerEntity player = MinecraftClient.getInstance().player;
+        avaliableItemMap = new HashMap<>();
+        if (player==null) return;
+        // Iterate through slots (usually 0-35 for player inventory)
+        for (ItemStack itemStack : player.getInventory().getMainStacks()) {
+            if (itemStack.isEmpty()) continue;
+            avaliableItemMap.merge(itemStack.getItem(), itemStack.getCount(), Integer::sum);
+        }
+    }
 
     public void renderSingleRecipeOutput(DrawContext context, TextRenderer fontRenderer, ItemStack items, int x, int y) {
         context.drawItem(items, x, y);
+        context.drawStackOverlay(fontRenderer, items, x, y);
     }
 
     public void renderIngredient(DrawContext context, TextRenderer fontRenderer, SlotDisplay ingredient, int x, int y) {
         assert client.world != null;
-        List<ItemStack> stacks = RecipeHandler.getCraftableStacks(ingredient);
+        List<ItemStack> stacks = getCraftableStacks(ingredient);
         if (stacks.isEmpty()) return;
 
         int toRender = 0;
@@ -249,17 +271,17 @@ public abstract class AbstractRecipeBook<T> {
 
     public void updatePatternMatch() {
         patternListSize = 0;
-        patternMatchingRecipes = new RecipeTreeSet();
+        patternMatchingRecipes = new RecipeTreeSet<>(this::recipeDisplayName);
         String patternText = (pattern == null) ? "" : pattern.getText();
 
         if (patternText.isEmpty()) return;
 
-        Set<RecipeDisplayEntry> recipes = getRecipesForSearch();
+        Set<T> recipes = getRecipesForSearch();
 
         try {
             Pattern regex = Pattern.compile(patternText, Pattern.CASE_INSENSITIVE);
-            for (RecipeDisplayEntry entry : recipes) {
-                List<ItemStack> results = entry.display().result().getStacks(worldContext);
+            for (T entry : recipes) {
+                List<ItemStack> results = getCraftingResult(entry);
                 if (results.isEmpty() || results.getFirst().isEmpty()) continue;
                 if (regex.matcher(results.getFirst().getName().getString()).find()) {
                     patternMatchingRecipes.add(entry);
@@ -328,6 +350,22 @@ public abstract class AbstractRecipeBook<T> {
 
     protected void slotClick(int slot, int mouseButton, SlotActionType clickType) {
         ((SlotClickAccepter) screen).slotClick(slot, mouseButton, clickType);
+    }
+
+    // other getters
+    static Set<Item> getAvailableItemSet() {
+        return avaliableItemMap.keySet();
+    }
+    static Map<Item,Integer> getAvailableItemMap(){
+        return avaliableItemMap;
+    }
+    protected List<ItemStack> getCraftableStacks(SlotDisplay ingredient){
+        return ingredient.getStacks(worldContext).stream()
+                .filter(stack -> getAvailableItemSet().contains(stack.getItem()))
+                .toList();
+    }
+    public static Identifier getCat(RecipeDisplayEntry entry){
+        return MinecraftClient.getInstance().world.getRegistryManager().getOptional(RegistryKeys.RECIPE_BOOK_CATEGORY).get().getId(entry.category());
     }
 }
 

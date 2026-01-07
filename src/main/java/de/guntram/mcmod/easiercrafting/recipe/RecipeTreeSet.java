@@ -1,18 +1,16 @@
 package de.guntram.mcmod.easiercrafting.recipe;
 
 import java.util.TreeSet;
-
-import net.minecraft.recipe.RecipeDisplayEntry;
-
-import static de.guntram.mcmod.easiercrafting.EasierCrafting.recipeDisplayName;
+import java.util.function.Function;
 
 public class RecipeTreeSet<T> extends TreeSet<T> {
 
-    public RecipeTreeSet() {
+    // need to provide a function to extract name of the recipe
+    public RecipeTreeSet(Function<T, String> getRecipeName) {
         super((a, b) -> {
             // We must treat them as Objects or a common base to compare
-            String nameA = recipeDisplayName(a);
-            String nameB = recipeDisplayName(b);
+            String nameA = getRecipeName.apply(a);
+            String nameB = getRecipeName.apply(b);
 
             int sameName = nameA.compareToIgnoreCase(nameB);
 
@@ -24,9 +22,5 @@ public class RecipeTreeSet<T> extends TreeSet<T> {
             // two different recipes with the same name.
             return Integer.compare(System.identityHashCode(a), System.identityHashCode(b));
         });
-    }
-
-    public void addRecipeEntry(T entry) {
-        this.add(entry); // No cast needed, perfectly safe
     }
 }

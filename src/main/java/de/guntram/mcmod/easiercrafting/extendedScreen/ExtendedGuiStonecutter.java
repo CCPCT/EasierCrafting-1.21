@@ -31,7 +31,7 @@ public class ExtendedGuiStonecutter extends StonecutterScreen implements SlotCli
     @Override
     protected void drawForeground(DrawContext context, final int mouseX, final int mouseY) {
         super.drawForeground(context, mouseX, mouseY);
-        recipeBook.drawRecipeList(context, textRenderer, backgroundWidth, backgroundHeight, mouseX-x, mouseY-y);
+        recipeBook.drawAllRecipe(context, textRenderer, backgroundWidth, backgroundHeight, mouseX-x, mouseY-y);
     }
     
     @Override

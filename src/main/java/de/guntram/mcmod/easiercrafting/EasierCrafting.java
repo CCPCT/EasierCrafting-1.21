@@ -2,7 +2,6 @@ package de.guntram.mcmod.easiercrafting;
 
 //import de.guntram.mcmod.easiercrafting.Loom.LoomRecipeRegistry;
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
-import de.guntram.mcmod.easiercrafting.recipe.RecipeHandler;
 import de.guntram.mcmod.fabrictools.ConfigurationProvider;
 import java.io.File;
 import java.io.FileInputStream;
@@ -30,60 +29,7 @@ public class EasierCrafting implements ClientModInitializer
     @Override
     public void onInitializeClient() {
         ModConfig.load();
-
-//        File localRecipes = extractBundledFile("localrecipes.zip");
-//
-//
-//        extractBundledFile("loomrecipes.zip");
-//        extractConfigFileContents("loomrecipes.zip", "loomrecipes");
-//        LoomRecipeRegistry.loadRecipeCollection(LoomRecipeRegistry.getRecipeCollectionPath());
-    }
-
-    public static <T> String recipeDisplayName(T recipe) {
-        if (recipe instanceof RecipeDisplayEntry entry){
-            return entry.display().result().getFirst(RecipeHandler.getEmptyContext()).toString();
-        }
-        if (recipe instanceof RecipeResultCollection entry){
-            String display = entry.getAllRecipes().getFirst().toString();
-            if (display.startsWith(MODID+":")) {
-                display = I18n.translate(display);
-                if (display.startsWith(MODID+":")) {
-                    display=display.substring(MODID.length()+1);
-                }
-            } else {
-                display = entry.getAllRecipes().getFirst().display().result().getFirst(RecipeHandler.getEmptyContext()).getName().getString();
-            }
-            return display;
-        }
-        if (recipe instanceof CuttingRecipeDisplay.GroupEntry<?> entry){
-            return entry.recipe().optionDisplay().getFirst(RecipeHandler.getWorldContext()).getName().getString();
-        }
-
-        return "No Name :/";
-    }
-
-    
-    private void extractConfigFileContents(String filename, String outputDirName) {
-        
-        File configDir = ConfigurationProvider.getSuggestedFile(MODID).getParentFile();
-        File inputFile = new File(configDir, filename);
-        try {
-            if (inputFile.exists()) {
-                File outputDir = new File(configDir, outputDirName);
-                outputDir.mkdirs();
-                if (outputDir.isDirectory()) {
-                    ZipInputStream zipStream = new ZipInputStream(new FileInputStream(inputFile));
-                    ZipEntry entry;
-                    while ((entry = zipStream.getNextEntry())!=null) {
-                        File outputFile = new File(outputDir, entry.getName());
-                        if (!(outputFile.exists())) {
-                            extractZipEntry(zipStream, outputFile);
-                        }
-                    }
-                }
-            }
-        } catch (IOException ex) {
-        }
+        System.out.println("[EasierCrafting] Loaded");
     }
     
     private File extractBundledFile(String name) {
@@ -131,6 +77,13 @@ public class EasierCrafting implements ClientModInitializer
                 fos.close();
             }
         }
+    }
+
+    public static String getModid() {
+        return MODID;
+    }
+    public static String getModName() {
+        return MODNAME;
     }
 
 }
