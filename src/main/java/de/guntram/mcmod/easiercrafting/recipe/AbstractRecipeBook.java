@@ -2,19 +2,20 @@ package de.guntram.mcmod.easiercrafting.recipe;
 
 import de.guntram.mcmod.easiercrafting.*;
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.screen.recipebook.RecipeResultCollection;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.resource.language.I18n;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.recipe.RecipeDisplayEntry;
-import net.minecraft.recipe.display.CuttingRecipeDisplay;
 import net.minecraft.recipe.display.SlotDisplay;
 import net.minecraft.recipe.display.SlotDisplayContexts;
 import net.minecraft.registry.RegistryKeys;
@@ -23,7 +24,6 @@ import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.context.ContextParameterMap;
-import net.minecraft.util.context.ContextType;
 import net.minecraft.util.math.MathHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,18 +37,20 @@ public abstract class AbstractRecipeBook<T> {
 
     protected final Logger LOGGER;
     static Identifier ARROWS;
-    static Map<Item,Integer> avaliableItemMap;
+    static final Object2IntOpenHashMap<Item> avaliableItemMap = new Object2IntOpenHashMap<>(36);
     ContextParameterMap worldContext;
-    static final ContextParameterMap EMPTY_CONTEXT = new ContextParameterMap.Builder().build(new ContextType.Builder().build());
 
     // Protected fields for subclasses
     public final HandledScreen<? extends ScreenHandler> screen;
     protected final int firstCraftSlotNo;
     protected final int gridSize;
     protected final int resultSlotNo;
-    public final int firstInventorySlotNo;
+    protected final int firstInventorySlotNo;
+    protected final SlotDisplay craftingBlock;
 
-    public final Set<T> craftableRecipes = new HashSet<>();
+
+    public final ObjectOpenHashSet<T> craftableRecipes = new ObjectOpenHashSet<>();
+    public final ObjectOpenHashSet<T> allRecipes = new ObjectOpenHashSet<>();
     public final TreeMap<String, RecipeTreeSet<T>> craftableCategories = new TreeMap<>();
     public T underMouse;
 
@@ -78,7 +80,7 @@ public abstract class AbstractRecipeBook<T> {
      * Factory method to create the correct RecipeBook instance.
      */
 
-    protected AbstractRecipeBook(HandledScreen<? extends ScreenHandler> craftScreen, int firstCraftSlotNo, int gridsize, int resultSlot, int firstInventorySlot) {
+    protected AbstractRecipeBook(HandledScreen<? extends ScreenHandler> craftScreen, int firstCraftSlotNo, int gridsize, int resultSlot, int firstInventorySlot, SlotDisplay craftingBlock) {
         this.screen = craftScreen;
         this.firstCraftSlotNo = firstCraftSlotNo;
         this.gridSize = gridsize;
@@ -91,6 +93,7 @@ public abstract class AbstractRecipeBook<T> {
         assert MinecraftClient.getInstance().world != null;
         this.worldContext = SlotDisplayContexts.createParameters(MinecraftClient.getInstance().world);
         this.LOGGER = LogManager.getLogger(craftScreen.getScreenHandler());
+        this.craftingBlock = craftingBlock;
 
         if (ARROWS == null) {
             ARROWS = Identifier.of(EasierCrafting.MODID, "textures/arrows.png");
@@ -100,7 +103,7 @@ public abstract class AbstractRecipeBook<T> {
     // --- Abstract Methods to be implemented by subclasses ---
 
     /**
-     * Called to populate craftableCategories. Return if not updated anything/ remain unchanged
+     * Called to update all avaliable and craftable recipes (the 2 sets). Return if not updated anything/ remain unchanged
      */
     public abstract boolean updateRecipes();
 
@@ -115,17 +118,17 @@ public abstract class AbstractRecipeBook<T> {
     protected abstract void drawRecipeGridOverlay(DrawContext context, TextRenderer fontRenderer, int height, int mouseX, int mouseY);
 
     /**
-     * Returns the list of recipes to search through for the search bar.
+     * Returns all craftable recipes.
      */
-    protected abstract Set<T> getRecipesForSearch();
+    protected Set<T> getCraftableRecipes(){
+        return craftableRecipes;
+    }
 
     // draw outputs... and set undermouse
     protected abstract int drawSetOfRecipes(DrawContext context, RecipeTreeSet<?> treeSet, TextRenderer fontRenderer, int xpos, int ypos, int mouseX, int mouseY);
 
     // return result of recipe
     protected abstract List<ItemStack> getCraftingResult(T recipe);
-
-    protected abstract void refreshRecipeVar();
 
     public abstract String recipeDisplayName(T recipe);
 
@@ -168,6 +171,7 @@ public abstract class AbstractRecipeBook<T> {
         if (recipeUpdateTime != 0 && System.currentTimeMillis() > recipeUpdateTime) {
             recipeUpdateTime = 0;
             if (!updateRecipes()){
+                // before and after not same
                 LOGGER.info("Update recipe");
                 mouseScroll=0;
                 if (ModConfig.getFadeoutTime() > 0) {
@@ -233,7 +237,7 @@ public abstract class AbstractRecipeBook<T> {
 
     public static void updateAvailableStacks() {
         PlayerEntity player = MinecraftClient.getInstance().player;
-        avaliableItemMap = new HashMap<>();
+        avaliableItemMap.clear();
         if (player==null) return;
         // Iterate through slots (usually 0-35 for player inventory)
         for (ItemStack itemStack : ((InventoryAccessor) player.getInventory()).getCompatMain()) {
@@ -250,7 +254,11 @@ public abstract class AbstractRecipeBook<T> {
     public void renderIngredient(DrawContext context, TextRenderer fontRenderer, SlotDisplay ingredient, int x, int y) {
         assert client.world != null;
         List<ItemStack> stacks = getCraftableStacks(ingredient);
-        if (stacks.isEmpty()) return;
+        if (stacks.isEmpty()){
+            // doesnt have ingredient
+            context.fill(x-1,y-1,x+18,y+18,0x60FF0000);
+            stacks = ingredient.getStacks(worldContext);
+        }
 
         int toRender = 0;
         if (stacks.size() > 1)
@@ -264,7 +272,7 @@ public abstract class AbstractRecipeBook<T> {
 
     public void recalcListSize() {
         listSize = craftableCategories.size();
-        for (RecipeTreeSet tree : craftableCategories.values())
+        for (RecipeTreeSet<T> tree : craftableCategories.values())
             listSize += ((tree.size() + (itemsPerRow - 1)) / itemsPerRow);
         listSize *= itemSize;
     }
@@ -276,11 +284,9 @@ public abstract class AbstractRecipeBook<T> {
 
         if (patternText.isEmpty()) return;
 
-        Set<T> recipes = getRecipesForSearch();
-
         try {
             Pattern regex = Pattern.compile(patternText, Pattern.CASE_INSENSITIVE);
-            for (T entry : recipes) {
+            for (T entry : (ModConfig.get().showAllRecipes ? allRecipes : craftableRecipes)) {
                 List<ItemStack> results = getCraftingResult(entry);
                 if (results.isEmpty() || results.getFirst().isEmpty()) continue;
                 if (regex.matcher(results.getFirst().getName().getString()).find()) {
@@ -329,8 +335,8 @@ public abstract class AbstractRecipeBook<T> {
     public boolean keyPressed(int code, int scancode, int modifiers) {
         if (pattern == null) return false;
         if (code == GLFW.GLFW_KEY_ENTER || code == GLFW.GLFW_KEY_KP_ENTER || code == GLFW.GLFW_KEY_ESCAPE) {
-            updatePatternMatch();
             pattern.setFocused(false);
+            updatePatternMatch();
             return true;
         } else if (pattern.isFocused()) {
             pattern.keyPressed(code, scancode, modifiers);
@@ -340,9 +346,15 @@ public abstract class AbstractRecipeBook<T> {
         return false;
     }
 
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public boolean charTyped(char codepoint, int modifiers) {
-        if (pattern != null && pattern.isFocused())
-            return pattern.charTyped(codepoint, modifiers);
+        if (pattern != null && pattern.isFocused()) {
+            // TextFieldWidget.charTyped returns true if it added a character to the text
+            if (pattern.charTyped(codepoint, modifiers)) {
+                updatePatternMatch();
+                return true;
+            }
+        }
         return false;
     }
 
@@ -365,6 +377,8 @@ public abstract class AbstractRecipeBook<T> {
                 .toList();
     }
     public static Identifier getCat(RecipeDisplayEntry entry){
+        assert MinecraftClient.getInstance().world != null;
+        if (MinecraftClient.getInstance().world.getRegistryManager().getOptional(RegistryKeys.RECIPE_BOOK_CATEGORY).isEmpty()) return null;
         return MinecraftClient.getInstance().world.getRegistryManager().getOptional(RegistryKeys.RECIPE_BOOK_CATEGORY).get().getId(entry.category());
     }
 }

@@ -1,6 +1,7 @@
 package de.guntram.mcmod.easiercrafting.recipe;
 
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
@@ -10,6 +11,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.recipe.StonecuttingRecipe;
 import net.minecraft.recipe.display.CuttingRecipeDisplay;
+import net.minecraft.recipe.display.SlotDisplay;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.StonecutterScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
@@ -18,19 +20,35 @@ import java.util.*;
 
 public class StonecutterRecipeBook extends AbstractRecipeBook<CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe>> {
 
-    public StonecutterRecipeBook(HandledScreen<? extends ScreenHandler> craftScreen, int firstCraftSlotNo, int gridsize, int resultSlot, int firstInventorySlot) {
-        super(craftScreen, firstCraftSlotNo, gridsize, resultSlot, firstInventorySlot);
+    public StonecutterRecipeBook(HandledScreen<? extends ScreenHandler> craftScreen, int firstCraftSlotNo, int gridsize, int resultSlot, int firstInventorySlot, SlotDisplay craftingBlock) {
+        super(craftScreen, firstCraftSlotNo, gridsize, resultSlot, firstInventorySlot,  craftingBlock);
     }
 
 
     @Override
     public boolean updateRecipes() {
         updateAvailableStacks();
-        Set<CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe>> before = new HashSet<>(getRecipesForSearch());
-        refreshRecipeVar();
+
+        ObjectOpenHashSet<CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe>> before = new ObjectOpenHashSet<>(craftableRecipes.size());
+        before.addAll(craftableRecipes);
+
+        assert MinecraftClient.getInstance().world != null;
+        craftableRecipes.clear();
+        allRecipes.clear();
+        allRecipes.addAll(MinecraftClient.getInstance().world.getRecipeManager().getStonecutterRecipes().entries());
+        for (CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe> recipe : allRecipes){
+            if (recipe.input().isEmpty()) continue;
+            for (Map.Entry<Item, Integer> avaliable : avaliableItemMap.object2IntEntrySet()){
+                if (recipe.input().test(avaliable.getKey().getDefaultStack())){
+                    // tested success
+                    craftableRecipes.add(recipe);
+                    break;
+                }
+            }
+        }
 
         craftableCategories.clear();
-        Set<CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe>> entries = getRecipesForSearch();
+        ObjectOpenHashSet<CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe>> entries = craftableRecipes;
 
 
         for (CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe> entry : entries) {
@@ -102,12 +120,6 @@ public class StonecutterRecipeBook extends AbstractRecipeBook<CuttingRecipeDispl
 
     }
 
-
-    @Override
-    protected Set<CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe>> getRecipesForSearch() {
-        return craftableRecipes;
-    }
-
     @Override
     @SuppressWarnings("unchecked")
     protected int drawSetOfRecipes(DrawContext context, RecipeTreeSet<?> treeSet, TextRenderer fontRenderer, int xpos, int ypos, int mouseX, int mouseY) {
@@ -118,7 +130,7 @@ public class StonecutterRecipeBook extends AbstractRecipeBook<CuttingRecipeDispl
                     renderSingleRecipeOutput(context, fontRenderer, recipe.recipe().optionDisplay().getFirst(worldContext), xOffset + xpos, ypos - itemLift);
                     if (mouseX >= xpos + xOffset && mouseX <= xpos + xOffset + itemSize - 1
                             && mouseY >= ypos - itemLift && mouseY <= ypos - itemLift + itemSize - 1) {
-                        // its save to cast :3
+                        // its safe to cast :3
                         underMouse = (CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe>) recipe;
 
                     }
@@ -137,22 +149,6 @@ public class StonecutterRecipeBook extends AbstractRecipeBook<CuttingRecipeDispl
     @Override
     protected List<ItemStack> getCraftingResult(CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe> recipe) {
         return recipe.recipe().optionDisplay().getStacks(worldContext);
-    }
-
-    @Override
-    protected void refreshRecipeVar() {
-        assert MinecraftClient.getInstance().world != null;
-        craftableRecipes.clear();
-        for (CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe> recipe : MinecraftClient.getInstance().world.getRecipeManager().getStonecutterRecipes().entries()){
-            if (recipe.input().isEmpty()) continue;
-            for (Map.Entry<Item, Integer> avaliable : avaliableItemMap.entrySet()){
-                if (recipe.input().test(avaliable.getKey().getDefaultStack())){
-                    // tested success
-                    craftableRecipes.add(recipe);
-                    break;
-                }
-            }
-        }
     }
 
     @Override

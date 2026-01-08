@@ -19,6 +19,7 @@ public class ModConfig {
     public boolean categorizeRecipes;
     public int loomClickSpeed;
     public int fadeOutTime;
+    public boolean showAllRecipes;
 
     public static ModConfig getInstance() {
         if (INSTANCE==null)
@@ -54,6 +55,10 @@ public class ModConfig {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static ModConfig get() {
+        return INSTANCE;
     }
 
 

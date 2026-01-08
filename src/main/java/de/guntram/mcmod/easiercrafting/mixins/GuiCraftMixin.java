@@ -7,6 +7,9 @@ import de.guntram.mcmod.easiercrafting.recipe.StonecutterRecipeBook;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.recipe.display.SlotDisplay;
 import net.minecraft.screen.CraftingScreenHandler;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerType;
@@ -30,7 +33,7 @@ public class GuiCraftMixin {
             ExtendedGuiCrafting screen = new ExtendedGuiCrafting(handler, client.player.getInventory(), title);
 
             // Your custom recipe book setup
-            screen.setRecipeBook(new CraftingRecipeBook(screen, 1, 3, 0, 10));
+            screen.setRecipeBook(new CraftingRecipeBook(screen, 1, 3, 0, 10, new SlotDisplay.StackSlotDisplay(new ItemStack(Items.CRAFTING_TABLE))));
 
             openScreen(client, handler, screen);
             ci.cancel();
@@ -39,7 +42,7 @@ public class GuiCraftMixin {
             StonecutterScreenHandler handler = ScreenHandlerType.STONECUTTER.create(id, client.player.getInventory());
             ExtendedGuiStonecutter screen = new ExtendedGuiStonecutter(handler, client.player.getInventory(), title);
 
-            screen.setRecipeBook(new StonecutterRecipeBook(screen, 0, 1, 1, 2));
+            screen.setRecipeBook(new StonecutterRecipeBook(screen, 0, 1, 1, 2, new SlotDisplay.StackSlotDisplay(new ItemStack(Items.STONECUTTER))));
 
             openScreen(client, handler, screen);
             ci.cancel();

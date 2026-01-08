@@ -58,18 +58,16 @@ public class ConfigScreen extends Screen {
                 .setSaveConsumer(newValue -> ModConfig.getInstance().categorizeRecipes = newValue)
                 .build());
 
-
-//        generalTab.addEntry(entryBuilder.startIntField(Text.literal("Loom Click Speed"), ModConfig.getInstance().loomClickSpeed)
-//                .setMin(0).setMax(20)
-//                .setSaveConsumer(newValue -> ModConfig.getInstance().loomClickSpeed = newValue)
-//                .build());
-
         generalTab.addEntry(entryBuilder.startIntField(Text.literal("Fadeout Time"), ModConfig.getInstance().fadeOutTime)
                 .setTooltip(Text.of("How long to hide recipes after updating"))
                 .setMin(0).setMax(20)
                 .setSaveConsumer(newValue -> ModConfig.getInstance().fadeOutTime = newValue)
                 .build());
 
+        generalTab.addEntry(entryBuilder.startBooleanToggle(Text.literal("Show All Recipes"), ModConfig.getInstance().showAllRecipes)
+                .setTooltip(Text.of("Show all recipes on search, even those you cannot craft yet"))
+                .setSaveConsumer(newValue -> ModConfig.getInstance().showAllRecipes = newValue)
+                .build());
 
 
         return builder.build();
