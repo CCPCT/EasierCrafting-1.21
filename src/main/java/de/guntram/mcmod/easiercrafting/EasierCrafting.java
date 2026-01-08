@@ -32,24 +32,6 @@ public class EasierCrafting implements ClientModInitializer
     public void onInitializeClient() {
         ModConfig.load();
         System.out.println("[EasierCrafting] Loaded");
-
-        // get version
-        mcVersion= FabricLoader.getInstance().getModContainer("minecraft")
-                .map(container -> {
-                    String versionString = container.getMetadata().getVersion().getFriendlyString();
-                    String[] parts = versionString.split("\\.");
-
-                    // version 1.21.4 -> parts[0]=1, parts[1]=21, parts[2]=4
-                    if (parts.length >= 3) {
-                        try {
-                            return Integer.parseInt(parts[2]);
-                        } catch (NumberFormatException e) {
-                            return 0; // Fallback for snapshots/pre-releases
-                        }
-                    }
-                    return 0; // If version is just "1.21", minor is effectively 0
-                }).orElse(0);
-        System.out.println("determined version: " + mcVersion);
     }
     
     private File extractBundledFile(String name) {
