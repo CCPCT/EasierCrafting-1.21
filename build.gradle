@@ -3,19 +3,12 @@ plugins {
 }
 
 repositories {
-    maven {
-        url = "file://tmp/mymavenrepo/"
-    }
-    maven {
-        url = "https://maven.fabricmc.net/"
-    }
-    maven {
-        url = "https://minecraft.guntram.de/maven/"
-    }
-	maven {
-		url = "https://maven.terraformersmc.com/releases/"
-	}
+	maven { url "https://maven.terraformersmc.com/releases/" }
+    maven {url = "https://minecraft.guntram.de/maven/"}
+
     maven { url "https://maven.shedaniel.me/" }
+
+	
 }
 
 

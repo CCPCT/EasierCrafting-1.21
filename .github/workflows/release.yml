@@ -4,6 +4,11 @@ on:
     tags:
       - 'v*' # Trigger only when pushing a tag starting with 'v'
   workflow_dispatch:
+    inputs:
+        tag_name:
+          description: 'Tag for the release (e.g., v1.0.0)'
+          required: true
+          default: 'manual-build'
 
 jobs:
   build:
@@ -18,13 +23,28 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
+          cache: 'gradle'
+          
+      - name: Force Download Dependencies
+        # This triggers Loom to download/remap but ignores the failure
+        run: ./gradlew downloadAssets --continue || true
 
+      - name: Manual Rename Fix
+        run: |
+          # Find and rename the jar in the project-local loom cache
+          find .gradle/loom-cache/remapped_mods -name "*cloth-config-fabric-*-fabric.jar" | while read -r file; do
+            mv "$file" "${file%-fabric.jar}.jar"
+            echo "Successfully renamed $file"
+          done
+        continue-on-error: true
+        
       - name: Build Mod
         run: ./gradlew build
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
           files: build/libs/*.jar 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
