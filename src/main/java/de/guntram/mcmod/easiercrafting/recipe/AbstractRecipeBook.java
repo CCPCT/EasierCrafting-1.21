@@ -4,7 +4,6 @@ import de.guntram.mcmod.easiercrafting.*;
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
@@ -14,7 +13,6 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.recipe.RecipeDisplayEntry;
 import net.minecraft.recipe.display.SlotDisplay;
 import net.minecraft.recipe.display.SlotDisplayContexts;
@@ -36,7 +34,6 @@ import java.util.regex.PatternSyntaxException;
 public abstract class AbstractRecipeBook<T> {
 
     protected final Logger LOGGER;
-    static Identifier ARROWS;
     static final Object2IntOpenHashMap<Item> avaliableItemMap = new Object2IntOpenHashMap<>(36);
     ContextParameterMap worldContext;
 
@@ -94,10 +91,6 @@ public abstract class AbstractRecipeBook<T> {
         this.worldContext = SlotDisplayContexts.createParameters(MinecraftClient.getInstance().world);
         this.LOGGER = LogManager.getLogger(craftScreen.getScreenHandler());
         this.craftingBlock = craftingBlock;
-
-        if (ARROWS == null) {
-            ARROWS = Identifier.of(EasierCrafting.MODID, "textures/arrows.png");
-        }
     }
 
     // --- Abstract Methods to be implemented by subclasses ---
@@ -146,7 +139,7 @@ public abstract class AbstractRecipeBook<T> {
             tempXOffset = -itemSize * tempItemsPerRow - distanceFromGui;
         }
         textBoxSize = -tempXOffset - 15;
-        if (ModConfig.getShowGuiRight())
+        if (ModConfig.get().showGuiRight)
             tempXOffset = 176 + distanceFromGui;
         if (tempItemsPerRow < 2) {
             LOGGER.warn("forcing tempItemsPerRow to 2 when it's " + tempItemsPerRow);
@@ -162,7 +155,7 @@ public abstract class AbstractRecipeBook<T> {
     public void drawAllRecipe(DrawContext context, TextRenderer fontRenderer, int left, int height, int mouseX, int mouseY) {
         if (pattern == null) {
             pattern = new TextFieldWidget(fontRenderer, xOffset, 0, textBoxSize, 20, Text.literal(""));
-            if (ModConfig.getAutoFocusSearch()) {
+            if (ModConfig.get().autoFocusSearch) {
                 pattern.setFocused(true);
             }
         }
@@ -174,8 +167,8 @@ public abstract class AbstractRecipeBook<T> {
                 // before and after not same
                 LOGGER.info("Update recipe");
                 mouseScroll=0;
-                if (ModConfig.getFadeoutTime() > 0) {
-                    recipeFadeTime = System.currentTimeMillis() + ModConfig.getFadeoutTime() * 50L;
+                if (ModConfig.get().fadeOutTime > 0) {
+                    recipeFadeTime = System.currentTimeMillis() + ModConfig.get().fadeOutTime * 50L;
                 }
             } else {
                 LOGGER.info("Didnt update recipe");

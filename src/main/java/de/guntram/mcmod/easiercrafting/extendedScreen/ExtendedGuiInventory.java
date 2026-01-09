@@ -20,7 +20,7 @@ public class ExtendedGuiInventory extends InventoryScreen implements SlotClickAc
     @Override
     public void init() {
         super.init();
-        if (!ModConfig.getAllowMinecraftRecipeBook())
+        if (!ModConfig.get().allowRecipeBook)
             this.children().clear();
         this.recipeBook.afterInitGui();
     }

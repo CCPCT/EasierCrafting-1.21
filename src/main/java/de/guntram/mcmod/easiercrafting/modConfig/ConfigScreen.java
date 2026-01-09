@@ -24,49 +24,49 @@ public class ConfigScreen extends Screen {
         ConfigEntryBuilder entryBuilder = builder.entryBuilder();
 
         // General settings
-        generalTab.addEntry(entryBuilder.startBooleanToggle(Text.literal("Auto focus search text"), ModConfig.getInstance().autoFocusSearch)
-                .setSaveConsumer(newValue -> ModConfig.getInstance().autoFocusSearch = newValue)
+        generalTab.addEntry(entryBuilder.startBooleanToggle(Text.literal("Auto focus search text"), ModConfig.get().autoFocusSearch)
+                .setSaveConsumer(newValue -> ModConfig.get().autoFocusSearch = newValue)
                 .build());
 
-        generalTab.addEntry(entryBuilder.startIntField(Text.literal("Auto update recipe timer"), ModConfig.getInstance().autoUpdateRecipeTimer)
+        generalTab.addEntry(entryBuilder.startIntField(Text.literal("Auto update recipe timer"), ModConfig.get().autoUpdateRecipeTimer)
                 .setTooltip(Text.of("How long after craft will recipes be updated, in game ticks"))
                 .setMin(0).setMax(30)
-                .setSaveConsumer(newValue -> ModConfig.getInstance().autoUpdateRecipeTimer = newValue)
+                .setSaveConsumer(newValue -> ModConfig.get().autoUpdateRecipeTimer = newValue)
                 .build());
 
-        generalTab.addEntry(entryBuilder.startBooleanToggle(Text.literal("Allow MC internal recipe book"), ModConfig.getInstance().allowRecipeBook)
-                .setSaveConsumer(newValue -> ModConfig.getInstance().allowRecipeBook = newValue)
+        generalTab.addEntry(entryBuilder.startBooleanToggle(Text.literal("Allow MC internal recipe book"), ModConfig.get().allowRecipeBook)
+                .setSaveConsumer(newValue -> ModConfig.get().allowRecipeBook = newValue)
                 .build());
 
-        generalTab.addEntry(entryBuilder.startBooleanToggle(Text.literal("Show GUI right of inventory"), ModConfig.getInstance().showGuiRight)
-                .setSaveConsumer(newValue -> ModConfig.getInstance().showGuiRight = newValue)
+        generalTab.addEntry(entryBuilder.startBooleanToggle(Text.literal("Show GUI right of inventory"), ModConfig.get().showGuiRight)
+                .setSaveConsumer(newValue -> ModConfig.get().showGuiRight = newValue)
                 .build());
 
-        generalTab.addEntry(entryBuilder.startBooleanToggle(Text.literal("Allow special recipes"), ModConfig.getInstance().allowGeneratedRecipes)
+        generalTab.addEntry(entryBuilder.startBooleanToggle(Text.literal("Allow special recipes"), ModConfig.get().allowGeneratedRecipes)
                 .setTooltip(Text.of("Allow mod generated recipes, such as repair item and dye shulker box"))
-                .setSaveConsumer(newValue -> ModConfig.getInstance().allowGeneratedRecipes = newValue)
+                .setSaveConsumer(newValue -> ModConfig.get().allowGeneratedRecipes = newValue)
                 .build());
 
-        generalTab.addEntry(entryBuilder.startIntField(Text.literal("Max. enchants"), ModConfig.getInstance().maxEnchantsAllowedForRepair)
+        generalTab.addEntry(entryBuilder.startIntField(Text.literal("Max. enchants"), ModConfig.get().maxEnchantsAllowedForRepair)
                 .setTooltip(Text.of("Max level of enchanted item allowed in recipe"))
                 .setMin(0).setMax(10)
-                .setSaveConsumer(newValue -> ModConfig.getInstance().maxEnchantsAllowedForRepair = newValue)
+                .setSaveConsumer(newValue -> ModConfig.get().maxEnchantsAllowedForRepair = newValue)
                 .build());
 
-        generalTab.addEntry(entryBuilder.startBooleanToggle(Text.literal("Categorize recipes"), ModConfig.getInstance().categorizeRecipes)
+        generalTab.addEntry(entryBuilder.startBooleanToggle(Text.literal("Categorize recipes"), ModConfig.get().categorizeRecipes)
                 .setTooltip(Text.of("use vanilla recipe book categorises to categorize recipes"))
-                .setSaveConsumer(newValue -> ModConfig.getInstance().categorizeRecipes = newValue)
+                .setSaveConsumer(newValue -> ModConfig.get().categorizeRecipes = newValue)
                 .build());
 
-        generalTab.addEntry(entryBuilder.startIntField(Text.literal("Fadeout Time"), ModConfig.getInstance().fadeOutTime)
+        generalTab.addEntry(entryBuilder.startIntField(Text.literal("Fadeout Time"), ModConfig.get().fadeOutTime)
                 .setTooltip(Text.of("How long to hide recipes after updating"))
                 .setMin(0).setMax(20)
-                .setSaveConsumer(newValue -> ModConfig.getInstance().fadeOutTime = newValue)
+                .setSaveConsumer(newValue -> ModConfig.get().fadeOutTime = newValue)
                 .build());
 
-        generalTab.addEntry(entryBuilder.startBooleanToggle(Text.literal("Show All Recipes"), ModConfig.getInstance().showAllRecipes)
+        generalTab.addEntry(entryBuilder.startBooleanToggle(Text.literal("Show All Recipes"), ModConfig.get().showAllRecipes)
                 .setTooltip(Text.of("Show all recipes on search, even those you cannot craft yet"))
-                .setSaveConsumer(newValue -> ModConfig.getInstance().showAllRecipes = newValue)
+                .setSaveConsumer(newValue -> ModConfig.get().showAllRecipes = newValue)
                 .build());
 
 
