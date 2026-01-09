@@ -45,5 +45,11 @@
     "easiercrafting.config.tt.hidewithrei": "如果你安裝了 REI, 則本程式將僅在 REI 界面關閉時顯示(默認快捷鍵 CTRL-O)",
     "easiercrafting.config.tt.hidebrewingstandbutton": "隱藏與資源包衝突的按鈕",
     "easiercrafting.config.tt.useinventoryrefreshhack": "如果你在合成後遇到同步問題，請啟用此功能",
-    "easiercrafting.config.tt.loomclickspeed": "妳設置的越低，織布機就會越快，但是太低的值可能會導致不同步"
+    "easiercrafting.config.tt.loomclickspeed": "妳設置的越低，織布機就會越快，但是太低的值可能會導致不同步",
+    "easiercrafting.config.fadeouttime": "淡出時間",
+    "easiercrafting.config.showallrecipes": "顯示所有配方",
+    "easiercrafting.config.title": "Easier Crafting 設定",
+    "easiercrafting.config.general": "一般",
+    "easiercrafting.config.tt.fadeouttime": "更新後隱藏配方的時間",
+    "easiercrafting.config.tt.showallrecipes": "搜尋時顯示所有配方，包括您尚無法合成的配方"
 }

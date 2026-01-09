@@ -45,5 +45,11 @@
     "easiercrafting.config.tt.hidewithrei": "如果你安装了 REI, 则 EasierCrafting 将仅在 REI 界面关闭时显示 §7(默认快捷键 CTRL-O)",
     "easiercrafting.config.tt.hidebrewingstandbutton": "“取出药水”按钮与某些资源包冲突时可使用此选项隐藏",
     "easiercrafting.config.tt.useinventoryrefreshhack": "若您在合成后遇到同步问题，请开启此选项。",
-    "easiercrafting.config.tt.loomclickspeed": "The lower you set this, the faster the loom will be, but too low might get you out of sync, especially on servers"
+    "easiercrafting.config.tt.loomclickspeed": "The lower you set this, the faster the loom will be, but too low might get you out of sync, especially on servers",
+    "easiercrafting.config.fadeouttime": "淡出時間",
+    "easiercrafting.config.showallrecipes": "顯示所有配方",
+    "easiercrafting.config.title": "Easier Crafting 設定",
+    "easiercrafting.config.general": "一般",
+    "easiercrafting.config.tt.fadeouttime": "更新後隱藏配方的時間",
+    "easiercrafting.config.tt.showallrecipes": "搜尋時顯示所有配方，包括您尚無法合成的配方"
 }

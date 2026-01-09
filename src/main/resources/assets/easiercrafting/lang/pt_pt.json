@@ -45,5 +45,11 @@
     "easiercrafting.config.tt.hidewithrei": "Se você tiver REI, o EasierCrafting só será exibida quando o REI estiver desligado (padrão CTRL-O)",
     "easiercrafting.config.tt.hidebrewingstandbutton": "Ocultar o botão TIRAR que entra em conflito com alguns pacotes de recursos",
     "easiercrafting.config.tt.useinventoryrefreshhack": "Ative isso se você tiver problemas de sincronização depois de criar",
-    "easiercrafting.config.tt.loomclickspeed": "Quanto mais baixo você definir isso, mais rápido o pilhagem será, mas muito baixo poderá deixar você fora de sincronização, especialmente nos servidores"
+    "easiercrafting.config.tt.loomclickspeed": "Quanto mais baixo você definir isso, mais rápido o pilhagem será, mas muito baixo poderá deixar você fora de sincronização, especialmente nos servidores",
+    "easiercrafting.config.fadeouttime": "Tempo de desaparecimento",
+    "easiercrafting.config.showallrecipes": "Mostrar todas as receitas",
+    "easiercrafting.config.title": "Configuração do Easier Crafting",
+    "easiercrafting.config.general": "Geral",
+    "easiercrafting.config.tt.fadeouttime": "Quanto tempo ocultar receitas após atualização",
+    "easiercrafting.config.tt.showallrecipes": "Mostrar todas as receitas na busca, mesmo aquelas que você ainda não pode criar"
 }

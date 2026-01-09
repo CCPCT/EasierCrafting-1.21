@@ -45,5 +45,11 @@
     "easiercrafting.config.tt.hidewithrei": "If you have REI, EasierCrafting will only show when REI is turned off (default CTRL-O)",
     "easiercrafting.config.tt.hidebrewingstandbutton": "Hide the TAKE button that conflicts with some resource packs",
     "easiercrafting.config.tt.useinventoryrefreshhack": "Turn this on if you experience synchronization problems after crafting",
-    "easiercrafting.config.tt.loomclickspeed": "The lower you set this, the faster the loom will be, but too low might get you out of sync, especially on servers"
+    "easiercrafting.config.tt.loomclickspeed": "The lower you set this, the faster the loom will be, but too low might get you out of sync, especially on servers",
+    "easiercrafting.config.fadeouttime": "페이드아웃 시간",
+    "easiercrafting.config.showallrecipes": "모든 레시피 표시",
+    "easiercrafting.config.title": "Easier Crafting 설정",
+    "easiercrafting.config.general": "일반",
+    "easiercrafting.config.tt.fadeouttime": "업데이트 후 레시피를 숨길 시간",
+    "easiercrafting.config.tt.showallrecipes": "아직 제작할 수 없는 레시피를 포함하여 검색 시 모든 레시피 표시"
 }

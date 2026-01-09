@@ -45,5 +45,11 @@
     "easiercrafting.config.tt.hidewithrei": "Jeżeli posiadasz REI EasierCrafting pokaże się tylko gdy REI zostanie schowane (domyślnie klikając CTRL-O)",
     "easiercrafting.config.tt.hidebrewingstandbutton": "Ukryj przycisk WEŹ który może konfliktować z niektórymi paczkami zasobów",
     "easiercrafting.config.tt.useinventoryrefreshhack": "Włącz tą opcje jeśli doświadczasz problemów ze synchronizacją podczas tworzenia",
-    "easiercrafting.config.tt.loomclickspeed": "Im niższe to ustawisz, tym szybsze będzie krosno, ale za nisko może wyprowadzić Ciebie z synchronizacji, zwłaszcza na serwerach"
+    "easiercrafting.config.tt.loomclickspeed": "Im niższe to ustawisz, tym szybsze będzie krosno, ale za nisko może wyprowadzić Ciebie z synchronizacji, zwłaszcza na serwerach",
+    "easiercrafting.config.fadeouttime": "Czas zanikania",
+    "easiercrafting.config.showallrecipes": "Pokaż wszystkie receptury",
+    "easiercrafting.config.title": "Konfiguracja Easier Crafting",
+    "easiercrafting.config.general": "Ogólne",
+    "easiercrafting.config.tt.fadeouttime": "Jak długo ukrywać receptury po aktualizacji",
+    "easiercrafting.config.tt.showallrecipes": "Pokaż wszystkie receptury w wyszukiwaniu, nawet te których nie możesz jeszcze stworzyć"
 }
