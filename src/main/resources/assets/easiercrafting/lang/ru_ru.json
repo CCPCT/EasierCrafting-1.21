@@ -45,5 +45,11 @@
     "easiercrafting.config.tt.hidewithrei": "Если у вас есть REI, EasierCrafting будет отображаться только при выключенном REI (по умолчанию CTRL-O)",
     "easiercrafting.config.tt.hidebrewingstandbutton": "Скрыть кнопку «Взять», которая конфликтует с некоторыми пакетами текстур",
     "easiercrafting.config.tt.useinventoryrefreshhack": "Включите это, если у вас возникли проблемы с синхронизацией после крафта",
-    "easiercrafting.config.tt.loomclickspeed": "Чем ниже вы установите, тем быстрее будет крафт, но слишком низкая скорость может привести  к невозможности синхронизации, особенно на серверах"
+    "easiercrafting.config.tt.loomclickspeed": "Чем ниже вы установите, тем быстрее будет крафт, но слишком низкая скорость может привести  к невозможности синхронизации, особенно на серверах",
+    "easiercrafting.config.fadeouttime": "Время затухания",
+    "easiercrafting.config.showallrecipes": "Показать все рецепты",
+    "easiercrafting.config.title": "Настройки Easier Crafting",
+    "easiercrafting.config.general": "Общие",
+    "easiercrafting.config.tt.fadeouttime": "Как долго скрывать рецепты после обновления",
+    "easiercrafting.config.tt.showallrecipes": "Показывать все рецепты при поиске, даже те, которые вы ещё не можете создать"
 }

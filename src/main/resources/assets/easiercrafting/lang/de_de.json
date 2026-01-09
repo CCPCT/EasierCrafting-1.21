@@ -45,5 +45,11 @@
     "easiercrafting.config.tt.hidewithrei": "Wenn REI installiert ist, wird EasierCrafting nur angezeigt, wenn REI ausgeschaltet ist (Standard STRG-O)",
     "easiercrafting.config.tt.hidebrewingstandbutton": "Den Nehmen-Button ausblenden, da er mit manchen Ressourcenpaketen kollidiert",
     "easiercrafting.config.tt.useinventoryrefreshhack": "Aktivieren, wenn nach dem Herstellen Synchronisationsprobleme auftreten",
-    "easiercrafting.config.tt.loomclickspeed": "Je niedriger die Einstellung, desto schneller wird der Webstuhl, aber zu niedrig kann nicht mehr synchronisieren, insbesondere auf Servern"
+    "easiercrafting.config.tt.loomclickspeed": "Je niedriger die Einstellung, desto schneller wird der Webstuhl, aber zu niedrig kann nicht mehr synchronisieren, insbesondere auf Servern",
+    "easiercrafting.config.fadeouttime": "Ausblendzeit",
+    "easiercrafting.config.showallrecipes": "Alle Rezepte anzeigen",
+    "easiercrafting.config.title": "Easier Crafting Einstellungen",
+    "easiercrafting.config.general": "Allgemein",
+    "easiercrafting.config.tt.fadeouttime": "Wie lange Rezepte nach der Aktualisierung ausgeblendet werden",
+    "easiercrafting.config.tt.showallrecipes": "Alle Rezepte bei der Suche anzeigen, auch die, die noch nicht hergestellt werden können"
 }

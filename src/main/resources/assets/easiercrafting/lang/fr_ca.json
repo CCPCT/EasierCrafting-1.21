@@ -45,5 +45,11 @@
     "easiercrafting.config.tt.hidewithrei": "Si vous avez des REI, l'artisanat facile ne s'affichera que lorsque le REI est désactivé (par défaut CTRL-O)",
     "easiercrafting.config.tt.hidebrewingstandbutton": "Masquer le bouton PRENDRE qui entre en conflit avec certains packs de ressources",
     "easiercrafting.config.tt.useinventoryrefreshhack": "Activer cette option si vous rencontrez des problèmes de synchronisation après la fabrication",
-    "easiercrafting.config.tt.loomclickspeed": "Plus cette valeur est basse, plus le métier à tisser sera rapide, mais si elle est trop basse, vous risquez d'être désynchronisé, surtout sur les serveurs"
+    "easiercrafting.config.tt.loomclickspeed": "Plus cette valeur est basse, plus le métier à tisser sera rapide, mais si elle est trop basse, vous risquez d'être désynchronisé, surtout sur les serveurs",
+    "easiercrafting.config.fadeouttime": "Temps de disparition",
+    "easiercrafting.config.showallrecipes": "Afficher toutes les recettes",
+    "easiercrafting.config.title": "Configuration Easier Crafting",
+    "easiercrafting.config.general": "Général",
+    "easiercrafting.config.tt.fadeouttime": "Durée de masquage des recettes après la mise à jour",
+    "easiercrafting.config.tt.showallrecipes": "Afficher toutes les recettes lors de la recherche, même celles que vous ne pouvez pas encore fabriquer"
 }
