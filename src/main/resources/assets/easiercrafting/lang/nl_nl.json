@@ -45,5 +45,11 @@
     "easiercrafting.config.tt.hidewithrei": "Als u REI hebt, zal EasierCrafting alleen worden weergegeven wanneer REI is uitgeschakeld (standaard CTRL-O)",
     "easiercrafting.config.tt.hidebrewingstandbutton": "Verberg de NEEM-knop die met sommige bronpakketten conflicteert",
     "easiercrafting.config.tt.useinventoryrefreshhack": "Schakel dit in als u na het vervaardigen synchronisatieproblemen heeft",
-    "easiercrafting.config.tt.loomclickspeed": "Hoe lager u dit instelt, hoe sneller het weefgetouw zal zijn, maar te laag kan vooral op servers tot synchronisatieproblemen leiden"
+    "easiercrafting.config.tt.loomclickspeed": "Hoe lager u dit instelt, hoe sneller het weefgetouw zal zijn, maar te laag kan vooral op servers tot synchronisatieproblemen leiden",
+    "easiercrafting.config.fadeouttime": "Vervaag tijd",
+    "easiercrafting.config.showallrecipes": "Toon alle recepten",
+    "easiercrafting.config.title": "Easier Crafting Configuratie",
+    "easiercrafting.config.general": "Algemeen",
+    "easiercrafting.config.tt.fadeouttime": "Hoe lang recepten worden verborgen na bijwerken",
+    "easiercrafting.config.tt.showallrecipes": "Toon alle recepten bij zoeken, ook die je nog niet kunt maken"
 }
