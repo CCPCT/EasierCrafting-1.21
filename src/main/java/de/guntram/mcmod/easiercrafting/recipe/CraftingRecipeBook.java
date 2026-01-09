@@ -19,7 +19,6 @@ import net.minecraft.item.*;
 import net.minecraft.recipe.Ingredient;
 import net.minecraft.recipe.NetworkRecipeId;
 import net.minecraft.recipe.RecipeDisplayEntry;
-import net.minecraft.recipe.book.RecipeBookCategories;
 import net.minecraft.recipe.display.*;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
@@ -27,6 +26,8 @@ import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
 
 import java.util.*;
+
+import static de.guntram.mcmod.easiercrafting.EasierCrafting.SPECIAL_CAT;
 
 public class CraftingRecipeBook extends AbstractRecipeBook<RecipeDisplayEntry> {
 
@@ -78,7 +79,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook<RecipeDisplayEntry> {
 
         ItemGroups.updateDisplayContext(player.networkHandler.getEnabledFeatures(), true, player.getWorld().getRegistryManager());
 
-        if (ModConfig.getAllowGeneratedRecipes()) {
+        if (ModConfig.get().allowGeneratedRecipes) {
             addUnusualRecipe();
         }
 
@@ -97,9 +98,11 @@ public class CraftingRecipeBook extends AbstractRecipeBook<RecipeDisplayEntry> {
             }
 
             String category;
-            if (!ModConfig.getCategorizeRecipes()) {
+            if (!ModConfig.get().categorizeRecipes) {
+                // dont categorize recipes
                 category = I18n.translate("easiercrafting.category.possible");
-            } else if (Objects.requireNonNull(getCat(entry)).getNamespace().startsWith(EasierCrafting.MODID + ":")) {
+            } else if (Objects.requireNonNull(getCat(entry)).getNamespace().startsWith(EasierCrafting.MODID)) {
+                // generated recipe
                 category = I18n.translate("easiercrafting.category.special");
             } else if (tab == null) {
                 category = Objects.requireNonNull(getCat(entry)).toTranslationKey();
@@ -263,7 +266,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook<RecipeDisplayEntry> {
         // actually craft item
         if (mouseButton == 0 && !Screen.hasControlDown()) {
             slotClick(resultSlotNo, mouseButton, SlotActionType.QUICK_MOVE);
-            updateRecipesIn(ModConfig.getAutoUpdateRecipeTimer() * 50);
+            updateRecipesIn(ModConfig.get().autoUpdateRecipeTimer * 50);
 
             rowadjust = 0;
             for (int i = 0; i < removal.length; i++) {
@@ -371,7 +374,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook<RecipeDisplayEntry> {
         int gunPowerCount = avaliableItemMap.getInt(Items.GUNPOWDER);
         if (avaliableItemMap.containsKey(Items.PAPER) && gunPowerCount > 0) {
             // power one is already there
-            for (int power = 2; power <= 3; power++) {
+            for (int power = 1; power <= 3; power++) {
                 if (gunPowerCount >= power) {
                     // 2. Prepare the Result Item
                     ItemStack resultItem = new ItemStack(Items.FIREWORK_ROCKET, 3);
@@ -405,7 +408,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook<RecipeDisplayEntry> {
                             new NetworkRecipeId(670 + power), // Use unique IDs to avoid UI glitches
                             display,
                             OptionalInt.empty(),
-                            RecipeBookCategories.CRAFTING_EQUIPMENT,
+                            SPECIAL_CAT,
                             Optional.of(ingredients)
                     );
 
@@ -439,7 +442,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook<RecipeDisplayEntry> {
                     new NetworkRecipeId((int)System.currentTimeMillis()), // yes this will warp every abt 50 days... dont play for 50 days straight
                     display,
                     OptionalInt.empty(),
-                    RecipeBookCategories.CRAFTING_EQUIPMENT,
+                    SPECIAL_CAT,
                     Optional.of(Collections.nCopies(2,Ingredient.ofItem(set.getKey())))
             );
 

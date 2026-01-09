@@ -23,7 +23,7 @@ public class ExtendedGuiCrafting extends CraftingScreen implements SlotClickAcce
     @Override
     protected void init() {
         super.init();
-        if (!ModConfig.getAllowMinecraftRecipeBook()) {
+        if (!ModConfig.get().allowRecipeBook) {
             this.children().clear();
         }
         this.recipeBook.afterInitGui();

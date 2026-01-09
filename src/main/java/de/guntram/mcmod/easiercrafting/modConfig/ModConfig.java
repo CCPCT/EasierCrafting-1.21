@@ -1,5 +1,6 @@
 package de.guntram.mcmod.easiercrafting.modConfig;
 
+import de.guntram.mcmod.easiercrafting.EasierCrafting;
 import net.fabricmc.loader.api.FabricLoader;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -17,11 +18,10 @@ public class ModConfig {
     public boolean allowGeneratedRecipes;
     public int maxEnchantsAllowedForRepair;
     public boolean categorizeRecipes;
-    public int loomClickSpeed;
     public int fadeOutTime;
     public boolean showAllRecipes;
 
-    public static ModConfig getInstance() {
+    public static ModConfig get() {
         if (INSTANCE==null)
             INSTANCE = new ModConfig();
         return INSTANCE;
@@ -44,49 +44,15 @@ public class ModConfig {
                 save();
             }
         } catch (IOException e) {
-            e.printStackTrace();
             INSTANCE = new ModConfig();
         }
     }
 
     public static void save() {
         try {
-            Files.writeString(CONFIG_PATH, GSON.toJson(getInstance()));
+            Files.writeString(CONFIG_PATH, GSON.toJson(get()));
         } catch (IOException e) {
-            e.printStackTrace();
+            EasierCrafting.getGeneralLogger().error("Unable to save EasierCrafting config!");
         }
-    }
-
-    public static ModConfig get() {
-        return INSTANCE;
-    }
-
-
-    public static int getAutoUpdateRecipeTimer() {
-        return getInstance().autoUpdateRecipeTimer;
-    }
-    public static boolean getAutoFocusSearch() {
-        return getInstance().autoFocusSearch;
-    }
-    public static boolean getAllowMinecraftRecipeBook() {
-        return getInstance().allowRecipeBook;
-    }
-    public static boolean getShowGuiRight() {
-        return getInstance().showGuiRight;
-    }
-    public static boolean getAllowGeneratedRecipes() {
-        return getInstance().allowGeneratedRecipes;
-    }
-    public static int getMaxEnchantsAllowedForRepair() {
-        return getInstance().maxEnchantsAllowedForRepair;
-    }
-    public static boolean getCategorizeRecipes() {
-        return getInstance().categorizeRecipes;
-    }
-    public static int getLoomClickSpeed() {
-        return getInstance().loomClickSpeed;
-    }
-    public static int getFadeoutTime() {
-        return getInstance().fadeOutTime;
     }
 }
