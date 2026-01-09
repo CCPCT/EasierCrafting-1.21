@@ -44,6 +44,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
+          name: "${{ github.event.inputs.tag_name || github.ref_name }} for 1.21.2-8"
           tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
           files: build/libs/*.jar 
         env:
