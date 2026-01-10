@@ -375,7 +375,7 @@ public abstract class AbstractRecipeBook {
             ItemStack stack = screen.getScreenHandler().getSlot(craftslot + firstCraftSlotNo).getStack();
             if (stack != null && !stack.isEmpty()) {
                 // so only crafting moves, stonecutter/ furnaces dont
-                if (gridSize>3) slotClick(craftslot, 0, SlotActionType.QUICK_MOVE);
+                if (gridSize>=3) slotClick(craftslot + firstCraftSlotNo, 0, SlotActionType.QUICK_MOVE);
             }
         }
 
