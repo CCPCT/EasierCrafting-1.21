@@ -41,11 +41,16 @@ jobs:
       - name: Build Mod
         run: ./gradlew build
 
+      - name: Get Commit Message
+        id: commit_message
+        run: echo "msg=$(git log -1 --pretty=%B)" >> $GITHUB_OUTPUT
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           name: "${{ github.event.inputs.tag_name || github.ref_name }} for 1.21.2-8"
           tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
+          body: ${{ steps.commit_message.outputs.msg }}
           files: build/libs/*.jar 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
