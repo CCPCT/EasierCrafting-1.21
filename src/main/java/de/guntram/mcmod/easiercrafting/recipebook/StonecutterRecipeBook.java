@@ -1,0 +1,144 @@
+package de.guntram.mcmod.easiercrafting.recipebook;
+
+import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
+import de.guntram.mcmod.easiercrafting.recipe.RecipeTreeSet;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.gui.screen.recipebook.RecipeResultCollection;
+import net.minecraft.client.resource.language.I18n;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.recipe.RecipeDisplayEntry;
+import net.minecraft.recipe.StonecuttingRecipe;
+import net.minecraft.recipe.book.RecipeBookCategories;
+import net.minecraft.recipe.display.CuttingRecipeDisplay;
+import net.minecraft.recipe.display.SlotDisplay;
+import net.minecraft.recipe.display.StonecutterRecipeDisplay;
+import net.minecraft.screen.ScreenHandler;
+import net.minecraft.screen.StonecutterScreenHandler;
+import net.minecraft.screen.slot.SlotActionType;
+
+import java.util.*;
+
+public class StonecutterRecipeBook extends AbstractRecipeBook {
+
+    public StonecutterRecipeBook(HandledScreen<? extends ScreenHandler> craftScreen, int firstCraftSlotNo, int gridsize, int resultSlot, int firstInventorySlot, SlotDisplay craftingBlock) {
+        super(craftScreen, firstCraftSlotNo, gridsize, resultSlot, firstInventorySlot,  craftingBlock);
+    }
+
+
+    @Override
+    public boolean updateRecipes() {
+        updateAvailableStacks();
+
+        // process if craftable changed
+        IntList before = new IntArrayList(craftableRecipes.size());
+        for (RecipeDisplayEntry entry : craftableRecipes){
+            before.add(entry.id().index());
+        }
+
+        craftableRecipes.clear();
+        allRecipes.clear();
+        craftableCategories.clear();
+
+        // add all recipes
+        for (RecipeResultCollection collection : recipeBook.getResultsForCategory(RecipeBookCategories.STONECUTTER)){
+            allRecipes.addAll(collection.getAllRecipes());
+        }
+
+        // add craftable recipes
+        for (RecipeDisplayEntry entry : allRecipes){
+            if (entry.display() instanceof StonecutterRecipeDisplay recipeDisplay){
+                for (ItemStack slotDisplay : recipeDisplay.input().getStacks(worldContext)){
+                    if (avaliableItemMap.containsKey(slotDisplay.getItem())){
+                        craftableRecipes.add(entry);
+                        craftableCategories.computeIfAbsent(ModConfig.get().categorizeRecipes ?
+                                getFirstIngredient(entry).getName().getString() :
+                                I18n.translate("easiercrafting.category.possible"),
+                                k -> new RecipeTreeSet()).add(entry);
+                    }
+                }
+
+            }
+        }
+
+
+        recalcListSize();
+        IntList after = new IntArrayList(craftableRecipes.size());
+        for (RecipeDisplayEntry entry : craftableRecipes){
+            after.add(entry.id().index());
+        }
+        return before.equals(after);
+    }
+
+
+    @Override
+    protected void onRecipeClicked(RecipeDisplayEntry entry, int mouseButton) {
+        var interactionManager = client.interactionManager;
+        if (!(screenHandler instanceof StonecutterScreenHandler container)||!(entry.display() instanceof StonecutterRecipeDisplay recipe)) {
+            return;
+        }
+
+        // no item -> return
+        if (!avaliableItemMap.containsKey(getFirstIngredient(entry).getItem())) return;
+        // move item to crafting slot
+        search:
+        for (int slot = firstInventorySlotNo; slot < 36 + firstInventorySlotNo; slot++) {
+            ItemStack slotContent = container.getSlot(slot).getStack();
+            for (ItemStack ingredientStack : recipe.input().getStacks(worldContext)) {
+                if (ingredientStack.getItem().equals(slotContent.getItem())){
+                    if (Screen.hasShiftDown()) {
+                        slotClick(slot, 0, SlotActionType.PICKUP);
+                        slotClick(slot, 0, SlotActionType.PICKUP_ALL);
+                        slotClick(firstCraftSlotNo, 0, SlotActionType.PICKUP);
+                        slotClick(slot, 0, SlotActionType.PICKUP);
+                    } else {
+                        slotClick(slot, 0, SlotActionType.PICKUP);
+                        slotClick(firstCraftSlotNo, 1, SlotActionType.PICKUP);
+                        slotClick(slot, 0, SlotActionType.PICKUP);
+                    }
+                    break search;
+                }
+            }
+        }
+
+        // click the recipe button (select the recipe)
+        List<CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe>> available = container.getAvailableRecipes().entries();
+        int buttonIndex = -1;
+
+        for (int i = 0; i < available.size(); i++) {
+            // Compare the recipe entries directly.
+            if (available.get(i).recipe().optionDisplay().equals(recipe.result())) {
+                buttonIndex = i;
+                break;
+            }
+        }
+
+        if (buttonIndex != -1 && interactionManager != null) {
+            // 3. Select the recipe by clicking the button with the index
+            interactionManager.clickButton(container.syncId, buttonIndex);
+
+            // 4. Take the result from the output slot (slot 1) to complete the craft
+            interactionManager.clickSlot(container.syncId, 1, 0, SlotActionType.QUICK_MOVE, player);
+            updateRecipesIn(ModConfig.get().autoUpdateRecipeTimer * 50);
+        }
+
+    }
+
+    @Override
+    protected void drawRecipeGridOverlay(DrawContext context, TextRenderer fontRenderer, int height, int mouseX, int mouseY) {
+        renderIngredient(context, fontRenderer, getFirstIngredient(underMouse), 0, height + itemSize);
+    }
+
+    protected ItemStack getFirstIngredient(RecipeDisplayEntry entry) {
+        if (!(entry.display() instanceof StonecutterRecipeDisplay recipe)) return null;
+        return recipe.input().getFirst(worldContext);
+    }
+
+}

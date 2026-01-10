@@ -1,7 +1,9 @@
 package de.guntram.mcmod.easiercrafting;
 
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
+import de.guntram.mcmod.easiercrafting.recipebook.FurnaceRecipeBook;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.recipe.book.RecipeBookCategory;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
@@ -33,5 +35,11 @@ public class EasierCrafting implements ClientModInitializer
                 Identifier.of(EasierCrafting.MODID, "special"),
                 new RecipeBookCategory()
         );
+
+        // do this when joining server/ world
+        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
+            // clear last fuel cache when joined new world/ server
+            FurnaceRecipeBook.lastFuelUsed = null;
+        });
     }
 }

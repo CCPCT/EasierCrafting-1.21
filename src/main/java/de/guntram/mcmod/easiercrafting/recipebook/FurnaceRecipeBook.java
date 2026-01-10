@@ -1,0 +1,179 @@
+package de.guntram.mcmod.easiercrafting.recipebook;
+
+import com.mojang.blaze3d.textures.FilterMode;
+import de.guntram.mcmod.easiercrafting.InventoryAccessor;
+import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
+import de.guntram.mcmod.easiercrafting.recipe.RecipeTreeSet;
+import de.guntram.mcmod.easiercrafting.recipe.RepairCraftingRecipeDisplay;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.gui.screen.recipebook.RecipeResultCollection;
+import net.minecraft.client.resource.language.I18n;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.recipe.RecipeDisplayEntry;
+import net.minecraft.recipe.StonecuttingRecipe;
+import net.minecraft.recipe.book.RecipeBookCategories;
+import net.minecraft.recipe.book.RecipeBookGroup;
+import net.minecraft.recipe.display.*;
+import net.minecraft.recipe.display.FurnaceRecipeDisplay;
+import net.minecraft.screen.ScreenHandler;
+import net.minecraft.screen.FurnaceScreenHandler;
+import net.minecraft.screen.StonecutterScreenHandler;
+import net.minecraft.screen.slot.SlotActionType;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+
+public class FurnaceRecipeBook extends AbstractRecipeBook {
+    public static Item lastFuelUsed;
+    protected final int FUEL_SLOT;
+
+    public FurnaceRecipeBook(HandledScreen<? extends ScreenHandler> craftScreen, int firstCraftSlotNo, int gridsize, int resultSlot, int firstInventorySlot, SlotDisplay craftingBlock, int fuelSlot) {
+        super(craftScreen, firstCraftSlotNo, gridsize, resultSlot, firstInventorySlot,  craftingBlock);
+        FUEL_SLOT=fuelSlot;
+    }
+
+    @Override
+    public boolean updateRecipes() {
+        updateAvailableStacks();
+
+        // process if craftable changed
+        IntList before = new IntArrayList(craftableRecipes.size());
+        for (RecipeDisplayEntry entry : craftableRecipes){
+            before.add(entry.id().index());
+        }
+
+        craftableRecipes.clear();
+        allRecipes.clear();
+        craftableCategories.clear();
+
+        // add all and craftable recipes
+        for (RecipeResultCollection collection : recipeBook.getOrderedResults()) {
+            for (RecipeDisplayEntry entry : collection.getAllRecipes()) {
+                if (!(entry.display() instanceof FurnaceRecipeDisplay recipeDisplay)) continue;
+                // its furnace recipe
+                allRecipes.add(entry);
+                for (ItemStack slotDisplay : recipeDisplay.ingredient().getStacks(worldContext)) {
+                    if (avaliableItemMap.containsKey(slotDisplay.getItem())) {
+                        craftableRecipes.add(entry);
+                        craftableCategories.computeIfAbsent(ModConfig.get().categorizeRecipes ?
+                                getTranslatedItemGroup(entry) :
+                                I18n.translate("easiercrafting.category.possible"),
+                                k -> new RecipeTreeSet()).add(entry);
+                        break;
+                    }
+                }
+
+            }
+        }
+
+
+        recalcListSize();
+        IntList after = new IntArrayList(craftableRecipes.size());
+        for (RecipeDisplayEntry entry : craftableRecipes){
+            after.add(entry.id().index());
+        }
+        return before.equals(after);
+    }
+
+    @Override
+    protected void onRecipeClicked(RecipeDisplayEntry entry, int mouseButton) {
+        if (!(screenHandler instanceof FurnaceScreenHandler container && entry.display() instanceof FurnaceRecipeDisplay recipe)) return;
+        List<ItemStack> inventory = ((InventoryAccessor)player.getInventory()).getCompatMain();
+        ItemStack fuelStack = container.slots.get(FUEL_SLOT).getStack();
+
+        // retrieve smelt items
+        if (container.slots.get(resultSlotNo).hasStack()) {
+            slotClick(resultSlotNo,0,SlotActionType.QUICK_MOVE);
+        }
+
+        // remove item if not match recipe
+        if (getFirstIngredient(entry).getItem() == container.slots.get(firstCraftSlotNo).getStack().getItem()){
+            slotClick(firstCraftSlotNo,0,SlotActionType.QUICK_MOVE);
+        }
+
+        // replenish fuel if possible, if fuel slot is empty let player decide what fuel to use
+        if (ModConfig.get().refillFuel) if (fuelStack.getItem().equals(Items.BUCKET)){
+            // just used lava as fuel...
+            slotClick(FUEL_SLOT,0,SlotActionType.QUICK_MOVE);
+
+            for (int slot = 0; slot < 36; slot++){
+                ItemStack itemStack = inventory.get(slot);
+                if (itemStack.getItem().equals(Items.LAVA_BUCKET)){
+                    LOGGER.info("try to refill lava");
+                    slotClick(slot,0,SlotActionType.QUICK_MOVE);
+                    lastFuelUsed = Items.LAVA_BUCKET;
+                    break;
+                }
+            }
+        } else if (!fuelStack.isEmpty()) {
+            // refill fuel
+            if (avaliableItemMap.containsKey(fuelStack.getItem())){
+                lastFuelUsed = fuelStack.getItem();
+                LOGGER.info("try to refill fuel: {}", fuelStack.getName().getString());
+                slotClick(FUEL_SLOT,0,SlotActionType.PICKUP);
+                slotClick(FUEL_SLOT,0,SlotActionType.PICKUP_ALL);
+                slotClick(FUEL_SLOT,0,SlotActionType.PICKUP);
+            }
+        } else if (lastFuelUsed!=null){
+            // refill fuel by last used as empty
+            LOGGER.info("try to refill memory: {}",lastFuelUsed.getTranslationKey());
+            for (int slot = firstInventorySlotNo; slot < 36+firstInventorySlotNo; slot++){
+                ItemStack itemStack = container.slots.get(slot).getStack();
+                if (itemStack.getItem().equals(lastFuelUsed)){
+                    LOGGER.info("refilling memory: {}",lastFuelUsed.getTranslationKey());
+                    slotClick(slot,0,SlotActionType.PICKUP);
+                    slotClick(slot,0,SlotActionType.PICKUP_ALL);
+                    slotClick(FUEL_SLOT,0,SlotActionType.PICKUP);
+                    break;
+                }
+            }
+        }
+
+        // move items onto craft spot
+        search:
+        for (int slot = firstInventorySlotNo; slot < 36 + firstInventorySlotNo; slot++) {
+            ItemStack slotContent = container.getSlot(slot).getStack();
+            for (ItemStack ingredientStack : recipe.ingredient().getStacks(worldContext)) {
+                if (ingredientStack.getItem().equals(slotContent.getItem())){
+                    if (Screen.hasShiftDown()) {
+                        slotClick(slot, 0, SlotActionType.PICKUP);
+                        slotClick(slot, 0, SlotActionType.PICKUP_ALL);
+                        slotClick(firstCraftSlotNo, 0, SlotActionType.PICKUP);
+                        slotClick(slot, 0, SlotActionType.PICKUP);
+                    } else {
+                        slotClick(slot, 0, SlotActionType.PICKUP);
+                        slotClick(firstCraftSlotNo, 1, SlotActionType.PICKUP);
+                        slotClick(slot, 0, SlotActionType.PICKUP);
+                    }
+                    break search;
+                }
+            }
+        }
+
+
+    }
+
+    @Override
+    protected void drawRecipeGridOverlay(DrawContext context, TextRenderer fontRenderer, int height, int mouseX, int mouseY) {
+        renderIngredient(context, fontRenderer, getFirstIngredient(underMouse), 0, height + itemSize);
+    }
+
+    protected ItemStack getFirstIngredient(RecipeDisplayEntry entry) {
+        if (!(entry.display() instanceof FurnaceRecipeDisplay recipe)) return null;
+        return recipe.ingredient().getFirst(worldContext);
+    }
+
+}

@@ -2,8 +2,8 @@ package de.guntram.mcmod.easiercrafting.extendedScreen;
 
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.SlotClickAccepter;
-import de.guntram.mcmod.easiercrafting.recipe.CraftingRecipeBook;
 
+import de.guntram.mcmod.easiercrafting.recipebook.CraftingRecipeBook;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.CraftingScreen;
 import net.minecraft.entity.player.PlayerInventory;

@@ -1,8 +1,10 @@
-package de.guntram.mcmod.easiercrafting.recipe;
+package de.guntram.mcmod.easiercrafting.recipebook;
 
 import de.guntram.mcmod.easiercrafting.*;
 import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiInventory;
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
+import de.guntram.mcmod.easiercrafting.recipe.RecipeTreeSet;
+import de.guntram.mcmod.easiercrafting.recipe.RepairCraftingRecipeDisplay;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.client.MinecraftClient;
@@ -29,7 +31,7 @@ import java.util.*;
 
 import static de.guntram.mcmod.easiercrafting.EasierCrafting.SPECIAL_CAT;
 
-public class CraftingRecipeBook extends AbstractRecipeBook<RecipeDisplayEntry> {
+public class CraftingRecipeBook extends AbstractRecipeBook {
 
     public CraftingRecipeBook(HandledScreen<? extends ScreenHandler> craftScreen, int firstCraftSlotNo, int gridsize, int resultSlot, int firstInventorySlot, SlotDisplay craftingBlock) {
         super(craftScreen, firstCraftSlotNo, gridsize, resultSlot, firstInventorySlot, craftingBlock);
@@ -40,7 +42,6 @@ public class CraftingRecipeBook extends AbstractRecipeBook<RecipeDisplayEntry> {
     public boolean updateRecipes() {
         assert MinecraftClient.getInstance().player != null;
 
-        ScreenHandler inventory = screen.getScreenHandler();
         ObjectOpenHashSet<NetworkRecipeId> beforeID = new ObjectOpenHashSet<>(craftableRecipes.size());
         for (RecipeDisplayEntry entry : craftableRecipes) {
             beforeID.add(entry.id());
@@ -72,12 +73,12 @@ public class CraftingRecipeBook extends AbstractRecipeBook<RecipeDisplayEntry> {
 
             if (getMaxCraftable(entry)>0) {
                 craftableRecipes.add(entry);
-                //System.out.println("can craft: " + entry.display().result().getFirst(getWorldContext()).getName().getString()+", cat: "+getCat(entry).getPath());
+                //System.out.println("can craft: " + entry.display().result().getFirst(worldcontext).getName().getString()+", cat: "+getCat(entry).getPath());
             }
         }
 
 
-        ItemGroups.updateDisplayContext(player.networkHandler.getEnabledFeatures(), true, player.getWorld().getRegistryManager());
+        ItemGroups.updateDisplayContext(player.networkHandler.getEnabledFeatures(), true, world.getRegistryManager());
 
         if (ModConfig.get().allowGeneratedRecipes) {
             addUnusualRecipe();
@@ -85,18 +86,6 @@ public class CraftingRecipeBook extends AbstractRecipeBook<RecipeDisplayEntry> {
 
         craftableCategories.clear();
         for (RecipeDisplayEntry entry : craftableRecipes) {
-            ItemStack result = entry.display().result().getFirst(worldContext);
-            Item item = result.getItem();
-            if (item == Items.AIR) continue;
-
-            ItemGroup tab = null;
-            for (ItemGroup group : ItemGroups.getGroups()) {
-                if (!group.isSpecial() && group.contains(result)) {
-                    tab = group;
-                    break;
-                }
-            }
-
             String category;
             if (!ModConfig.get().categorizeRecipes) {
                 // dont categorize recipes
@@ -104,13 +93,11 @@ public class CraftingRecipeBook extends AbstractRecipeBook<RecipeDisplayEntry> {
             } else if (Objects.requireNonNull(getCat(entry)).getNamespace().startsWith(EasierCrafting.MODID)) {
                 // generated recipe
                 category = I18n.translate("easiercrafting.category.special");
-            } else if (tab == null) {
-                category = Objects.requireNonNull(getCat(entry)).toTranslationKey();
             } else {
-                category = I18n.translate(tab.getDisplayName().getString());
+                category = getTranslatedItemGroup(entry);
             }
 
-            craftableCategories.computeIfAbsent(category, k -> new RecipeTreeSet<>(this::recipeDisplayName)).add(entry);
+            craftableCategories.computeIfAbsent(category, k -> new RecipeTreeSet()).add(entry);
         }
         recalcListSize();
 
@@ -120,47 +107,6 @@ public class CraftingRecipeBook extends AbstractRecipeBook<RecipeDisplayEntry> {
         }
 
         return beforeID.equals(afterID);
-    }
-
-    @Override
-    protected int drawSetOfRecipes(DrawContext context, RecipeTreeSet<?> treeSet, TextRenderer fontRenderer, int xpos, int ypos, int mouseX, int mouseY) {
-        if (treeSet == null || treeSet.isEmpty()) return ypos;
-        for (Object generalRecipe : treeSet) {
-            if (generalRecipe instanceof RecipeDisplayEntry recipe) {
-                if (ypos >= minYtoDraw) {
-                    int x = xOffset + xpos;
-                    int y = ypos - itemLift;
-
-                    // if cant craft draw red background on the result
-                    if (ModConfig.get().showAllRecipes && !craftableRecipes.contains(recipe)) {
-                        context.fill(x-1,y-1,x+18,y+18,0x60FF0000);
-                    }
-
-                    renderSingleRecipeOutput(context, fontRenderer, recipe.display().result().getFirst(worldContext), x, y);
-                    if (mouseX >= x && mouseX <= x + itemSize - 1
-                            && mouseY >= y && mouseY <= y + itemSize - 1) {
-                        underMouse = recipe;
-                    }
-                }
-                xpos += itemSize;
-                if (xpos >= itemSize * itemsPerRow) {
-                    ypos += itemSize;
-                    xpos = 0;
-                }
-            }
-        }
-        if (xpos != 0) ypos += itemSize;
-        return ypos;
-    }
-
-    @Override
-    protected List<ItemStack> getCraftingResult(RecipeDisplayEntry recipe) {
-        return recipe.display().result().getStacks(worldContext);
-    }
-
-    @Override
-    public String recipeDisplayName(RecipeDisplayEntry recipe) {
-        return recipe.display().result().getFirst(worldContext).getName().getString();
     }
 
     @Override
@@ -248,10 +194,10 @@ public class CraftingRecipeBook extends AbstractRecipeBook<RecipeDisplayEntry> {
 //            }
 
             for (int slot = firstInventorySlotNo; remaining > 0 && slot < 36 + firstInventorySlotNo; slot++) {
-                ItemStack slotcontent = screen.getScreenHandler().getSlot(slot).getStack();
+                ItemStack slotcontent = screenHandler.getSlot(slot).getStack();
                 if (canActAsIngredient(ingredient, slotcontent)) {
                     transfer(slot, i + firstCraftSlotNo + rowadjust, remaining);
-                    ItemStack inCraftSlot = screen.getScreenHandler().getSlot(i + firstCraftSlotNo + rowadjust).getStack();
+                    ItemStack inCraftSlot = screenHandler.getSlot(i + firstCraftSlotNo + rowadjust).getStack();
                     remaining = maxCraftableStacks - inCraftSlot.getCount();
                     if (!inCraftSlot.getRecipeRemainder().isEmpty()) {
                         removal[i] = true;
@@ -287,7 +233,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook<RecipeDisplayEntry> {
     }
 
     public void transfer(int from, int to, int amount) {
-        Slot fromSlot = screen.getScreenHandler().getSlot(from);
+        Slot fromSlot = screenHandler.getSlot(from);
         ItemStack fromContent = fromSlot.getStack();
 
         if (amount >= fromSlot.getStack().getCount()) {

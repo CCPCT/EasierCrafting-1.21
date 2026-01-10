@@ -2,7 +2,7 @@ package de.guntram.mcmod.easiercrafting.mixins;
 
 
 import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiInventory;
-import de.guntram.mcmod.easiercrafting.recipe.CraftingRecipeBook;
+import de.guntram.mcmod.easiercrafting.recipebook.CraftingRecipeBook;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
@@ -18,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(MinecraftClient.class)
-public class GuiInventoryMixin {
+public class OpenGuiInventoryMixin {
     
     @Shadow public ClientPlayerEntity player;
     @Shadow public void setScreen(Screen screenIn) {}

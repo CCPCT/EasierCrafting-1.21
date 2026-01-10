@@ -1,8 +1,10 @@
-package de.guntram.mcmod.easiercrafting.recipe;
+package de.guntram.mcmod.easiercrafting.recipebook;
 
 import de.guntram.mcmod.easiercrafting.*;
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
+import de.guntram.mcmod.easiercrafting.recipe.RecipeTreeSet;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
@@ -10,18 +12,26 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.recipebook.ClientRecipeBook;
+import net.minecraft.client.resource.language.I18n;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemGroup;
+import net.minecraft.item.ItemGroups;
 import net.minecraft.item.ItemStack;
 import net.minecraft.recipe.RecipeDisplayEntry;
+import net.minecraft.recipe.display.CuttingRecipeDisplay;
 import net.minecraft.recipe.display.SlotDisplay;
 import net.minecraft.recipe.display.SlotDisplayContexts;
+import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.context.ContextParameterMap;
+import net.minecraft.util.context.ContextType;
 import net.minecraft.util.math.MathHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,11 +41,12 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-public abstract class AbstractRecipeBook<T> {
+public abstract class AbstractRecipeBook {
 
     protected final Logger LOGGER;
     static final Object2IntOpenHashMap<Item> avaliableItemMap = new Object2IntOpenHashMap<>(36);
     ContextParameterMap worldContext;
+    public static final ContextParameterMap EMPTY_CONTEXT = new ContextParameterMap.Builder().build(new ContextType.Builder().build());
 
     // Protected fields for subclasses
     public final HandledScreen<? extends ScreenHandler> screen;
@@ -44,15 +55,18 @@ public abstract class AbstractRecipeBook<T> {
     protected final int resultSlotNo;
     protected final int firstInventorySlotNo;
     protected final SlotDisplay craftingBlock;
+    protected ClientRecipeBook recipeBook;
 
 
-    public final ObjectOpenHashSet<T> craftableRecipes = new ObjectOpenHashSet<>();
-    public final ObjectOpenHashSet<T> allRecipes = new ObjectOpenHashSet<>();
-    public final TreeMap<String, RecipeTreeSet<T>> craftableCategories = new TreeMap<>();
-    public T underMouse;
+    public final ObjectArrayList<RecipeDisplayEntry> craftableRecipes = new ObjectArrayList<>();
+    public final ObjectArrayList<RecipeDisplayEntry> allRecipes = new ObjectArrayList<>();
+    public final TreeMap<String, RecipeTreeSet> craftableCategories = new TreeMap<>();
+    public RecipeDisplayEntry underMouse;
 
     protected final MinecraftClient client;
     protected final ClientPlayerEntity player;
+    protected final ClientWorld world;
+    protected final ScreenHandler screenHandler;
 
     // Layout
     protected final int itemSize = 20;
@@ -70,7 +84,7 @@ public abstract class AbstractRecipeBook<T> {
     protected long recipeUpdateTime = 0;
     protected long recipeFadeTime = 0;
     public TextFieldWidget pattern;
-    public RecipeTreeSet<T> patternMatchingRecipes;
+    public RecipeTreeSet patternMatchingRecipes;
     public int patternListSize;
 
     /**
@@ -78,6 +92,11 @@ public abstract class AbstractRecipeBook<T> {
      */
 
     protected AbstractRecipeBook(HandledScreen<? extends ScreenHandler> craftScreen, int firstCraftSlotNo, int gridsize, int resultSlot, int firstInventorySlot, SlotDisplay craftingBlock) {
+        this.client = MinecraftClient.getInstance();
+        this.world = client.world;
+        assert client.player != null;
+        assert world != null;
+
         this.screen = craftScreen;
         this.firstCraftSlotNo = firstCraftSlotNo;
         this.gridSize = gridsize;
@@ -85,12 +104,12 @@ public abstract class AbstractRecipeBook<T> {
         this.firstInventorySlotNo = firstInventorySlot;
         this.pattern = null;
         this.underMouse = null;
-        this.client = MinecraftClient.getInstance();
         this.player = client.player;
-        assert MinecraftClient.getInstance().world != null;
-        this.worldContext = SlotDisplayContexts.createParameters(MinecraftClient.getInstance().world);
+        this.worldContext = SlotDisplayContexts.createParameters(world);
         this.LOGGER = LogManager.getLogger(craftScreen.getScreenHandler());
         this.craftingBlock = craftingBlock;
+        this.recipeBook = player.getRecipeBook();
+        this.screenHandler = screen.getScreenHandler();
     }
 
     // --- Abstract Methods to be implemented by subclasses ---
@@ -103,27 +122,50 @@ public abstract class AbstractRecipeBook<T> {
     /**
      * Called when a recipe in the list is clicked.
      */
-    protected abstract void onRecipeClicked(T entry, int mouseButton);
+    protected abstract void onRecipeClicked(RecipeDisplayEntry entry, int mouseButton);
 
     /**
      * Called to draw the overlay (e.g. 3x3 grid) when hovering over a recipe.
      */
     protected abstract void drawRecipeGridOverlay(DrawContext context, TextRenderer fontRenderer, int height, int mouseX, int mouseY);
-
     /**
      * Returns all craftable recipes.
      */
-    protected Set<T> getCraftableRecipes(){
-        return craftableRecipes;
-    }
+
+    // return all ingredient from SlotDisplayEntry
+    //protected abstract List<ItemStack> getAllIngredient(SlotDisplay display);
 
     // draw outputs... and set undermouse
-    protected abstract int drawSetOfRecipes(DrawContext context, RecipeTreeSet<?> treeSet, TextRenderer fontRenderer, int xpos, int ypos, int mouseX, int mouseY);
+    protected int drawSetOfRecipes(DrawContext context, RecipeTreeSet treeSet, TextRenderer fontRenderer, int xpos, int ypos, int mouseX, int mouseY) {
+        if (treeSet == null || treeSet.isEmpty()) return ypos;
+        for (RecipeDisplayEntry recipe : treeSet) {
+            if (ypos >= minYtoDraw) {
+                int x = xOffset + xpos;
+                int y = ypos - itemLift;
 
-    // return result of recipe
-    protected abstract List<ItemStack> getCraftingResult(T recipe);
+                // if cant craft draw red background on the result
+                if (ModConfig.get().showAllRecipes && !craftableRecipes.contains(recipe)) {
+                    context.fill(x-1,y-1,x+18,y+18,0x60FF0000);
+                }
 
-    public abstract String recipeDisplayName(T recipe);
+                renderSingleRecipeOutput(context, fontRenderer, recipe.display().result().getFirst(worldContext), x, y);
+                if (mouseX >= x &&
+                        mouseX <= x + itemSize - 1 &&
+                        mouseY >= y &&
+                        mouseY <= y + itemSize - 1)
+                {
+                    underMouse = recipe;
+                }
+            }
+            xpos += itemSize;
+            if (xpos >= itemSize * itemsPerRow) {
+                ypos += itemSize;
+                xpos = 0;
+            }
+        }
+        if (xpos != 0) ypos += itemSize;
+        return ypos;
+    }
 
     // --- Common Logic ---
 
@@ -257,6 +299,17 @@ public abstract class AbstractRecipeBook<T> {
         if (stacks.size() > 1)
             toRender = (int) ((System.currentTimeMillis() / 333) % stacks.size());
         context.drawItem(stacks.get(toRender), x, y);
+        context.drawStackOverlay(fontRenderer,stacks.get(toRender),x,y);
+    }
+
+    public void renderIngredient(DrawContext context, TextRenderer fontRenderer, ItemStack ingredient, int x, int y) {
+        assert world != null;
+        if (!avaliableItemMap.containsKey(ingredient.getItem())){
+            // doesnt have ingredient
+            context.fill(x-1,y-1,x+18,y+18,0x60FF0000);
+        }
+        context.drawItem(ingredient, x, y);
+        context.drawStackOverlay(fontRenderer,ingredient,x,y);
     }
 
     public void updateRecipesIn(int ms) {
@@ -265,24 +318,25 @@ public abstract class AbstractRecipeBook<T> {
 
     public void recalcListSize() {
         listSize = craftableCategories.size();
-        for (RecipeTreeSet<T> tree : craftableCategories.values())
+        for (RecipeTreeSet tree : craftableCategories.values())
             listSize += ((tree.size() + (itemsPerRow - 1)) / itemsPerRow);
         listSize *= itemSize;
     }
 
     public void updatePatternMatch() {
         patternListSize = 0;
-        patternMatchingRecipes = new RecipeTreeSet<>(this::recipeDisplayName);
+        patternMatchingRecipes = new RecipeTreeSet();
         String patternText = (pattern == null) ? "" : pattern.getText();
 
         if (patternText.isEmpty()) return;
 
         try {
             Pattern regex = Pattern.compile(patternText, Pattern.CASE_INSENSITIVE);
-            for (T entry : (ModConfig.get().showAllRecipes ? allRecipes : craftableRecipes)) {
+            for (RecipeDisplayEntry entry : (ModConfig.get().showAllRecipes ? allRecipes : craftableRecipes)) {
                 List<ItemStack> results = getCraftingResult(entry);
                 if (results.isEmpty() || results.getFirst().isEmpty()) continue;
-                if (regex.matcher(results.getFirst().getName().getString()).find()) {
+                // if raw name or translated name match (support other languages)
+                if (regex.matcher(results.getFirst().getItem().getTranslationKey()).find() || regex.matcher(results.getFirst().getName().getString()).find()) {
                     patternMatchingRecipes.add(entry);
                 }
             }
@@ -319,7 +373,10 @@ public abstract class AbstractRecipeBook<T> {
         // Ensure grid is empty (common check, though subclasses might override behavior)
         for (int craftslot = 0; craftslot < gridSize * gridSize; craftslot++) {
             ItemStack stack = screen.getScreenHandler().getSlot(craftslot + firstCraftSlotNo).getStack();
-            if (stack != null && !stack.isEmpty()) return;
+            if (stack != null && !stack.isEmpty()) {
+                // so only crafting moves, stonecutter/ furnaces dont
+                if (gridSize>3) slotClick(craftslot, 0, SlotActionType.QUICK_MOVE);
+            }
         }
 
         onRecipeClicked(underMouse, mouseButton);
@@ -374,5 +431,35 @@ public abstract class AbstractRecipeBook<T> {
         if (MinecraftClient.getInstance().world.getRegistryManager().getOptional(RegistryKeys.RECIPE_BOOK_CATEGORY).isEmpty()) return null;
         return MinecraftClient.getInstance().world.getRegistryManager().getOptional(RegistryKeys.RECIPE_BOOK_CATEGORY).get().getId(entry.category());
     }
+
+    public String recipeDisplayName(RecipeDisplayEntry entry) {
+        return getCraftingResult(entry).getFirst().getName().getString();
+    }
+
+    protected List<ItemStack> getCraftingResult(RecipeDisplayEntry recipe) {
+        return recipe.getStacks(worldContext);
+    }
+
+    protected ItemStack getFirstCraftingResult(RecipeDisplayEntry recipe) {
+        return recipe.display().result().getFirst(worldContext);
+    }
+
+    protected ItemGroup getItemGroup(RecipeDisplayEntry entry) {
+        Item resultItem = getFirstCraftingResult(entry).getItem();
+
+        for (ItemGroup group : Registries.ITEM_GROUP) {
+            // We check the "display stacks" of the group to see if our item is there
+            if (group.contains(resultItem.getDefaultStack())) {
+                return group; // Found the Creative Tab!
+            }
+        }
+        return ItemGroups.getDefaultTab();
+    }
+
+    protected String getTranslatedItemGroup(RecipeDisplayEntry entry){
+        return I18n.translate(getItemGroup(entry).getDisplayName().getString());
+    }
+
+
 }
 

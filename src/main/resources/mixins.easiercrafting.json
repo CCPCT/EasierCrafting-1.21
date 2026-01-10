@@ -5,8 +5,8 @@
   "minVersion": "0.6",
   "client": [
     "DelayedSlotClickContinue",
-    "GuiCraftMixin",
-    "GuiInventoryMixin",
+    "OpenGuiMixin",
+    "OpenGuiInventoryMixin",
     "PlayerInventoryMixin"
   ],
   "injectors": {

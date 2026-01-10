@@ -72,6 +72,11 @@ public class ConfigScreen extends Screen {
                 .setSaveConsumer(newValue -> ModConfig.get().showAllRecipes = newValue)
                 .build());
 
+        generalTab.addEntry(entryBuilder.startBooleanToggle(Text.literal("Refill fuel for furnaces"), ModConfig.get().refillFuel)
+                .setTooltip(Text.translatable("easiercrafting.config.tt.showallrecipes"))
+                .setSaveConsumer(newValue -> ModConfig.get().refillFuel = newValue)
+                .build());
+
 
         return builder.build();
     }
