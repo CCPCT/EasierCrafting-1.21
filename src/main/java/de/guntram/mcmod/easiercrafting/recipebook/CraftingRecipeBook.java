@@ -140,6 +140,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
 
     @Override
     protected void onRecipeClicked(RecipeDisplayEntry entry, int mouseButton) {
+        if (!craftableRecipes.contains(underMouse)) return;
         List<Ingredient> recipeInput = entry.craftingRequirements().orElse(Collections.emptyList());
         if (recipeInput.isEmpty()) return;
 
