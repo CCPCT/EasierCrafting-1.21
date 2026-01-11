@@ -205,6 +205,7 @@ public abstract class AbstractRecipeBook {
         // Update logic
         if (recipeUpdateTime != 0 && System.currentTimeMillis() > recipeUpdateTime) {
             recipeUpdateTime = 0;
+            // call update recipe here
             if (!updateRecipes()){
                 // before and after not same
                 LOGGER.info("Update recipe");
@@ -370,6 +371,9 @@ public abstract class AbstractRecipeBook {
 
         if (underMouse == null) return;
 
+        // dont craft uncraftable items
+        if (!craftableRecipes.contains(underMouse)) return;
+
         // Ensure grid is empty (common check, though subclasses might override behavior)
         for (int craftslot = 0; craftslot < gridSize * gridSize; craftslot++) {
             ItemStack stack = screen.getScreenHandler().getSlot(craftslot + firstCraftSlotNo).getStack();
@@ -445,14 +449,19 @@ public abstract class AbstractRecipeBook {
     }
 
     protected ItemGroup getItemGroup(RecipeDisplayEntry entry) {
+        // get the group of result item
         Item resultItem = getFirstCraftingResult(entry).getItem();
 
         for (ItemGroup group : Registries.ITEM_GROUP) {
+            // dont want to be generic "searched"
+            if (group.getType() == ItemGroup.Type.SEARCH) continue;
+
             // We check the "display stacks" of the group to see if our item is there
             if (group.contains(resultItem.getDefaultStack())) {
                 return group; // Found the Creative Tab!
             }
         }
+        LOGGER.warn("Cant find group for: {}", resultItem.getTranslationKey());
         return ItemGroups.getDefaultTab();
     }
 

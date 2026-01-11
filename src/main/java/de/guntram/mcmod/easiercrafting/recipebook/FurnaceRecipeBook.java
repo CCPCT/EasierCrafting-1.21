@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Stream;
 
 public class FurnaceRecipeBook extends AbstractRecipeBook {
     public static Item lastFuelUsed;
@@ -64,6 +65,7 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
             for (RecipeDisplayEntry entry : collection.getAllRecipes()) {
                 if (!(entry.display() instanceof FurnaceRecipeDisplay recipeDisplay)) continue;
                 // its furnace recipe
+                if (recipeDisplay.craftingStation().getFirst(worldContext).getItem()!=Items.FURNACE) continue;
                 allRecipes.add(entry);
                 for (ItemStack slotDisplay : recipeDisplay.ingredient().getStacks(worldContext)) {
                     if (avaliableItemMap.containsKey(slotDisplay.getItem())) {

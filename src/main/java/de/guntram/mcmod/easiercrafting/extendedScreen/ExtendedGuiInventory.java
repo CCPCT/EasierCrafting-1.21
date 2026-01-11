@@ -5,6 +5,7 @@ import de.guntram.mcmod.easiercrafting.SlotClickAccepter;
 import de.guntram.mcmod.easiercrafting.recipebook.CraftingRecipeBook;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
+import net.minecraft.client.gui.screen.recipebook.RecipeBookWidget;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.screen.slot.SlotActionType;
 import org.lwjgl.glfw.GLFW;
@@ -20,8 +21,10 @@ public class ExtendedGuiInventory extends InventoryScreen implements SlotClickAc
     @Override
     public void init() {
         super.init();
-        if (!ModConfig.get().allowRecipeBook)
-            this.children().clear();
+        if (!ModConfig.get().allowRecipeBook) {
+            // just remove recipe book button
+            this.children().removeIf(entry -> entry instanceof RecipeBookWidget);
+        }
         this.recipeBook.afterInitGui();
     }
 

@@ -2,10 +2,10 @@ package de.guntram.mcmod.easiercrafting.extendedScreen;
 
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.SlotClickAccepter;
-
 import de.guntram.mcmod.easiercrafting.recipebook.CraftingRecipeBook;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.CraftingScreen;
+import net.minecraft.client.gui.screen.recipebook.RecipeBookWidget;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.screen.CraftingScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
@@ -24,7 +24,8 @@ public class ExtendedGuiCrafting extends CraftingScreen implements SlotClickAcce
     protected void init() {
         super.init();
         if (!ModConfig.get().allowRecipeBook) {
-            this.children().clear();
+            // just remove recipe book button
+            this.children().removeIf(entry -> entry instanceof RecipeBookWidget);
         }
         this.recipeBook.afterInitGui();
     }

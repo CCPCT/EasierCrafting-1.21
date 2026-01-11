@@ -1,9 +1,11 @@
 package de.guntram.mcmod.easiercrafting.extendedScreen;
 
 import de.guntram.mcmod.easiercrafting.SlotClickAccepter;
+import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.recipebook.StonecutterRecipeBook;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.StonecutterScreen;
+import net.minecraft.client.gui.screen.recipebook.RecipeBookWidget;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.screen.StonecutterScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
@@ -21,6 +23,10 @@ public class ExtendedGuiStonecutter extends StonecutterScreen implements SlotCli
     @Override
     protected void init() {
         super.init();
+        if (!ModConfig.get().allowRecipeBook) {
+            // just remove recipe book button
+            this.children().removeIf(entry -> entry instanceof RecipeBookWidget);
+        }
         this.recipeBook.afterInitGui();
     }
 
