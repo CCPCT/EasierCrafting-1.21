@@ -54,11 +54,19 @@ public class OpenGuiMixin {
         }
         // smoker
         else if (type == ScreenHandlerType.SMOKER) {
-            //ci.cancel();
+            FurnaceScreenHandler handler = ScreenHandlerType.FURNACE.create(id, client.player.getInventory());
+            ExtendedGuiFurnace screen = new ExtendedGuiFurnace(handler, client.player.getInventory(), title);
+            screen.setRecipeBook(new FurnaceRecipeBook(screen, 0, 1, 2, 3, new SlotDisplay.StackSlotDisplay(new ItemStack(Items.SMOKER)),1));
+            openScreen(client, handler, screen);
+            ci.cancel();
         }
         // blast furnace
         else if (type == ScreenHandlerType.BLAST_FURNACE) {
-            //ci.cancel();
+            FurnaceScreenHandler handler = ScreenHandlerType.FURNACE.create(id, client.player.getInventory());
+            ExtendedGuiFurnace screen = new ExtendedGuiFurnace(handler, client.player.getInventory(), title);
+            screen.setRecipeBook(new FurnaceRecipeBook(screen, 0, 1, 2, 3, new SlotDisplay.StackSlotDisplay(new ItemStack(Items.BLAST_FURNACE)),1));
+            openScreen(client, handler, screen);
+            ci.cancel();
         }
     }
 

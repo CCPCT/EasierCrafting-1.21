@@ -65,7 +65,7 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
             for (RecipeDisplayEntry entry : collection.getAllRecipes()) {
                 if (!(entry.display() instanceof FurnaceRecipeDisplay recipeDisplay)) continue;
                 // its furnace recipe
-                if (recipeDisplay.craftingStation().getFirst(worldContext).getItem()!=Items.FURNACE) continue;
+                if (recipeDisplay.craftingStation().getFirst(worldContext).getItem()!=craftingBlock.getItem()) continue;
                 allRecipes.add(entry);
                 for (ItemStack slotDisplay : recipeDisplay.ingredient().getStacks(worldContext)) {
                     if (avaliableItemMap.containsKey(slotDisplay.getItem())) {
