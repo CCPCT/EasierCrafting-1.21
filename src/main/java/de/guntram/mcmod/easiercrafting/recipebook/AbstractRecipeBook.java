@@ -378,8 +378,8 @@ public abstract class AbstractRecipeBook {
         for (int craftslot = 0; craftslot < gridSize * gridSize; craftslot++) {
             ItemStack stack = screen.getScreenHandler().getSlot(craftslot + firstCraftSlotNo).getStack();
             if (stack != null && !stack.isEmpty()) {
-                // so only crafting moves, stonecutter/ furnaces dont
-                if (gridSize>3) slotClick(craftslot, 0, SlotActionType.QUICK_MOVE);
+                slotClick(craftslot+firstCraftSlotNo, 0, SlotActionType.QUICK_MOVE);
+                if (!stack.isEmpty()) return; // can't move item away (inventory full or locked) stop crafting
             }
         }
 
