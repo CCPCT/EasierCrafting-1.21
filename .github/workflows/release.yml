@@ -2,7 +2,7 @@ name: release
 on:
   push:
     tags:
-      - 'v*' 
+      - 'v*' # Trigger only when pushing a tag starting with 'v'
   workflow_dispatch:
     inputs:
         tag_name:
@@ -14,11 +14,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write 
+      contents: write # Needed to create the release
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Ensures the git log is available
+          fetch-depth: 0 # Fetches all history so it can find the commit message for any tag
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -28,10 +29,12 @@ jobs:
           cache: 'gradle'
           
       - name: Force Download Dependencies
+        # This triggers Loom to download/remap but ignores the failure
         run: ./gradlew downloadAssets --continue || true
 
       - name: Manual Rename Fix
         run: |
+          # Find and rename the jar in the project-local loom cache
           find .gradle/loom-cache/remapped_mods -name "*cloth-config-fabric-*-fabric.jar" | while read -r file; do
             mv "$file" "${file%-fabric.jar}.jar"
             echo "Successfully renamed $file"
@@ -44,16 +47,19 @@ jobs:
       - name: Get Commit Message
         id: commit_message
         run: |
+          # Use the manually entered tag if it exists, otherwise use the tag that triggered the push
+          TARGET_REF="${{ github.event.inputs.tag_name || github.ref_name }}"
+          echo "Fetching message for: $TARGET_REF"
+          
           {
             echo "msg<<EOF"
-            git log -1 --pretty=%B
+            git log -1 "$TARGET_REF" --pretty=%B
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          # Use the tag name or manual input for the release title
           name: "${{ github.event.inputs.tag_name || github.ref_name }} for 1.21.2-8"
           tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
           body: ${{ steps.commit_message.outputs.msg }}
