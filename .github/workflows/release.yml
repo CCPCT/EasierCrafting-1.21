@@ -5,10 +5,10 @@ on:
       - 'v*' # Trigger only when pushing a tag starting with 'v'
   workflow_dispatch:
     inputs:
-        tag_name:
-          description: 'Tag for the release (e.g., v1.0.0)'
-          required: true
-          default: 'manual-build'
+      tag_name:
+        description: 'Tag for the release (e.g., v1.0.0)'
+        required: true
+        default: 'v2.'
 
 jobs:
   build:
@@ -19,15 +19,28 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Fetches all history so it can find the commit message for any tag
+          fetch-depth: 0 # Fetches all history for commit messages
 
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
-          cache: 'gradle'
-          
+          # Standard caching is disabled here to use the manual block below
+
+      - name: Gradle & Loom Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            .gradle/loom-cache
+          # Key is based on OS and build file hashes
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          # Fallback to the most recent cache available if the files changed slightly
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
       - name: Force Download Dependencies
         # This triggers Loom to download/remap but ignores the failure
         run: ./gradlew downloadAssets --continue || true
@@ -40,7 +53,7 @@ jobs:
             echo "Successfully renamed $file"
           done
         continue-on-error: true
-        
+
       - name: Build Mod
         run: ./gradlew build
 
@@ -63,6 +76,6 @@ jobs:
           name: "${{ github.event.inputs.tag_name || github.ref_name }} for 1.21.2-8"
           tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
           body: ${{ steps.commit_message.outputs.msg }}
-          files: build/libs/*.jar 
+          files: build/libs/*.jar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
