@@ -1,16 +1,10 @@
 package de.guntram.mcmod.easiercrafting.recipebook;
 
-import com.mojang.blaze3d.textures.FilterMode;
 import de.guntram.mcmod.easiercrafting.InventoryAccessor;
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.recipe.RecipeTreeSet;
-import de.guntram.mcmod.easiercrafting.recipe.RepairCraftingRecipeDisplay;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -21,21 +15,12 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.recipe.RecipeDisplayEntry;
-import net.minecraft.recipe.StonecuttingRecipe;
-import net.minecraft.recipe.book.RecipeBookCategories;
-import net.minecraft.recipe.book.RecipeBookGroup;
 import net.minecraft.recipe.display.*;
 import net.minecraft.recipe.display.FurnaceRecipeDisplay;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.FurnaceScreenHandler;
-import net.minecraft.screen.StonecutterScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
-
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Stream;
 
 public class FurnaceRecipeBook extends AbstractRecipeBook {
     public static Item lastFuelUsed;
@@ -102,7 +87,7 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
         }
 
         // remove item if not match recipe
-        if (getFirstIngredient(entry).getItem() == container.slots.get(firstCraftSlotNo).getStack().getItem()){
+        if (getFirstIngredient(entry).getItem() != container.slots.get(firstCraftSlotNo).getStack().getItem()){
             slotClick(firstCraftSlotNo,0,SlotActionType.QUICK_MOVE);
         }
 
@@ -164,8 +149,30 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
                 }
             }
         }
+    }
 
+    // override as want to stack more items onto instead of take out everytime
+    @Override
+    public void mouseClicked(int mouseX, int mouseY, int mouseButton, int guiLeft, int guiTop) {
+        if (pattern != null) {
+            pattern.setFocused(pattern.mouseClicked(mouseX - guiLeft, mouseY - guiTop, mouseButton));
+        }
 
+        // Scroll bar area click
+        if (mouseY > 0 && mouseY < 20 && mouseX > xOffset + containerLeft && mouseX < xOffset + containerLeft + textBoxSize) {
+            if (mouseX < xOffset + containerLeft + 20) scrollBy(-1);
+            else if (mouseX > xOffset + containerLeft + textBoxSize - 20) scrollBy(1);
+            return;
+        }
+
+        if (underMouse == null) return;
+
+        // dont craft uncraftable items
+        if (!craftableRecipes.contains(underMouse)) return;
+
+        // skip check -> implement check in onRecipeClicked
+        onRecipeClicked(underMouse, mouseButton);
+        queueUpdateRecipe();
     }
 
     @Override

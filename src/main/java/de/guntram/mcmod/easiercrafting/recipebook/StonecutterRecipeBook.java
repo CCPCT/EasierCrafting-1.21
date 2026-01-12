@@ -126,9 +126,7 @@ public class StonecutterRecipeBook extends AbstractRecipeBook {
 
             // 4. Take the result from the output slot (slot 1) to complete the craft
             interactionManager.clickSlot(container.syncId, 1, 0, SlotActionType.QUICK_MOVE, player);
-            updateRecipesIn(ModConfig.get().autoUpdateRecipeTimer * 50);
         }
-
     }
 
     @Override

@@ -21,6 +21,8 @@ import net.minecraft.item.*;
 import net.minecraft.recipe.Ingredient;
 import net.minecraft.recipe.NetworkRecipeId;
 import net.minecraft.recipe.RecipeDisplayEntry;
+import net.minecraft.recipe.book.RecipeBookCategories;
+import net.minecraft.recipe.book.RecipeBookCategory;
 import net.minecraft.recipe.display.*;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
@@ -52,7 +54,6 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
         allRecipes.clear();
 
         for (RecipeResultCollection result : MinecraftClient.getInstance().player.getRecipeBook().getResultsForCategory(RecipeBookType.CRAFTING)){
-            //System.out.println("found collection: "+result.getAllRecipes().getFirst().getStacks(EMPTY_CONTEXT).getFirst().getName());
             allRecipes.addAll(result.getAllRecipes());
         }
         for (RecipeDisplayEntry entry : allRecipes) {
@@ -77,11 +78,14 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
             }
         }
 
-
-        ItemGroups.updateDisplayContext(player.networkHandler.getEnabledFeatures(), true, world.getRegistryManager());
-
         if (ModConfig.get().allowGeneratedRecipes) {
             addUnusualRecipe();
+            allRecipes.removeIf(entry ->
+                entry.category() == RecipeBookCategories.CRAFTING_MISC && entry.display().result().getFirst(worldContext).getItem()==Items.FIREWORK_ROCKET
+            );
+            craftableRecipes.removeIf(entry ->
+                    entry.category() == RecipeBookCategories.CRAFTING_MISC && entry.display().result().getFirst(worldContext).getItem()==Items.FIREWORK_ROCKET
+            );
         }
 
         craftableCategories.clear();
@@ -92,11 +96,14 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
                 category = I18n.translate("easiercrafting.category.possible");
             } else if (Objects.requireNonNull(getCat(entry)).getNamespace().startsWith(EasierCrafting.MODID)) {
                 // generated recipe
-                category = I18n.translate("easiercrafting.category.special");
+                if (entry.display() instanceof RepairCraftingRecipeDisplay){
+                    category = "Repair";
+                } else {
+                    category = I18n.translate("easiercrafting.category.special");
+                }
             } else {
                 category = getTranslatedItemGroup(entry);
             }
-
             craftableCategories.computeIfAbsent(category, k -> new RecipeTreeSet()).add(entry);
         }
         recalcListSize();
@@ -212,7 +219,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
         // actually craft item
         if (mouseButton == 0 && !Screen.hasControlDown()) {
             slotClick(resultSlotNo, mouseButton, SlotActionType.QUICK_MOVE);
-            updateRecipesIn(ModConfig.get().autoUpdateRecipeTimer * 50);
+            queueUpdateRecipe();
 
             rowadjust = 0;
             for (int i = 0; i < removal.length; i++) {

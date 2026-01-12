@@ -271,8 +271,7 @@ public abstract class AbstractRecipeBook {
     }
 
 
-    public static void updateAvailableStacks() {
-        PlayerEntity player = MinecraftClient.getInstance().player;
+    public void updateAvailableStacks() {
         avaliableItemMap.clear();
         if (player==null) return;
         // Iterate through slots (usually 0-35 for player inventory)
@@ -280,6 +279,8 @@ public abstract class AbstractRecipeBook {
             if (itemStack.isEmpty()) continue;
             avaliableItemMap.merge(itemStack.getItem(), itemStack.getCount(), Integer::sum);
         }
+        // populate creative item group so recipes can be grouped
+        ItemGroups.updateDisplayContext(player.networkHandler.getEnabledFeatures(), true, world.getRegistryManager());
     }
 
     public void renderSingleRecipeOutput(DrawContext context, TextRenderer fontRenderer, ItemStack items, int x, int y) {
@@ -311,10 +312,6 @@ public abstract class AbstractRecipeBook {
         }
         context.drawItem(ingredient, x, y);
         context.drawStackOverlay(fontRenderer,ingredient,x,y);
-    }
-
-    public void updateRecipesIn(int ms) {
-        recipeUpdateTime = System.currentTimeMillis() + ms;
     }
 
     public void recalcListSize() {
@@ -384,6 +381,7 @@ public abstract class AbstractRecipeBook {
         }
 
         onRecipeClicked(underMouse, mouseButton);
+        queueUpdateRecipe();
     }
 
     public boolean keyPressed(int code, int scancode, int modifiers) {
@@ -469,6 +467,9 @@ public abstract class AbstractRecipeBook {
         return I18n.translate(getItemGroup(entry).getDisplayName().getString());
     }
 
+    protected void queueUpdateRecipe(){
+        recipeUpdateTime = System.currentTimeMillis() + ModConfig.get().autoUpdateRecipeTimer * 50L;
+    }
 
 }
 

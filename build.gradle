@@ -4,23 +4,10 @@ plugins {
 
 repositories {
 	maven {url "https://maven.terraformersmc.com/releases/" }
-    maven {url = "https://minecraft.guntram.de/maven/"}
     maven {url "https://maven.shedaniel.me/" }
 }
 
-
-sourceCompatibility = 21
-targetCompatibility = 21
-
-
-
-archivesBaseName = "easiercrafting-updated"
-
 version = "${project.minecraft_version}-${project.projectVersion}"
-
-loom {
-        mixin.defaultRefmapName = "EasierCrafting-refmap.json";
-}
 
 processResources {
     inputs.property "version", project.version
@@ -36,10 +23,6 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
     modImplementation "com.terraformersmc:modmenu:${project.modmenu_version}"
-
-    modImplementation "de.guntram.mcmod:GBfabrictools:${project.gbfabrictools_version}"
-    include    "de.guntram.mcmod:GBfabrictools:${project.gbfabrictools_version}"
-
     modApi ("me.shedaniel.cloth:cloth-config-fabric:${project.clothconfig_version}") {
         exclude (group: "net.fabricmc.fabric-api")
     }
@@ -47,6 +30,9 @@ dependencies {
 
 java {
     withSourcesJar()
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 jar {
