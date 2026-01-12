@@ -2,7 +2,7 @@ name: release
 on:
   push:
     tags:
-      - 'v*' # Trigger only when pushing a tag starting with 'v'
+      - 'v*' 
   workflow_dispatch:
     inputs:
         tag_name:
@@ -14,10 +14,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Needed to create the release
+      contents: write 
     steps:
       - uses: actions/checkout@v4
-      
+        with:
+          fetch-depth: 0 # Ensures the git log is available
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -26,12 +28,10 @@ jobs:
           cache: 'gradle'
           
       - name: Force Download Dependencies
-        # This triggers Loom to download/remap but ignores the failure
         run: ./gradlew downloadAssets --continue || true
 
       - name: Manual Rename Fix
         run: |
-          # Find and rename the jar in the project-local loom cache
           find .gradle/loom-cache/remapped_mods -name "*cloth-config-fabric-*-fabric.jar" | while read -r file; do
             mv "$file" "${file%-fabric.jar}.jar"
             echo "Successfully renamed $file"
@@ -43,11 +43,17 @@ jobs:
 
       - name: Get Commit Message
         id: commit_message
-        run: echo "msg=$(git log -1 --pretty=%B)" >> $GITHUB_OUTPUT
+        run: |
+          {
+            echo "msg<<EOF"
+            git log -1 --pretty=%B
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
+          # Use the tag name or manual input for the release title
           name: "${{ github.event.inputs.tag_name || github.ref_name }} for 1.21.2-8"
           tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
           body: ${{ steps.commit_message.outputs.msg }}
