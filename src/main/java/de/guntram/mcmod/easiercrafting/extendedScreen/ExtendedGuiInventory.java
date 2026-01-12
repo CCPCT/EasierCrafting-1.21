@@ -1,7 +1,7 @@
 package de.guntram.mcmod.easiercrafting.extendedScreen;
 
-import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.SlotClickAccepter;
+import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.recipebook.CraftingRecipeBook;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
@@ -70,9 +70,7 @@ public class ExtendedGuiInventory extends InventoryScreen implements SlotClickAc
 
     @Override
     public void slotClick(int slot, int mouseButton, SlotActionType clickType) {
-        // System.out.println("Clicking slot "+slot+" "+(mouseButton==0 ? "left" : "right")+" type:"+clickType.toString());
         this.onMouseClick(null, slot, mouseButton, clickType);
-        // mc.playerController.windowClick(mc.player.openContainer.windowId, slot, mouseButton, clickType, mc.player);
     }
 
 }

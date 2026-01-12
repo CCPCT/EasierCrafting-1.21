@@ -1,11 +1,11 @@
 package de.guntram.mcmod.easiercrafting.recipebook;
 
-import de.guntram.mcmod.easiercrafting.*;
+import de.guntram.mcmod.easiercrafting.InventoryAccessor;
+import de.guntram.mcmod.easiercrafting.SlotClickAccepter;
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.recipe.RecipeTreeSet;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
@@ -15,13 +15,11 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.recipebook.ClientRecipeBook;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemGroups;
 import net.minecraft.item.ItemStack;
 import net.minecraft.recipe.RecipeDisplayEntry;
-import net.minecraft.recipe.display.CuttingRecipeDisplay;
 import net.minecraft.recipe.display.SlotDisplay;
 import net.minecraft.recipe.display.SlotDisplayContexts;
 import net.minecraft.registry.Registries;
@@ -37,7 +35,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -469,6 +470,10 @@ public abstract class AbstractRecipeBook {
 
     protected void queueUpdateRecipe(){
         recipeUpdateTime = System.currentTimeMillis() + ModConfig.get().autoUpdateRecipeTimer * 50L;
+    }
+
+    public static SlotDisplay getSlotDisplayFromItem(Item item){
+        return new SlotDisplay.StackSlotDisplay(new ItemStack(item));
     }
 
 }

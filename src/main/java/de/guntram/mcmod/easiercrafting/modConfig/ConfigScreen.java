@@ -24,6 +24,10 @@ public class ConfigScreen extends Screen {
         ConfigEntryBuilder entryBuilder = builder.entryBuilder();
 
         // General settings
+        generalTab.addEntry(entryBuilder.startBooleanToggle(Text.literal("Enable Mod"), ModConfig.get().modEnabled)
+                .setSaveConsumer(newValue -> ModConfig.get().modEnabled = newValue)
+                .build());
+
         generalTab.addEntry(entryBuilder.startBooleanToggle(Text.translatable("easiercrafting.config.autofocus"), ModConfig.get().autoFocusSearch)
                 .setTooltip(Text.translatable("easiercrafting.config.tt.autofocus"))
                 .setSaveConsumer(newValue -> ModConfig.get().autoFocusSearch = newValue)

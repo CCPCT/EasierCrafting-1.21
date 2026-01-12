@@ -4,32 +4,29 @@ import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.recipe.RecipeTreeSet;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.recipebook.RecipeResultCollection;
 import net.minecraft.client.resource.language.I18n;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.recipe.RecipeDisplayEntry;
 import net.minecraft.recipe.StonecuttingRecipe;
 import net.minecraft.recipe.book.RecipeBookCategories;
 import net.minecraft.recipe.display.CuttingRecipeDisplay;
-import net.minecraft.recipe.display.SlotDisplay;
 import net.minecraft.recipe.display.StonecutterRecipeDisplay;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.StonecutterScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
 
-import java.util.*;
+import java.util.List;
 
 public class StonecutterRecipeBook extends AbstractRecipeBook {
 
-    public StonecutterRecipeBook(HandledScreen<? extends ScreenHandler> craftScreen, int firstCraftSlotNo, int gridsize, int resultSlot, int firstInventorySlot, SlotDisplay craftingBlock) {
-        super(craftScreen, firstCraftSlotNo, gridsize, resultSlot, firstInventorySlot,  craftingBlock);
+    public StonecutterRecipeBook(HandledScreen<? extends ScreenHandler> craftScreen) {
+        super(craftScreen, 0, 1, 1, 2,  getSlotDisplayFromItem(Items.STONECUTTER));
     }
 
 

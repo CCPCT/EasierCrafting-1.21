@@ -1,9 +1,9 @@
 package de.guntram.mcmod.easiercrafting.modConfig;
 
-import de.guntram.mcmod.easiercrafting.EasierCrafting;
-import net.fabricmc.loader.api.FabricLoader;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import de.guntram.mcmod.easiercrafting.EasierCrafting;
+import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,6 +11,7 @@ import java.nio.file.Path;
 
 public class ModConfig {
 
+    public boolean modEnabled;
     public boolean autoFocusSearch;
     public int autoUpdateRecipeTimer;
     public boolean allowRecipeBook;

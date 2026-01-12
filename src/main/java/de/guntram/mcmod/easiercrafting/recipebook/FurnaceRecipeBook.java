@@ -15,20 +15,20 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.recipe.RecipeDisplayEntry;
-import net.minecraft.recipe.display.*;
 import net.minecraft.recipe.display.FurnaceRecipeDisplay;
-import net.minecraft.screen.ScreenHandler;
+import net.minecraft.recipe.display.SlotDisplay;
 import net.minecraft.screen.FurnaceScreenHandler;
+import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
+
 import java.util.List;
 
 public class FurnaceRecipeBook extends AbstractRecipeBook {
     public static Item lastFuelUsed;
-    protected final int FUEL_SLOT;
+    protected final int FUEL_SLOT = 1;
 
-    public FurnaceRecipeBook(HandledScreen<? extends ScreenHandler> craftScreen, int firstCraftSlotNo, int gridsize, int resultSlot, int firstInventorySlot, SlotDisplay craftingBlock, int fuelSlot) {
-        super(craftScreen, firstCraftSlotNo, gridsize, resultSlot, firstInventorySlot,  craftingBlock);
-        FUEL_SLOT=fuelSlot;
+    public FurnaceRecipeBook(HandledScreen<? extends ScreenHandler> craftScreen, SlotDisplay craftingBlock) {
+        super(craftScreen, 0, 1, 2, 3, craftingBlock);
     }
 
     @Override

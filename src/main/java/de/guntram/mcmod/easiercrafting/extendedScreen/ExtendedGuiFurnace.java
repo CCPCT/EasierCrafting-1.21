@@ -72,8 +72,6 @@ public class ExtendedGuiFurnace extends FurnaceScreen implements SlotClickAccept
 
     @Override
     public void slotClick(int slot, int mouseButton, SlotActionType clickType) {
-        // System.out.println("Clicking slot "+slot+" "+(mouseButton==0 ? "left" : "right")+" type:"+clickType.toString());
         this.onMouseClick(null, slot, mouseButton, clickType);
-        // mc.playerController.windowClick(mc.player.openContainer.windowId, slot, mouseButton, clickType, mc.player);
     }
 }
