@@ -41,19 +41,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Force Download Dependencies
-        # This triggers Loom to download/remap but ignores the failure
-        run: ./gradlew downloadAssets --continue || true
-
-      - name: Manual Rename Fix
-        run: |
-          # Find and rename the jar in the project-local loom cache
-          find .gradle/loom-cache/remapped_mods -name "*cloth-config-fabric-*-fabric.jar" | while read -r file; do
-            mv "$file" "${file%-fabric.jar}.jar"
-            echo "Successfully renamed $file"
-          done
-        continue-on-error: true
-
       - name: Build Mod
         run: ./gradlew build
 
