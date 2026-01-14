@@ -16,7 +16,7 @@
       "fabric-api": "*",
       "fabricloader": "*",
       "fabric": "*",
-      "minecraft": ">=1.21.9 <=1.21.10",
+      "minecraft": "~1.21.9",
       "java": ">=21",
       "modmenu": "*",
       "cloth-config": "*"
