@@ -2,11 +2,11 @@ name: release
 on:
   push:
     tags:
-      - 'v*' # Trigger only when pushing a tag starting with 'v'
+      - 'v*'
   workflow_dispatch:
     inputs:
       tag_name:
-        description: 'Tag for the release (e.g., v1.0.0)'
+        description: 'Tag for the release'
         required: true
         default: 'v2.'
 
@@ -14,43 +14,30 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Needed to create the release
+      contents: write
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Fetches all history for commit messages
+          fetch-depth: 0
 
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
-          # Standard caching is disabled here to use the manual block below
-
-      - name: Gradle & Loom Cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-            .gradle/loom-cache
-          # Key is based on OS and build file hashes
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          # Fallback to the most recent cache available if the files changed slightly
-          restore-keys: |
-            ${{ runner.os }}-gradle-
 
       - name: Build Mod
-        run: ./gradlew build
+        # --no-daemon ensures the process doesn't get killed for memory leaks
+        # GRADLE_OPTS gives the runner enough RAM to decompile MC from scratch
+        run: ./gradlew build --no-daemon
+        env:
+          GRADLE_OPTS: -Xmx4G -XX:+UseParallelGC
 
       - name: Get Commit Message
         id: commit_message
         run: |
-          # Use the manually entered tag if it exists, otherwise use the tag that triggered the push
           TARGET_REF="${{ github.event.inputs.tag_name || github.ref_name }}"
-          echo "Fetching message for: $TARGET_REF"
-          
           {
             echo "msg<<EOF"
             git log -1 "$TARGET_REF" --pretty=%B
