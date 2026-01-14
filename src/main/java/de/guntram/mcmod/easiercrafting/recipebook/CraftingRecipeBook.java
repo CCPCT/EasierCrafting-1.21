@@ -1,12 +1,12 @@
 package de.guntram.mcmod.easiercrafting.recipebook;
 
-import de.guntram.mcmod.easiercrafting.*;
+import de.guntram.mcmod.easiercrafting.EasierCrafting;
+import de.guntram.mcmod.easiercrafting.InventoryAccessor;
 import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiInventory;
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.recipe.RecipeTreeSet;
 import de.guntram.mcmod.easiercrafting.recipe.RepairCraftingRecipeDisplay;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
@@ -17,13 +17,17 @@ import net.minecraft.client.recipebook.RecipeBookType;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.FireworksComponent;
-import net.minecraft.item.*;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.recipe.Ingredient;
 import net.minecraft.recipe.NetworkRecipeId;
 import net.minecraft.recipe.RecipeDisplayEntry;
 import net.minecraft.recipe.book.RecipeBookCategories;
-import net.minecraft.recipe.book.RecipeBookCategory;
-import net.minecraft.recipe.display.*;
+import net.minecraft.recipe.display.RecipeDisplay;
+import net.minecraft.recipe.display.ShapedCraftingRecipeDisplay;
+import net.minecraft.recipe.display.ShapelessCraftingRecipeDisplay;
+import net.minecraft.recipe.display.SlotDisplay;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
@@ -44,9 +48,9 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
     public boolean updateRecipes() {
         assert MinecraftClient.getInstance().player != null;
 
-        ObjectOpenHashSet<NetworkRecipeId> beforeID = new ObjectOpenHashSet<>(craftableRecipes.size());
+        int hashID=0;
         for (RecipeDisplayEntry entry : craftableRecipes) {
-            beforeID.add(entry.id());
+            hashID^=entry.id().index();
         }
         updateAvailableStacks();
 
@@ -108,12 +112,11 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
         }
         recalcListSize();
 
-        ObjectOpenHashSet<NetworkRecipeId> afterID = new ObjectOpenHashSet<>(craftableRecipes.size());
         for (RecipeDisplayEntry entry : craftableRecipes) {
-            afterID.add(entry.id());
+            hashID^=entry.id().index();
         }
 
-        return beforeID.equals(afterID);
+        return hashID==0;
     }
 
     @Override
@@ -392,7 +395,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
             );
 
             RecipeDisplayEntry entry = new RecipeDisplayEntry(
-                    new NetworkRecipeId((int)System.currentTimeMillis()), // yes this will warp every abt 50 days... dont play for 50 days straight
+                    new NetworkRecipeId(6767),
                     display,
                     OptionalInt.empty(),
                     SPECIAL_CAT,
