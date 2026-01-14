@@ -8,12 +8,17 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.input.CharInput;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.recipebook.ClientRecipeBook;
 import net.minecraft.client.resource.language.I18n;
+import net.minecraft.client.util.InputUtil;
+import net.minecraft.client.util.Window;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
@@ -56,8 +61,8 @@ public abstract class AbstractRecipeBook {
     protected final int resultSlotNo;
     protected final int firstInventorySlotNo;
     protected final SlotDisplay craftingBlock;
-    protected ClientRecipeBook recipeBook;
-
+    protected final ClientRecipeBook recipeBook;
+    protected final Window window;
 
     public final ObjectArrayList<RecipeDisplayEntry> craftableRecipes = new ObjectArrayList<>();
     public final ObjectArrayList<RecipeDisplayEntry> allRecipes = new ObjectArrayList<>();
@@ -111,6 +116,7 @@ public abstract class AbstractRecipeBook {
         this.craftingBlock = craftingBlock;
         this.recipeBook = player.getRecipeBook();
         this.screenHandler = screen.getScreenHandler();
+        this.window = client.getWindow();
     }
 
     // --- Abstract Methods to be implemented by subclasses ---
@@ -355,9 +361,12 @@ public abstract class AbstractRecipeBook {
         mouseScroll = MathHelper.clamp(mouseScroll - ticks, 0, maxScrollPos);
     }
 
-    public void mouseClicked(int mouseX, int mouseY, int mouseButton, int guiLeft, int guiTop) {
+    public void mouseClicked(Click click, boolean doubled, int guiLeft, int guiTop) {
+        int mouseX = (int) click.x();
+        int mouseY = (int) click.y();
+
         if (pattern != null) {
-            pattern.setFocused(pattern.mouseClicked(mouseX - guiLeft, mouseY - guiTop, mouseButton));
+            pattern.setFocused(pattern.mouseClicked(new Click(click.x()-guiLeft,click.y()-guiTop,click.buttonInfo()), doubled));
         }
 
         // Scroll bar area click
@@ -381,18 +390,18 @@ public abstract class AbstractRecipeBook {
             }
         }
 
-        onRecipeClicked(underMouse, mouseButton);
+        onRecipeClicked(underMouse, click.button());
         queueUpdateRecipe();
     }
 
-    public boolean keyPressed(int code, int scancode, int modifiers) {
+    public boolean keyPressed(KeyInput input) {
         if (pattern == null) return false;
-        if (code == GLFW.GLFW_KEY_ENTER || code == GLFW.GLFW_KEY_KP_ENTER || code == GLFW.GLFW_KEY_ESCAPE) {
+        if (input.isEnter() || input.isEscape()) {
             pattern.setFocused(false);
             updatePatternMatch();
             return true;
         } else if (pattern.isFocused()) {
-            pattern.keyPressed(code, scancode, modifiers);
+            pattern.keyPressed(input);
             updatePatternMatch();
             return true;
         }
@@ -400,10 +409,10 @@ public abstract class AbstractRecipeBook {
     }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    public boolean charTyped(char codepoint, int modifiers) {
+    public boolean charTyped(CharInput input) {
         if (pattern != null && pattern.isFocused()) {
             // TextFieldWidget.charTyped returns true if it added a character to the text
-            if (pattern.charTyped(codepoint, modifiers)) {
+            if (pattern.charTyped(input)) {
                 updatePatternMatch();
                 return true;
             }
@@ -474,6 +483,14 @@ public abstract class AbstractRecipeBook {
 
     public static SlotDisplay getSlotDisplayFromItem(Item item){
         return new SlotDisplay.StackSlotDisplay(new ItemStack(item));
+    }
+
+    public boolean hasShiftDown(){
+        return InputUtil.isKeyPressed(window, GLFW.GLFW_KEY_LEFT_SHIFT);
+    }
+
+    public boolean hasControlDown(){
+        return InputUtil.isKeyPressed(window, GLFW.GLFW_KEY_LEFT_CONTROL);
     }
 
 }

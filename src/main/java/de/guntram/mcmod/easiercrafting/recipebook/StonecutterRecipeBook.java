@@ -2,11 +2,8 @@ package de.guntram.mcmod.easiercrafting.recipebook;
 
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.recipe.RecipeTreeSet;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.recipebook.RecipeResultCollection;
 import net.minecraft.client.resource.language.I18n;
@@ -35,9 +32,9 @@ public class StonecutterRecipeBook extends AbstractRecipeBook {
         updateAvailableStacks();
 
         // process if craftable changed
-        IntList before = new IntArrayList(craftableRecipes.size());
-        for (RecipeDisplayEntry entry : craftableRecipes){
-            before.add(entry.id().index());
+        int hashID=0;
+        for (RecipeDisplayEntry entry : craftableRecipes) {
+            hashID^=entry.id().index();
         }
 
         craftableRecipes.clear();
@@ -67,11 +64,10 @@ public class StonecutterRecipeBook extends AbstractRecipeBook {
 
 
         recalcListSize();
-        IntList after = new IntArrayList(craftableRecipes.size());
-        for (RecipeDisplayEntry entry : craftableRecipes){
-            after.add(entry.id().index());
+        for (RecipeDisplayEntry entry : craftableRecipes) {
+            hashID^=entry.id().index();
         }
-        return before.equals(after);
+        return hashID==0;
     }
 
 
@@ -90,7 +86,7 @@ public class StonecutterRecipeBook extends AbstractRecipeBook {
             ItemStack slotContent = container.getSlot(slot).getStack();
             for (ItemStack ingredientStack : recipe.input().getStacks(worldContext)) {
                 if (ingredientStack.getItem().equals(slotContent.getItem())){
-                    if (Screen.hasShiftDown()) {
+                    if (hasShiftDown()) {
                         slotClick(slot, 0, SlotActionType.PICKUP);
                         slotClick(slot, 0, SlotActionType.PICKUP_ALL);
                         slotClick(firstCraftSlotNo, 0, SlotActionType.PICKUP);

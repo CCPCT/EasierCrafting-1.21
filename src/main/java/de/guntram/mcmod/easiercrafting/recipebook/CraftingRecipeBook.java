@@ -1,29 +1,32 @@
 package de.guntram.mcmod.easiercrafting.recipebook;
 
-import de.guntram.mcmod.easiercrafting.*;
+import de.guntram.mcmod.easiercrafting.EasierCrafting;
+import de.guntram.mcmod.easiercrafting.InventoryAccessor;
 import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiInventory;
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.recipe.RecipeTreeSet;
 import de.guntram.mcmod.easiercrafting.recipe.RepairCraftingRecipeDisplay;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.recipebook.RecipeResultCollection;
 import net.minecraft.client.recipebook.RecipeBookType;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.FireworksComponent;
-import net.minecraft.item.*;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.recipe.Ingredient;
 import net.minecraft.recipe.NetworkRecipeId;
 import net.minecraft.recipe.RecipeDisplayEntry;
 import net.minecraft.recipe.book.RecipeBookCategories;
-import net.minecraft.recipe.book.RecipeBookCategory;
-import net.minecraft.recipe.display.*;
+import net.minecraft.recipe.display.RecipeDisplay;
+import net.minecraft.recipe.display.ShapedCraftingRecipeDisplay;
+import net.minecraft.recipe.display.ShapelessCraftingRecipeDisplay;
+import net.minecraft.recipe.display.SlotDisplay;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
@@ -44,9 +47,9 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
     public boolean updateRecipes() {
         assert MinecraftClient.getInstance().player != null;
 
-        ObjectOpenHashSet<NetworkRecipeId> beforeID = new ObjectOpenHashSet<>(craftableRecipes.size());
+        int hashID=0;
         for (RecipeDisplayEntry entry : craftableRecipes) {
-            beforeID.add(entry.id());
+            hashID^=entry.id().index();
         }
         updateAvailableStacks();
 
@@ -108,12 +111,10 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
         }
         recalcListSize();
 
-        ObjectOpenHashSet<NetworkRecipeId> afterID = new ObjectOpenHashSet<>(craftableRecipes.size());
         for (RecipeDisplayEntry entry : craftableRecipes) {
-            afterID.add(entry.id());
+            hashID ^= entry.id().index();
         }
-
-        return beforeID.equals(afterID);
+        return hashID==0;
     }
 
     @Override
@@ -155,20 +156,16 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
         int recipeWidth;
         List<SlotDisplay> ingredients;
 
-        // todo make repairing
-//        byte[] resultSlots = new byte[entry.craftingRequirements().get().size()];
-//        boolean predefineIngredients = false;
-
         switch (entry.display()) {
             case ShapedCraftingRecipeDisplay shaped -> {
                 recipeWidth = shaped.width();
                 ingredients = shaped.ingredients();
-                if (Screen.hasShiftDown()) maxCraftableStacks = getMaxCraftable(ingredients);
+                if (hasShiftDown()) maxCraftableStacks = getMaxCraftable(ingredients);
             }
             case ShapelessCraftingRecipeDisplay shapeless -> {
                 ingredients = shapeless.ingredients();
                 recipeWidth = ingredients.size() <= 4 ? 2 : 3;
-                if (Screen.hasShiftDown()) maxCraftableStacks = getMaxCraftable(ingredients);
+                if (hasShiftDown()) maxCraftableStacks = getMaxCraftable(ingredients);
             }
             case RepairCraftingRecipeDisplay repairDisplay -> {
                 ingredients = repairDisplay.ingredients();
@@ -190,16 +187,6 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
             SlotDisplay ingredient = ingredients.get(i);
             if (ingredient.getStacks(worldContext).isEmpty()) continue;
 
-            // todo make algorithm to make best repairing
-//            if (predefineIngredients) {
-//                transfer(resultSlots[i], i + firstCraftSlotNo + rowadjust, remaining);
-//                ItemStack inCraftSlot = screen.getScreenHandler().getSlot(i + firstCraftSlotNo + rowadjust).getStack();
-//                if (!inCraftSlot.getRecipeRemainder().isEmpty()) {
-//                    removal[i] = true;
-//                }
-//                continue;
-//            }
-
             for (int slot = firstInventorySlotNo; remaining > 0 && slot < 36 + firstInventorySlotNo; slot++) {
                 ItemStack slotcontent = screenHandler.getSlot(slot).getStack();
                 if (canActAsIngredient(ingredient, slotcontent)) {
@@ -217,7 +204,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
         }
 
         // actually craft item
-        if (mouseButton == 0 && !Screen.hasControlDown()) {
+        if (mouseButton == 0 && !hasControlDown()) {
             slotClick(resultSlotNo, mouseButton, SlotActionType.QUICK_MOVE);
             queueUpdateRecipe();
 
@@ -392,7 +379,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
             );
 
             RecipeDisplayEntry entry = new RecipeDisplayEntry(
-                    new NetworkRecipeId((int)System.currentTimeMillis()), // yes this will warp every abt 50 days... dont play for 50 days straight
+                    new NetworkRecipeId(6767), // dont care abt if it repeat
                     display,
                     OptionalInt.empty(),
                     SPECIAL_CAT,

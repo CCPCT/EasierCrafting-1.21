@@ -3,14 +3,16 @@ package de.guntram.mcmod.easiercrafting.extendedScreen;
 import de.guntram.mcmod.easiercrafting.SlotClickAccepter;
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.recipebook.CraftingRecipeBook;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.CraftingScreen;
 import net.minecraft.client.gui.screen.recipebook.RecipeBookWidget;
+import net.minecraft.client.input.CharInput;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.screen.CraftingScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
-import org.lwjgl.glfw.GLFW;
 
 public class ExtendedGuiCrafting extends CraftingScreen implements SlotClickAccepter {
 
@@ -47,26 +49,26 @@ public class ExtendedGuiCrafting extends CraftingScreen implements SlotClickAcce
     }    
     
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
-        super.mouseClicked(mouseX, mouseY, mouseButton);
-        recipeBook.mouseClicked((int)mouseX, (int)mouseY, mouseButton, x, y);
+    public boolean mouseClicked(Click click, boolean doubled) {
+        super.mouseClicked(click, doubled);
+        recipeBook.mouseClicked(click, doubled, x, y);
         return true;
     }
 
     @Override
-    public boolean keyPressed(int c, int scancode, int modifiers) {
-        if (c==GLFW.GLFW_KEY_ESCAPE)
-            return super.keyPressed(c, scancode, modifiers);
-        else if (recipeBook.keyPressed(c, scancode, modifiers))
+    public boolean keyPressed(KeyInput input) {
+        if (input.isEscape())
+            return super.keyPressed(input);
+        else if (recipeBook.keyPressed(input))
             return true;
         else
-            return super.keyPressed(c, scancode, modifiers);
+            return super.keyPressed(input);
     }
     
     @Override
-    public boolean charTyped(char codepoint, int modifiers) {
-        if (!recipeBook.charTyped(codepoint, modifiers))
-            return super.charTyped(codepoint, modifiers);
+    public boolean charTyped(CharInput input) {
+        if (!recipeBook.charTyped(input))
+            return super.charTyped(input);
         return true;
     }
 
