@@ -52,7 +52,7 @@ public class StonecutterRecipeBook extends AbstractRecipeBook {
                     if (avaliableItemMap.containsKey(slotDisplay.getItem())){
                         craftableRecipes.add(entry);
                         craftableCategories.computeIfAbsent(ModConfig.get().categorizeRecipes ?
-                                getFirstIngredient(entry).getName().getString() :
+                                getIngredients(entry).getFirst().getName().getString() :
                                 I18n.translate("easiercrafting.category.possible"),
                                 k -> new RecipeTreeSet()).add(entry);
                     }
@@ -78,7 +78,9 @@ public class StonecutterRecipeBook extends AbstractRecipeBook {
         }
 
         // no item -> return
-        if (!avaliableItemMap.containsKey(getFirstIngredient(entry).getItem())) return;
+        for (ItemStack ingredient : getIngredients(entry)) {
+            if (!avaliableItemMap.containsKey(ingredient.getItem()))return;
+        }
         // move item to crafting slot
         search:
         for (int slot = firstInventorySlotNo; slot < 36 + firstInventorySlotNo; slot++) {
@@ -117,18 +119,27 @@ public class StonecutterRecipeBook extends AbstractRecipeBook {
             interactionManager.clickButton(container.syncId, buttonIndex);
 
             // 4. Take the result from the output slot (slot 1) to complete the craft
+            if (hasControlDown()) return;
             interactionManager.clickSlot(container.syncId, 1, 0, SlotActionType.QUICK_MOVE, player);
         }
     }
 
     @Override
     protected void drawRecipeGridOverlay(DrawContext context, int height, int mouseX, int mouseY) {
-        renderIngredient(context, textRenderer, getFirstIngredient(underMouse), 0, height + itemSize);
+        renderIngredient(context, getIngredients(underMouse), 0, height + itemSize);
     }
 
-    protected ItemStack getFirstIngredient(RecipeDisplayEntry entry) {
+    protected List<ItemStack> getIngredients(RecipeDisplayEntry entry) {
         if (!(entry.display() instanceof StonecutterRecipeDisplay recipe)) return null;
-        return recipe.input().getFirst(worldContext);
+        List<ItemStack> craftable = recipe.input().getStacks(worldContext).stream()
+                .filter(stack -> getAvailableItemSet().contains(stack.getItem()))
+                .toList();
+
+        if (craftable.isEmpty()){
+            return recipe.input().getStacks(worldContext);
+        } else {
+            return craftable;
+        }
     }
 
 }

@@ -78,13 +78,8 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
         ItemStack fuelStack = container.slots.get(FUEL_SLOT).getStack();
 
         // retrieve smelt items
-        if (container.slots.get(resultSlotNo).hasStack()) {
+        if (container.slots.get(resultSlotNo).hasStack() && !hasControlDown()) {
             slotClick(resultSlotNo,0,SlotActionType.QUICK_MOVE);
-        }
-
-        // remove item if not match recipe
-        if (getFirstIngredient(entry).getItem() != container.slots.get(firstCraftSlotNo).getStack().getItem()){
-            slotClick(firstCraftSlotNo,0,SlotActionType.QUICK_MOVE);
         }
 
         // replenish fuel if possible, if fuel slot is empty let player decide what fuel to use
@@ -131,6 +126,11 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
             ItemStack slotContent = container.getSlot(slot).getStack();
             for (ItemStack ingredientStack : recipe.ingredient().getStacks(worldContext)) {
                 if (ingredientStack.getItem().equals(slotContent.getItem())){
+                    // remove item if not match recipe
+                    if (ingredientStack.getItem() != container.slots.get(firstCraftSlotNo).getStack().getItem()){
+                        slotClick(firstCraftSlotNo,0,SlotActionType.QUICK_MOVE);
+                    }
+                    // move item up
                     if (hasShiftDown()) {
                         slotClick(slot, 0, SlotActionType.PICKUP);
                         slotClick(slot, 0, SlotActionType.PICKUP_ALL);
@@ -153,7 +153,15 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
         int mouseX = (int) click.x();
         int mouseY = (int) click.y();
         if (pattern != null) {
-            pattern.setFocused(pattern.mouseClicked(new Click(click.x()-guiLeft,click.y()-guiTop,click.buttonInfo()), doubled));
+            boolean clickedPattern = pattern.mouseClicked(new Click(click.x()-guiLeft,click.y()-guiTop,click.new MouseInput(0,0)), doubled);
+            pattern.setFocused(clickedPattern);
+            if (clickedPattern) {
+                if (click.button() == 1) {
+                    pattern.setText("");
+                    updatePatternMatch();
+                }
+                return;
+            }
         }
 
         // Scroll bar area click
@@ -175,12 +183,20 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
 
     @Override
     protected void drawRecipeGridOverlay(DrawContext context, int height, int mouseX, int mouseY) {
-        renderIngredient(context, textRenderer, getFirstIngredient(underMouse), 0, height + itemSize);
+        renderIngredient(context, getIngredients(underMouse), 0, height + itemSize);
     }
 
-    protected ItemStack getFirstIngredient(RecipeDisplayEntry entry) {
+    protected List<ItemStack> getIngredients(RecipeDisplayEntry entry) {
         if (!(entry.display() instanceof FurnaceRecipeDisplay recipe)) return null;
-        return recipe.ingredient().getFirst(worldContext);
+        List<ItemStack> craftable = recipe.ingredient().getStacks(worldContext).stream()
+                .filter(stack -> getAvailableItemSet().contains(stack.getItem()))
+                .toList();
+
+        if (craftable.isEmpty()){
+            return recipe.ingredient().getStacks(worldContext);
+        } else {
+            return craftable;
+        }
     }
 
 }
