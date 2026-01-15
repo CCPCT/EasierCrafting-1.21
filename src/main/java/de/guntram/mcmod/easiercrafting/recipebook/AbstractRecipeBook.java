@@ -153,7 +153,7 @@ public abstract class AbstractRecipeBook {
                     if (ModConfig.get().itemBackground) {
                         // draw alternating background (gray and light gray)
                         if (gridBackground % 2 == 1) {
-                            context.fill(x - 1, y - 1, x + 17, y + 17, 0x60909090);
+                            context.fill(x - 1, y - 1, x + 17, y + 17, 0x60E0E0E0);
                         } else {
                             context.fill(x - 1, y - 1, x + 17, y + 17, 0x60E0E0E0);
                         }
@@ -374,7 +374,15 @@ public abstract class AbstractRecipeBook {
 
     public void mouseClicked(int mouseX, int mouseY, int mouseButton, int guiLeft, int guiTop) {
         if (pattern != null) {
-            pattern.setFocused(pattern.mouseClicked(mouseX - guiLeft, mouseY - guiTop, mouseButton));
+            boolean clickedPattern = pattern.mouseClicked(mouseX - guiLeft, mouseY - guiTop, 0);
+            pattern.setFocused(clickedPattern);
+            if (clickedPattern) {
+                if (mouseButton == 1) {
+                    pattern.setText("");
+                    updatePatternMatch();
+                }
+                return;
+            }
         }
 
         // Scroll bar area click

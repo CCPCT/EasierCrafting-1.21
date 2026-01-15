@@ -192,16 +192,6 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
             SlotDisplay ingredient = ingredients.get(i);
             if (ingredient.getStacks(worldContext).isEmpty()) continue;
 
-            // todo make algorithm to make best repairing
-//            if (predefineIngredients) {
-//                transfer(resultSlots[i], i + firstCraftSlotNo + rowadjust, remaining);
-//                ItemStack inCraftSlot = screen.getScreenHandler().getSlot(i + firstCraftSlotNo + rowadjust).getStack();
-//                if (!inCraftSlot.getRecipeRemainder().isEmpty()) {
-//                    removal[i] = true;
-//                }
-//                continue;
-//            }
-
             for (int slot = firstInventorySlotNo; remaining > 0 && slot < 36 + firstInventorySlotNo; slot++) {
                 ItemStack slotcontent = screenHandler.getSlot(slot).getStack();
                 if (canActAsIngredient(ingredient, slotcontent)) {
