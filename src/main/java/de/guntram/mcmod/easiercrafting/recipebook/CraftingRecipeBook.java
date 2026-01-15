@@ -127,21 +127,21 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
                 for (int y = 0; y < shaped.height(); y++) {
                     SlotDisplay ingredient = ingredients.get(x + y * shaped.width());
                     if (ingredient.getFirst(worldContext).isEmpty()) continue;
-                    renderIngredient(context, textRenderer, ingredient, itemSize * x, height + itemSize + itemSize * y);
+                    renderIngredient(context, ingredient, itemSize * x, height + itemSize + itemSize * y);
                 }
             }
         } else if (display instanceof ShapelessCraftingRecipeDisplay recipeDisplay) {
             if (underMouse.craftingRequirements().isPresent()) {
                 int x = 0;
                 for (SlotDisplay ingredient : recipeDisplay.ingredients()) {
-                    renderIngredient(context, textRenderer, ingredient, itemSize * x, height + itemSize);
+                    renderIngredient(context, ingredient, itemSize * x, height + itemSize);
                     x++;
                 }
             }
         } else if (display instanceof RepairCraftingRecipeDisplay repairDisplay) {
             int x = 0;
             for (SlotDisplay ingredient : repairDisplay.ingredients()) {
-                renderIngredient(context, textRenderer, ingredient, itemSize * x, height + itemSize);
+                renderIngredient(context, ingredient, itemSize * x, height + itemSize);
                 x++;
             }
         }

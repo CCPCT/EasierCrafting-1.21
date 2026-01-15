@@ -124,12 +124,22 @@ public class StonecutterRecipeBook extends AbstractRecipeBook {
 
     @Override
     protected void drawRecipeGridOverlay(DrawContext context, int height, int mouseX, int mouseY) {
-        renderIngredient(context, textRenderer, getFirstIngredient(underMouse), 0, height + itemSize);
+        renderIngredient(context, getFirstIngredient(underMouse), 0, height + itemSize);
     }
 
-    protected ItemStack getFirstIngredient(RecipeDisplayEntry entry) {
-        if (!(entry.display() instanceof StonecutterRecipeDisplay recipe)) return null;
-        return recipe.input().getFirst(worldContext);
+    protected List<ItemStack> getFirstIngredient(StonecutterRecipeDisplay entry) {
+        if (!(entry.display() instanceof FurnaceRecipeDisplay recipe)) return null;
+        List<ItemStack> craftable = recipe.input().getStacks(worldContext).stream()
+                .map(slotDisplay -> slotDisplay.getFirst(worldContext))
+                .filter(stack -> getAvailableItemSet().contains(stack.getItem()))
+                .toList();
+
+        if (craftable.isEmpty()){
+            return recipe.input().getStacks(worldContext).stream()
+                .map(slotDisplay -> slotDisplay.getFirst(worldContext)).toList();
+        } else {
+            return craftable;
+        }
     }
 
 }

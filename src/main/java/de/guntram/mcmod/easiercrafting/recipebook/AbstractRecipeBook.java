@@ -308,30 +308,28 @@ public abstract class AbstractRecipeBook {
         context.drawStackOverlay(fontRenderer, items, x, y);
     }
 
-    public void renderIngredient(DrawContext context, TextRenderer fontRenderer, SlotDisplay ingredient, int x, int y) {
-        assert client.world != null;
+// may not need to renderIngredient by ingredient but by slotdisplay
+    public void renderIngredient(DrawContext context, SlotDisplay ingredient, int x, int y) {
         List<ItemStack> stacks = getCraftableStacks(ingredient);
         if (stacks.isEmpty()){
-            // doesnt have ingredient -> fill red
-            context.fill(x-1,y-1,x+17,y+17,0x60FF0000);
+            // doesnt have ingredient
             stacks = ingredient.getStacks(worldContext);
+        }
+        renderIngredient(context, stacks, x, y);
+    }
+
+    public void renderIngredient(DrawContext context, List<ItemStack> stacks, int x, int y) {
+        if (stacks.isEmpty()) return;
+        if (!getAvailableItemSet().contains(stacks.getFirst().getItem())){
+            // no recipe found
+            context.fill(x-1,y-1,x+17,y+17,0x60FF0000);
         }
 
         int toRender = 0;
         if (stacks.size() > 1)
             toRender = (int) ((System.currentTimeMillis() / 333) % stacks.size());
         context.drawItem(stacks.get(toRender), x, y);
-        context.drawStackOverlay(fontRenderer,stacks.get(toRender),x,y);
-    }
-
-    public void renderIngredient(DrawContext context, TextRenderer fontRenderer, ItemStack ingredient, int x, int y) {
-        assert world != null;
-        if (!avaliableItemMap.containsKey(ingredient.getItem())){
-            // doesnt have ingredient
-            context.fill(x-1,y-1,x+18,y+18,0x60FF0000);
-        }
-        context.drawItem(ingredient, x, y);
-        context.drawStackOverlay(fontRenderer,ingredient,x,y);
+        context.drawStackOverlay(textRenderer,stacks.get(toRender),x,y);
     }
 
     public void recalcListSize() {

@@ -173,12 +173,22 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
 
     @Override
     protected void drawRecipeGridOverlay(DrawContext context, int height, int mouseX, int mouseY) {
-        renderIngredient(context, textRenderer, getFirstIngredient(underMouse), 0, height + itemSize);
+        renderIngredient(context, getFirstIngredient(underMouse), 0, height + itemSize);
     }
 
-    protected ItemStack getFirstIngredient(RecipeDisplayEntry entry) {
+    protected List<ItemStack> getFirstIngredient(StonecutterRecipeDisplay entry) {
         if (!(entry.display() instanceof FurnaceRecipeDisplay recipe)) return null;
-        return recipe.ingredient().getFirst(worldContext);
+        List<ItemStack> craftable = recipe.ingredient().getStacks(worldContext).stream()
+                .map(slotDisplay -> slotDisplay.getFirst(worldContext))
+                .filter(stack -> getAvailableItemSet().contains(stack.getItem()))
+                .toList();
+
+        if (craftable.isEmpty()){
+            return recipe.ingredient().getStacks(worldContext).stream()
+                .map(slotDisplay -> slotDisplay.getFirst(worldContext)).toList();
+        } else {
+            return craftable;
+        }
     }
 
 }
