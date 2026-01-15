@@ -8,7 +8,6 @@ import de.guntram.mcmod.easiercrafting.recipe.RecipeTreeSet;
 import de.guntram.mcmod.easiercrafting.recipe.RepairCraftingRecipeDisplay;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -120,7 +119,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
     }
 
     @Override
-    protected void drawRecipeGridOverlay(DrawContext context, TextRenderer fontRenderer, int height, int mouseX, int mouseY) {
+    protected void drawRecipeGridOverlay(DrawContext context, int height, int mouseX, int mouseY) {
         RecipeDisplay display = underMouse.display();
         if (display instanceof ShapedCraftingRecipeDisplay shaped) {
             List<SlotDisplay> ingredients = shaped.ingredients();
@@ -128,21 +127,21 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
                 for (int y = 0; y < shaped.height(); y++) {
                     SlotDisplay ingredient = ingredients.get(x + y * shaped.width());
                     if (ingredient.getFirst(worldContext).isEmpty()) continue;
-                    renderIngredient(context, fontRenderer, ingredient, itemSize * x, height + itemSize + itemSize * y);
+                    renderIngredient(context, textRenderer, ingredient, itemSize * x, height + itemSize + itemSize * y);
                 }
             }
         } else if (display instanceof ShapelessCraftingRecipeDisplay recipeDisplay) {
             if (underMouse.craftingRequirements().isPresent()) {
                 int x = 0;
                 for (SlotDisplay ingredient : recipeDisplay.ingredients()) {
-                    renderIngredient(context, fontRenderer, ingredient, itemSize * x, height + itemSize);
+                    renderIngredient(context, textRenderer, ingredient, itemSize * x, height + itemSize);
                     x++;
                 }
             }
         } else if (display instanceof RepairCraftingRecipeDisplay repairDisplay) {
             int x = 0;
             for (SlotDisplay ingredient : repairDisplay.ingredients()) {
-                renderIngredient(context, fontRenderer, ingredient, itemSize * x, height + itemSize);
+                renderIngredient(context, textRenderer, ingredient, itemSize * x, height + itemSize);
                 x++;
             }
         }

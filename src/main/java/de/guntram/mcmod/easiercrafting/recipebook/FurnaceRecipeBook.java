@@ -3,7 +3,6 @@ package de.guntram.mcmod.easiercrafting.recipebook;
 import de.guntram.mcmod.easiercrafting.InventoryAccessor;
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.recipe.RecipeTreeSet;
-import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -173,8 +172,8 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
     }
 
     @Override
-    protected void drawRecipeGridOverlay(DrawContext context, TextRenderer fontRenderer, int height, int mouseX, int mouseY) {
-        renderIngredient(context, fontRenderer, getFirstIngredient(underMouse), 0, height + itemSize);
+    protected void drawRecipeGridOverlay(DrawContext context, int height, int mouseX, int mouseY) {
+        renderIngredient(context, textRenderer, getFirstIngredient(underMouse), 0, height + itemSize);
     }
 
     protected ItemStack getFirstIngredient(RecipeDisplayEntry entry) {

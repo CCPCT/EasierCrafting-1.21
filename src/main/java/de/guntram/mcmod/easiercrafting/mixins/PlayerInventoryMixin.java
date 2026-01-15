@@ -15,7 +15,8 @@ public abstract class PlayerInventoryMixin implements InventoryAccessor {
 
     // Shadow the internal list (the name 'main' is used in most mappings)
     @Final
-    @Shadow public DefaultedList<ItemStack> main;
+    @Shadow
+    private DefaultedList<ItemStack> main;
 
     @Override
     public List<ItemStack> getCompatMain() {
