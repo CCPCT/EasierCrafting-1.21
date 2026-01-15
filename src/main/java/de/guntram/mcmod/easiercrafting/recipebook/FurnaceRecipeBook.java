@@ -7,6 +7,7 @@ import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.recipebook.RecipeResultCollection;
+import net.minecraft.client.input.MouseInput;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -153,7 +154,7 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
         int mouseX = (int) click.x();
         int mouseY = (int) click.y();
         if (pattern != null) {
-            boolean clickedPattern = pattern.mouseClicked(new Click(click.x()-guiLeft,click.y()-guiTop,click.new MouseInput(0,0)), doubled);
+            boolean clickedPattern = pattern.mouseClicked(new Click(click.x()-guiLeft,click.y()-guiTop,new MouseInput(0,0)), doubled);
             pattern.setFocused(clickedPattern);
             if (clickedPattern) {
                 if (click.button() == 1) {
