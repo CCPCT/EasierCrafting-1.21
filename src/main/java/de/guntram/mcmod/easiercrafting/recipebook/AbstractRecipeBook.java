@@ -8,12 +8,9 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.input.CharInput;
-import net.minecraft.client.input.KeyInput;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.recipebook.ClientRecipeBook;
 import net.minecraft.client.resource.language.I18n;
@@ -61,6 +58,8 @@ public abstract class AbstractRecipeBook {
     protected final int resultSlotNo;
     protected final int firstInventorySlotNo;
     protected final SlotDisplay craftingBlock;
+    protected final TextRenderer textRenderer;
+
     protected final ClientRecipeBook recipeBook;
     protected final Window window;
 
@@ -75,7 +74,7 @@ public abstract class AbstractRecipeBook {
     protected final ScreenHandler screenHandler;
 
     // Layout
-    protected final int itemSize = 20;
+    protected final int itemSize = 18;
     protected final int itemLift = 5;
     protected int listSize;
     protected int itemsPerRow;
@@ -104,11 +103,12 @@ public abstract class AbstractRecipeBook {
         assert world != null;
 
         this.screen = craftScreen;
+        this.textRenderer = client.textRenderer;
         this.firstCraftSlotNo = firstCraftSlotNo;
         this.gridSize = gridsize;
         this.resultSlotNo = resultSlot;
         this.firstInventorySlotNo = firstInventorySlot;
-        this.pattern = null;
+        this.pattern = new TextFieldWidget(textRenderer, 0, 0, 10, 20, Text.literal("")); // update width later
         this.underMouse = null;
         this.player = client.player;
         this.worldContext = SlotDisplayContexts.createParameters(world);
@@ -134,7 +134,7 @@ public abstract class AbstractRecipeBook {
     /**
      * Called to draw the overlay (e.g. 3x3 grid) when hovering over a recipe.
      */
-    protected abstract void drawRecipeGridOverlay(DrawContext context, TextRenderer fontRenderer, int height, int mouseX, int mouseY);
+    protected abstract void drawRecipeGridOverlay(DrawContext context, int height, int mouseX, int mouseY);
     /**
      * Returns all craftable recipes.
      */
@@ -143,19 +143,31 @@ public abstract class AbstractRecipeBook {
     //protected abstract List<ItemStack> getAllIngredient(SlotDisplay display);
 
     // draw outputs... and set undermouse
-    protected int drawSetOfRecipes(DrawContext context, RecipeTreeSet treeSet, TextRenderer fontRenderer, int xpos, int ypos, int mouseX, int mouseY) {
+    protected int drawSetOfRecipes(DrawContext context, RecipeTreeSet treeSet, int xpos, int ypos, int mouseX, int mouseY) {
         if (treeSet == null || treeSet.isEmpty()) return ypos;
+        int gridBackground = 0;
+        boolean lastGridDarkBackground = true;
         for (RecipeDisplayEntry recipe : treeSet) {
             if (ypos >= minYtoDraw) {
                 int x = xOffset + xpos;
                 int y = ypos - itemLift;
 
-                // if cant craft draw red background on the result
-                if (ModConfig.get().showAllRecipes && !craftableRecipes.contains(recipe)) {
-                    context.fill(x-1,y-1,x+18,y+18,0x60FF0000);
+                gridBackground++;
+                if (craftableRecipes.contains(recipe)) {
+                    if (ModConfig.get().itemBackground) {
+                        // draw alternating background (gray and light gray)
+                        if (gridBackground % 2 == 1) {
+                            context.fill(x - 1, y - 1, x + 17, y + 17, 0x60909090);
+                        } else {
+                            context.fill(x - 1, y - 1, x + 17, y + 17, 0x60E0E0E0);
+                        }
+                    }
+                } else {
+                    // if cant craft draw red background on the result
+                    context.fill(x-1,y-1,x+17,y+17,0x60FF0000);
                 }
 
-                renderSingleRecipeOutput(context, fontRenderer, recipe.display().result().getFirst(worldContext), x, y);
+                renderSingleRecipeOutput(context, textRenderer, recipe.display().result().getFirst(worldContext), x, y);
                 if (mouseX >= x &&
                         mouseX <= x + itemSize - 1 &&
                         mouseY >= y &&
@@ -168,6 +180,8 @@ public abstract class AbstractRecipeBook {
             if (xpos >= itemSize * itemsPerRow) {
                 ypos += itemSize;
                 xpos = 0;
+                lastGridDarkBackground = !lastGridDarkBackground;
+                gridBackground = lastGridDarkBackground ? 0 : 1;
             }
         }
         if (xpos != 0) ypos += itemSize;
@@ -181,13 +195,12 @@ public abstract class AbstractRecipeBook {
         this.containerLeft = (screen.width - 176) / 2;
         this.containerTop = (screen.height - 166) / 2;
 
-        int tempItemsPerRow = 8;
+        int tempItemsPerRow = 9; // max item per row
         int tempXOffset = -itemSize * tempItemsPerRow - distanceFromGui;
         if (tempXOffset + containerLeft < 0) {
             tempItemsPerRow = (containerLeft - distanceFromGui) / itemSize;
             tempXOffset = -itemSize * tempItemsPerRow - distanceFromGui;
         }
-        textBoxSize = -tempXOffset - 15;
         if (ModConfig.get().showGuiRight)
             tempXOffset = 176 + distanceFromGui;
         if (tempItemsPerRow < 2) {
@@ -199,11 +212,15 @@ public abstract class AbstractRecipeBook {
         updatePatternMatch();
         mouseScroll = 0;
         updateRecipes();
+
+        pattern.setX(xOffset);
+        textBoxSize=itemsPerRow*itemSize;
+        pattern.setWidth(textBoxSize);
+
     }
 
-    public void drawAllRecipe(DrawContext context, TextRenderer fontRenderer, int left, int height, int mouseX, int mouseY) {
+    public void drawAllRecipe(DrawContext context, int left, int height, int mouseX, int mouseY) {
         if (pattern == null) {
-            pattern = new TextFieldWidget(fontRenderer, xOffset, 0, textBoxSize, 20, Text.literal(""));
             if (ModConfig.get().autoFocusSearch) {
                 pattern.setFocused(true);
             }
@@ -258,22 +275,22 @@ public abstract class AbstractRecipeBook {
         ypos -= mouseScroll * itemSize;
 
         // Draw Search Results
-        ypos = drawSetOfRecipes(context, patternMatchingRecipes, fontRenderer, 0, ypos, mouseX, mouseY);
+        ypos = drawSetOfRecipes(context, patternMatchingRecipes, 0, ypos, mouseX, mouseY);
 
         // Draw Categories
         for (String category : craftableCategories.keySet()) {
             if (ypos >= minYtoDraw) {
-                context.drawText(fontRenderer, category, xOffset, ypos, 0xFFFFFF00, true);
+                context.drawText(textRenderer, category, xOffset, ypos, 0xFFFFFF00, true);
             }
             ypos += itemSize;
-            ypos = drawSetOfRecipes(context, craftableCategories.get(category), fontRenderer, 0, ypos, mouseX, mouseY);
+            ypos = drawSetOfRecipes(context, craftableCategories.get(category), 0, ypos, mouseX, mouseY);
         }
 
         // Draw crafting ingredient Overlay (Tooltip/Grid)
         if (underMouse != null) {
             String displayName = recipeDisplayName(underMouse);
-            context.drawText(fontRenderer, displayName, 0, height + 3, 0xFFFFFF00, true);
-            drawRecipeGridOverlay(context, fontRenderer, height, mouseX, mouseY);
+            context.drawText(textRenderer, displayName, 0, height + 3, 0xFFFFFF00, true);
+            drawRecipeGridOverlay(context, height, mouseX, mouseY);
         }
     }
 
@@ -299,8 +316,8 @@ public abstract class AbstractRecipeBook {
         assert client.world != null;
         List<ItemStack> stacks = getCraftableStacks(ingredient);
         if (stacks.isEmpty()){
-            // doesnt have ingredient
-            context.fill(x-1,y-1,x+18,y+18,0x60FF0000);
+            // doesnt have ingredient -> fill red
+            context.fill(x-1,y-1,x+17,y+17,0x60FF0000);
             stacks = ingredient.getStacks(worldContext);
         }
 

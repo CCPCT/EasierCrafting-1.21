@@ -22,6 +22,7 @@ public class ModConfig {
     public int fadeOutTime;
     public boolean showAllRecipes;
     public boolean refillFuel;
+    public boolean itemBackground;
 
     public static ModConfig get() {
         if (INSTANCE==null)

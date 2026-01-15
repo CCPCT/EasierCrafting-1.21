@@ -39,7 +39,7 @@ public class ExtendedGuiCrafting extends CraftingScreen implements SlotClickAcce
     @Override
     protected void drawForeground(DrawContext context, final int mouseX, final int mouseY) {
         super.drawForeground(context, mouseX, mouseY);
-        recipeBook.drawAllRecipe(context, textRenderer, backgroundWidth, backgroundHeight, mouseX-x, mouseY-y);
+        recipeBook.drawAllRecipe(context, backgroundWidth, backgroundHeight, mouseX-x, mouseY-y);
     }
     
     @Override
