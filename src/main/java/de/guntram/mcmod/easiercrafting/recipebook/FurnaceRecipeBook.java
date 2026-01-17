@@ -188,7 +188,7 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
         if (canCraft){
             int i;
             Item item = null;
-            if (hasShiftDown()){
+            if (Screen.hasShiftDown()){
                 for (i=0; i<recipe.ingredient().getStacks(worldContext).size(); i++){
                     item = recipe.ingredient().getStacks(worldContext).get(i).getItem();
                     if (avaliableItemMap.containsKey(item)){

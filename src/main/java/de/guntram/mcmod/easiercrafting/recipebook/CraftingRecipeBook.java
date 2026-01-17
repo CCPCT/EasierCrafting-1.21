@@ -127,12 +127,12 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
             case ShapedCraftingRecipeDisplay shaped -> {
                 recipeWidth = shaped.width();
                 ingredients = shaped.ingredients();
-                if (hasShiftDown()) maxCraftableStacks = getMaxCraftable(ingredients);
+                if (Screen.hasShiftDown()) maxCraftableStacks = getMaxCraftable(ingredients);
             }
             case ShapelessCraftingRecipeDisplay shapeless -> {
                 ingredients = shapeless.ingredients();
                 recipeWidth = ingredients.size() <= 4 ? 2 : 3;
-                if (hasShiftDown()) maxCraftableStacks = getMaxCraftable(ingredients);
+                if (Screen.hasShiftDown()) maxCraftableStacks = getMaxCraftable(ingredients);
             }
             case RepairCraftingRecipeDisplay repairDisplay -> {
                 ingredients = repairDisplay.ingredients();

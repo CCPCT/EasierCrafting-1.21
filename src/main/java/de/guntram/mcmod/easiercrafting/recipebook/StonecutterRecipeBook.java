@@ -135,7 +135,7 @@ public class StonecutterRecipeBook extends AbstractRecipeBook {
         if (canCraft){
             int i;
             Item item = null;
-            if (hasShiftDown()){
+            if (Screen.hasShiftDown()){
                 for (i=0; i<recipe.input().getStacks(worldContext).size(); i++){
                     item = recipe.input().getStacks(worldContext).get(i).getItem();
                     if (avaliableItemMap.containsKey(item)){

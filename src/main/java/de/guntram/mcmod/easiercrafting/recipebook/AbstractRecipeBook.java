@@ -116,7 +116,6 @@ public abstract class AbstractRecipeBook {
         this.craftingBlock = craftingBlock;
         this.recipeBook = player.getRecipeBook();
         this.screenHandler = screen.getScreenHandler();
-        this.window = client.getWindow();
         itemDisplaySpacing = ModConfig.get().itemDisplaySpacing;
         displayItemSize = itemSize+itemDisplaySpacing*2;
     }
@@ -504,14 +503,5 @@ public abstract class AbstractRecipeBook {
     protected boolean canCraft(RecipeDisplayEntry entry){
         return craftableRecipes.contains(entry);
     }
-
-    public boolean hasShiftDown(){
-        return InputUtil.isKeyPressed(window, GLFW.GLFW_KEY_LEFT_SHIFT);
-    }
-
-    public boolean hasControlDown(){
-        return InputUtil.isKeyPressed(window, GLFW.GLFW_KEY_LEFT_CONTROL);
-    }
-
 }
 
