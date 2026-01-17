@@ -2,6 +2,12 @@ plugins {
     id 'fabric-loom' version '1.13-SNAPSHOT'
 }
 
+loom {
+    mixin {
+        defaultRefmapName = "EasierCrafting-refmap.json"
+    }
+}
+
 repositories {
 	maven {url "https://maven.terraformersmc.com/releases/" }
     maven {url "https://maven.shedaniel.me/" }
