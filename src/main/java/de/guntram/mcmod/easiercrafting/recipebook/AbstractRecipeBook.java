@@ -25,6 +25,7 @@ import net.minecraft.recipe.display.SlotDisplayContexts;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.screen.ScreenHandler;
+import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -71,7 +72,9 @@ public abstract class AbstractRecipeBook {
     protected final ScreenHandler screenHandler;
 
     // Layout
-    protected final int itemSize = 18;
+    public static final int itemSize = 16;
+    public static int itemDisplaySpacing = ModConfig.get().itemDisplaySpacing;
+    public static int displayItemSize = itemSize+itemDisplaySpacing*2;
     protected final int itemLift = 5;
     protected int listSize;
     protected int itemsPerRow;
@@ -113,6 +116,9 @@ public abstract class AbstractRecipeBook {
         this.craftingBlock = craftingBlock;
         this.recipeBook = player.getRecipeBook();
         this.screenHandler = screen.getScreenHandler();
+        this.window = client.getWindow();
+        itemDisplaySpacing = ModConfig.get().itemDisplaySpacing;
+        displayItemSize = itemSize+itemDisplaySpacing*2;
     }
 
     // --- Abstract Methods to be implemented by subclasses ---
@@ -130,7 +136,7 @@ public abstract class AbstractRecipeBook {
     /**
      * Called to draw the overlay (e.g. 3x3 grid) when hovering over a recipe.
      */
-    protected abstract void drawRecipeGridOverlay(DrawContext context, int height, int mouseX, int mouseY);
+    protected abstract void drawRecipeGridOverlay(DrawContext context);
     /**
      * Returns all craftable recipes.
      */
@@ -139,48 +145,38 @@ public abstract class AbstractRecipeBook {
     //protected abstract List<ItemStack> getAllIngredient(SlotDisplay display);
 
     // draw outputs... and set undermouse
-    protected int drawSetOfRecipes(DrawContext context, RecipeTreeSet treeSet, int xpos, int ypos, int mouseX, int mouseY) {
+    protected int drawSetOfRecipes(DrawContext context, RecipeTreeSet treeSet, int xpos, int ypos, int screenBottom, int mouseX, int mouseY) {
         if (treeSet == null || treeSet.isEmpty()) return ypos;
-        int gridBackground = 0;
-        boolean lastGridDarkBackground = true;
         for (RecipeDisplayEntry recipe : treeSet) {
+            if (ypos>screenBottom) return ypos;
             if (ypos >= minYtoDraw) {
                 int x = xOffset + xpos;
                 int y = ypos - itemLift;
-
-                gridBackground++;
-                if (craftableRecipes.contains(recipe)) {
-                    if (ModConfig.get().itemBackground) {
-                        // draw alternating background (gray and light gray)
-                        if (gridBackground % 2 == 1) {
-                            context.fill(x - 1, y - 1, x + 17, y + 17, 0x60E0E0E0);
-                        } else {
-                            context.fill(x - 1, y - 1, x + 17, y + 17, 0x60E0E0E0);
-                        }
-                    }
-                } else {
+                if (!canCraft(recipe)) {
                     // if cant craft draw red background on the result
-                    context.fill(x-1,y-1,x+17,y+17,0x60FF0000);
+                    context.fill(x-itemDisplaySpacing,y-itemDisplaySpacing,x+itemSize+itemDisplaySpacing,y+itemSize+itemDisplaySpacing,0x60FF0000);
                 }
 
                 renderSingleRecipeOutput(context, textRenderer, recipe.display().result().getFirst(worldContext), x, y);
                 if (mouseX >= x &&
-                        mouseX <= x + itemSize - 1 &&
+                        mouseX <= x + displayItemSize - 1 &&
                         mouseY >= y &&
-                        mouseY <= y + itemSize - 1)
+                        mouseY <= y + displayItemSize - 1)
                 {
                     underMouse = recipe;
+                    // render background behind hovered item
+                    context.fill(x-itemDisplaySpacing,y-itemDisplaySpacing,x+itemSize+itemDisplaySpacing,y+itemSize+itemDisplaySpacing,0x50E0E0E0);
+                    // render recipe overlay
+                    drawRecipeGridOverlay(context);
                 }
             }
-            xpos += itemSize;
-            if (xpos >= itemSize * itemsPerRow) {
-                ypos += itemSize;
+            xpos += displayItemSize;
+            if (xpos >= displayItemSize * itemsPerRow) {
+                ypos += displayItemSize;
                 xpos = 0;
-                lastGridDarkBackground = !lastGridDarkBackground;
-                gridBackground = lastGridDarkBackground ? 0 : 1;
             }
         }
-        if (xpos != 0) ypos += itemSize;
+        if (xpos != 0) ypos += displayItemSize;
         return ypos;
     }
 
@@ -192,15 +188,15 @@ public abstract class AbstractRecipeBook {
         this.containerTop = (screen.height - 166) / 2;
 
         int tempItemsPerRow = 9; // max item per row
-        int tempXOffset = -itemSize * tempItemsPerRow - distanceFromGui;
+        int tempXOffset = -displayItemSize * tempItemsPerRow - distanceFromGui;
         if (tempXOffset + containerLeft < 0) {
-            tempItemsPerRow = (containerLeft - distanceFromGui) / itemSize;
-            tempXOffset = -itemSize * tempItemsPerRow - distanceFromGui;
+            tempItemsPerRow = (containerLeft - distanceFromGui) / displayItemSize;
+            tempXOffset = -displayItemSize * tempItemsPerRow - distanceFromGui;
         }
         if (ModConfig.get().showGuiRight)
             tempXOffset = 176 + distanceFromGui;
         if (tempItemsPerRow < 2) {
-            LOGGER.warn("forcing tempItemsPerRow to 2 when it's " + tempItemsPerRow);
+            LOGGER.warn("forcing tempItemsPerRow to 2 when it's {}", tempItemsPerRow);
             tempItemsPerRow = 2;
         }
         this.itemsPerRow = tempItemsPerRow;
@@ -210,7 +206,7 @@ public abstract class AbstractRecipeBook {
         updateRecipes();
 
         pattern.setX(xOffset);
-        textBoxSize=itemsPerRow*itemSize;
+        textBoxSize=itemsPerRow*displayItemSize;
         pattern.setWidth(textBoxSize);
 
     }
@@ -248,7 +244,7 @@ public abstract class AbstractRecipeBook {
         }
 
         int ypos = 0;
-        int neededHeight = patternListSize + listSize + itemSize; // + search box
+        int neededHeight = patternListSize + listSize + displayItemSize; // + search box
 
         if (neededHeight > height) {
             ypos -= (neededHeight - height) / 2;
@@ -263,30 +259,30 @@ public abstract class AbstractRecipeBook {
 
         underMouse = null;
 
-        // Draw Search
+        // draw background
+        int screenBottom = context.getScaledWindowHeight()-containerTop-5;
+        if (ModConfig.get().recipeBackground){
+            context.fill(pattern.getX()-5,pattern.getY()-5,pattern.getX()+textBoxSize+5,screenBottom ,0x50505050);
+        }
+
+        // Draw Search box
         pattern.setY(ypos);
         pattern.renderWidget(context, 0, 0, 0f);
-        ypos += itemSize * 3 / 2;
+        ypos += displayItemSize * 3 / 2;
         minYtoDraw = ypos;
-        ypos -= mouseScroll * itemSize;
+        ypos -= mouseScroll * displayItemSize;
 
         // Draw Search Results
-        ypos = drawSetOfRecipes(context, patternMatchingRecipes, 0, ypos, mouseX, mouseY);
+        ypos = drawSetOfRecipes(context, patternMatchingRecipes, 0, ypos, screenBottom-displayItemSize, mouseX, mouseY);
 
         // Draw Categories
         for (String category : craftableCategories.keySet()) {
+            if (ypos>screenBottom-displayItemSize) return;
             if (ypos >= minYtoDraw) {
                 context.drawText(textRenderer, category, xOffset, ypos, 0xFFFFFF00, true);
             }
-            ypos += itemSize;
-            ypos = drawSetOfRecipes(context, craftableCategories.get(category), 0, ypos, mouseX, mouseY);
-        }
-
-        // Draw crafting ingredient Overlay (Tooltip/Grid)
-        if (underMouse != null) {
-            String displayName = recipeDisplayName(underMouse);
-            context.drawText(textRenderer, displayName, 0, height + 3, 0xFFFFFF00, true);
-            drawRecipeGridOverlay(context, height, mouseX, mouseY);
+            ypos += displayItemSize;
+            ypos = drawSetOfRecipes(context, craftableCategories.get(category), 0,  ypos, screenBottom-displayItemSize, mouseX, mouseY);
         }
     }
 
@@ -309,26 +305,28 @@ public abstract class AbstractRecipeBook {
     }
 
 // may not need to renderIngredient by ingredient but by slotdisplay
-    public void renderIngredient(DrawContext context, SlotDisplay ingredient, int x, int y) {
+    public void renderIngredient(DrawContext context, SlotDisplay ingredient, Slot slot) {
         List<ItemStack> stacks = getCraftableStacks(ingredient);
         if (stacks.isEmpty()){
             // doesnt have ingredient
             stacks = ingredient.getStacks(worldContext);
         }
-        renderIngredient(context, stacks, x, y);
+        renderIngredient(context, stacks, slot);
     }
 
-    public void renderIngredient(DrawContext context, List<ItemStack> stacks, int x, int y) {
+    public void renderIngredient(DrawContext context, List<ItemStack> stacks, Slot slot) {
         if (stacks.isEmpty()) return;
+        int x = slot.x;
+        int y = slot.y;
         if (!getAvailableItemSet().contains(stacks.getFirst().getItem())){
             // no recipe found
-            context.fill(x-1,y-1,x+17,y+17,0x60FF0000);
+            context.fill(x,y,x+itemSize,y+itemSize,0x60FF0000);
         }
 
         int toRender = 0;
         if (stacks.size() > 1)
             toRender = (int) ((System.currentTimeMillis() / 333) % stacks.size());
-        context.drawItem(stacks.get(toRender), x, y);
+        drawHoloItem(context,slot,stacks.get(toRender));
         context.drawStackOverlay(textRenderer,stacks.get(toRender),x,y);
     }
 
@@ -336,7 +334,7 @@ public abstract class AbstractRecipeBook {
         listSize = craftableCategories.size();
         for (RecipeTreeSet tree : craftableCategories.values())
             listSize += ((tree.size() + (itemsPerRow - 1)) / itemsPerRow);
-        listSize *= itemSize;
+        listSize *= displayItemSize;
     }
 
     public void updatePatternMatch() {
@@ -363,12 +361,12 @@ public abstract class AbstractRecipeBook {
     }
 
     public void recalcPatternMatchSize() {
-        patternListSize = ((patternMatchingRecipes.size() + (itemsPerRow - 1)) / itemsPerRow) * itemSize;
+        patternListSize = ((patternMatchingRecipes.size() + (itemsPerRow - 1)) / itemsPerRow) * displayItemSize;
         mouseScroll = 0;
     }
 
     public void scrollBy(int ticks) {
-        int maxScrollPos = ((listSize + patternListSize - screen.height + itemSize) / itemSize) + 3;
+        int maxScrollPos = ((listSize + patternListSize - screen.height + displayItemSize) / displayItemSize) + 3;
         mouseScroll = MathHelper.clamp(mouseScroll - ticks, 0, maxScrollPos);
     }
 
@@ -387,6 +385,7 @@ public abstract class AbstractRecipeBook {
 
         // Scroll bar area click
         if (mouseY > 0 && mouseY < 20 && mouseX > xOffset + containerLeft && mouseX < xOffset + containerLeft + textBoxSize) {
+            LOGGER.info("Try to scroll...");
             if (mouseX < xOffset + containerLeft + 20) scrollBy(-1);
             else if (mouseX > xOffset + containerLeft + textBoxSize - 20) scrollBy(1);
             return;
@@ -395,7 +394,7 @@ public abstract class AbstractRecipeBook {
         if (underMouse == null) return;
 
         // dont craft uncraftable items
-        if (!craftableRecipes.contains(underMouse)) return;
+        if (!canCraft(underMouse)) return;
 
         // Ensure grid is empty (common check, though subclasses might override behavior)
         for (int craftslot = 0; craftslot < gridSize * gridSize; craftslot++) {
@@ -440,6 +439,17 @@ public abstract class AbstractRecipeBook {
 
     protected void slotClick(int slot, int mouseButton, SlotActionType clickType) {
         ((SlotClickAccepter) screen).slotClick(slot, mouseButton, clickType);
+    }
+
+    protected void drawHoloItem(DrawContext context, Slot slot, ItemStack stack){
+        int x = slot.x;
+        int y = slot.y;
+        context.drawItem(stack, x, y);
+        // fill transparent colour of grid to make items look transparent
+        context.fill(x, y, x+itemSize, y+itemSize, 0x808b8b8b);
+        if (stack.getCount()>1){
+            context.drawStackOverlay(textRenderer,stack,x,y);
+        }
     }
 
     // other getters
@@ -499,6 +509,18 @@ public abstract class AbstractRecipeBook {
 
     public static SlotDisplay getSlotDisplayFromItem(Item item){
         return new SlotDisplay.StackSlotDisplay(new ItemStack(item));
+    }
+
+    protected boolean canCraft(RecipeDisplayEntry entry){
+        return craftableRecipes.contains(entry);
+    }
+
+    public boolean hasShiftDown(){
+        return InputUtil.isKeyPressed(window, GLFW.GLFW_KEY_LEFT_SHIFT);
+    }
+
+    public boolean hasControlDown(){
+        return InputUtil.isKeyPressed(window, GLFW.GLFW_KEY_LEFT_CONTROL);
     }
 
 }

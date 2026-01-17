@@ -23,7 +23,6 @@ import net.minecraft.recipe.Ingredient;
 import net.minecraft.recipe.NetworkRecipeId;
 import net.minecraft.recipe.RecipeDisplayEntry;
 import net.minecraft.recipe.book.RecipeBookCategories;
-import net.minecraft.recipe.display.RecipeDisplay;
 import net.minecraft.recipe.display.ShapedCraftingRecipeDisplay;
 import net.minecraft.recipe.display.ShapelessCraftingRecipeDisplay;
 import net.minecraft.recipe.display.SlotDisplay;
@@ -119,30 +118,45 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
     }
 
     @Override
-    protected void drawRecipeGridOverlay(DrawContext context, int height, int mouseX, int mouseY) {
-        RecipeDisplay display = underMouse.display();
-        if (display instanceof ShapedCraftingRecipeDisplay shaped) {
-            List<SlotDisplay> ingredients = shaped.ingredients();
-            for (int x = 0; x < shaped.width(); x++) {
-                for (int y = 0; y < shaped.height(); y++) {
-                    SlotDisplay ingredient = ingredients.get(x + y * shaped.width());
-                    if (ingredient.getFirst(worldContext).isEmpty()) continue;
-                    renderIngredient(context, ingredient, itemSize * x, height + itemSize + itemSize * y);
-                }
+    protected void drawRecipeGridOverlay(DrawContext context) {
+        // get info
+        int recipeWidth;
+        List<SlotDisplay> ingredients;
+        int maxCraftableStacks=1;
+        switch (underMouse.display()) {
+            case ShapedCraftingRecipeDisplay shaped -> {
+                recipeWidth = shaped.width();
+                ingredients = shaped.ingredients();
+                if (hasShiftDown()) maxCraftableStacks = getMaxCraftable(ingredients);
             }
-        } else if (display instanceof ShapelessCraftingRecipeDisplay recipeDisplay) {
-            if (underMouse.craftingRequirements().isPresent()) {
-                int x = 0;
-                for (SlotDisplay ingredient : recipeDisplay.ingredients()) {
-                    renderIngredient(context, ingredient, itemSize * x, height + itemSize);
-                    x++;
-                }
+            case ShapelessCraftingRecipeDisplay shapeless -> {
+                ingredients = shapeless.ingredients();
+                recipeWidth = ingredients.size() <= 4 ? 2 : 3;
+                if (hasShiftDown()) maxCraftableStacks = getMaxCraftable(ingredients);
             }
-        } else if (display instanceof RepairCraftingRecipeDisplay repairDisplay) {
-            int x = 0;
-            for (SlotDisplay ingredient : repairDisplay.ingredients()) {
-                renderIngredient(context, ingredient, itemSize * x, height + itemSize);
-                x++;
+            case RepairCraftingRecipeDisplay repairDisplay -> {
+                ingredients = repairDisplay.ingredients();
+                recipeWidth = 2;
+            }
+            case null, default -> {
+                return;
+            }
+        }
+
+        // render result
+        ItemStack resultStack = underMouse.display().result().getFirst(worldContext).copy();
+        resultStack.setCount(maxCraftableStacks);
+        Slot resultSlot = screenHandler.getSlot(resultSlotNo);
+        boolean canCraft = canCraft(underMouse);
+        drawHoloItem(context, resultSlot, resultStack);
+        if (!canCraft) context.fill(resultSlot.x-2,resultSlot.y-2,resultSlot.x+itemSize+2,resultSlot.y+itemSize+2,0x60FF0000);
+
+        for (int x = 0; x < recipeWidth; x++) {
+            for (int y = 0; y < 3; y++) {
+                if (y*recipeWidth+x >= ingredients.size()) return;
+                SlotDisplay ingredient = ingredients.get(y*recipeWidth+x);
+                if (ingredient.getFirst(worldContext).isEmpty()) continue;
+                renderIngredient(context, ingredient, screenHandler.getSlot(firstCraftSlotNo + y*gridSize+x));
             }
         }
     }
