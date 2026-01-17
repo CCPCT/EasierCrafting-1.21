@@ -11,18 +11,19 @@ import java.nio.file.Path;
 
 public class ModConfig {
 
-    public boolean modEnabled;
-    public boolean autoFocusSearch;
-    public int autoUpdateRecipeTimer;
-    public boolean allowRecipeBook;
-    public boolean showGuiRight;
-    public boolean allowGeneratedRecipes;
-    public int maxEnchantsAllowedForRepair;
-    public boolean categorizeRecipes;
-    public int fadeOutTime;
-    public boolean showAllRecipes;
-    public boolean refillFuel;
-    public boolean itemBackground;
+    public boolean modEnabled = true;
+    public boolean autoFocusSearch = false;
+    public int autoUpdateRecipeTimer = 20;
+    public boolean allowRecipeBook = false;
+    public boolean showGuiRight = true;
+    public boolean allowGeneratedRecipes = true;
+    public int maxEnchantsAllowedForRepair = 0;
+    public boolean categorizeRecipes = true;
+    public int fadeOutTime = 10;
+    public boolean showAllRecipes = true;
+    public boolean refillFuel = true;
+    public boolean recipeBackground = false;
+    public int itemDisplaySpacing = 1;
 
     public static ModConfig get() {
         if (INSTANCE==null)

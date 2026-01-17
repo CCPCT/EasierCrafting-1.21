@@ -17,6 +17,7 @@ import net.minecraft.recipe.display.FurnaceRecipeDisplay;
 import net.minecraft.recipe.display.SlotDisplay;
 import net.minecraft.screen.FurnaceScreenHandler;
 import net.minecraft.screen.ScreenHandler;
+import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 
 import java.util.List;
@@ -183,8 +184,33 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
     }
 
     @Override
-    protected void drawRecipeGridOverlay(DrawContext context, int height, int mouseX, int mouseY) {
-        renderIngredient(context, getIngredients(underMouse), 0, height + itemSize);
+    protected void drawRecipeGridOverlay(DrawContext context) {
+        if (!(underMouse.display() instanceof FurnaceRecipeDisplay recipe)) return;
+        ItemStack result = recipe.result().getFirst(worldContext).copy();
+        boolean canCraft = canCraft(underMouse);
+        if (canCraft){
+            int i;
+            Item item = null;
+            if (hasShiftDown()){
+                for (i=0; i<recipe.ingredient().getStacks(worldContext).size(); i++){
+                    item = recipe.ingredient().getStacks(worldContext).get(i).getItem();
+                    if (avaliableItemMap.containsKey(item)){
+                        result.setCount(Math.min(avaliableItemMap.getInt(item)*result.getCount(),item.getMaxCount()));
+                        break;
+                    }
+                }
+            }
+            assert item != null;
+
+        }
+
+        // draw result
+        Slot resultSlot = screenHandler.getSlot(resultSlotNo);
+        drawHoloItem(context,resultSlot,result);
+
+        if (!canCraft) context.fill(resultSlot.x-2,resultSlot.y-2,resultSlot.x+itemSize+2,resultSlot.y+itemSize+2,0x60FF0000);
+
+        renderIngredient(context, getIngredients(underMouse), screenHandler.getSlot(firstCraftSlotNo));
     }
 
     protected List<ItemStack> getIngredients(RecipeDisplayEntry entry) {
