@@ -304,16 +304,6 @@ public abstract class AbstractRecipeBook {
         context.drawStackOverlay(fontRenderer, items, x, y);
     }
 
-// may not need to renderIngredient by ingredient but by slotdisplay
-    public void renderIngredient(DrawContext context, SlotDisplay ingredient, Slot slot) {
-        List<ItemStack> stacks = getCraftableStacks(ingredient);
-        if (stacks.isEmpty()){
-            // doesnt have ingredient
-            stacks = ingredient.getStacks(worldContext);
-        }
-        renderIngredient(context, stacks, slot);
-    }
-
     public void renderIngredient(DrawContext context, List<ItemStack> stacks, Slot slot) {
         if (stacks.isEmpty()) return;
         int x = slot.x;

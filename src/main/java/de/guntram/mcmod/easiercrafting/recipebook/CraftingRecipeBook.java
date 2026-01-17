@@ -74,9 +74,9 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
                 }
             }
 
-            if (getMaxCraftable(entry)>0) {
+            if (recipeCraftable(entry)) {
                 craftableRecipes.add(entry);
-                //System.out.println("can craft: " + entry.display().result().getFirst(worldcontext).getName().getString()+", cat: "+getCat(entry).getPath());
+//                System.out.println("can craft: " + entry.display().result().getFirst(worldContext).getName().getString()+", cat: "+getCat(entry).getPath());
             }
         }
 
@@ -151,14 +151,30 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
         drawHoloItem(context, resultSlot, resultStack);
         if (!canCraft) context.fill(resultSlot.x-2,resultSlot.y-2,resultSlot.x+itemSize+2,resultSlot.y+itemSize+2,0x60FF0000);
 
-        for (int x = 0; x < recipeWidth; x++) {
-            for (int y = 0; y < 3; y++) {
+        Object2IntOpenHashMap<Item> tempMap = avaliableItemMap.clone();
+
+        for (int y = 0; y < 3; y++) {
+            for (int x = 0; x < recipeWidth; x++) {
                 if (y*recipeWidth+x >= ingredients.size()) return;
                 SlotDisplay ingredient = ingredients.get(y*recipeWidth+x);
                 if (ingredient.getFirst(worldContext).isEmpty()) continue;
-                renderIngredient(context, ingredient, screenHandler.getSlot(firstCraftSlotNo + y*gridSize+x));
+                boolean found = false;
+                for (ItemStack stack : ingredient.getStacks(worldContext)){
+                    // cant craft
+                    if (tempMap.getInt(stack.getItem())<=0) continue;
+                    tempMap.addTo(stack.getItem(),-1);
+                    renderCraftingIngredient(context,stack,screenHandler.getSlot(firstCraftSlotNo + y*gridSize+x));
+                    found = true;
+                    break;
+                }
+                if (!found) renderIngredient(context, ingredient.getStacks(worldContext), screenHandler.getSlot(firstCraftSlotNo + y*gridSize+x));
             }
         }
+    }
+
+    public void renderCraftingIngredient(DrawContext context, ItemStack stack, Slot slot) {
+        if (stack.isEmpty()) return;
+        drawHoloItem(context,slot,stack);
     }
 
     @Override
@@ -291,37 +307,25 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
         return maxCraftableStacks;
     }
 
-    private static int getMaxCraftable(RecipeDisplayEntry recipe) {
-        if (recipe.craftingRequirements().isEmpty() || avaliableItemMap.isEmpty()) return 0;
-        List<Ingredient> requirements = recipe.craftingRequirements().get();
+    private boolean recipeCraftable(RecipeDisplayEntry entry){
+        Object2IntOpenHashMap<Item> tempMap = avaliableItemMap.clone();
+        if (entry.craftingRequirements().isEmpty()) return false;
+        List<Ingredient> ingredients= entry.craftingRequirements().get();
 
-        // 1. Pre-filter and Cache: Map each requirement to a list of valid items in the inventory.
-        // This avoids calling ingredient.test() thousands of times.
-        Object2IntOpenHashMap<Item> ingredientMatches = new Object2IntOpenHashMap<>(10);
-        for (Ingredient ingredient : requirements) {
+        for (Ingredient ingredient : ingredients) {
             if (ingredient.isEmpty()) continue;
-
-            Item validItems = Items.AIR;
-            for (Item item : avaliableItemMap.keySet()) {
-                if (ingredient.test(item.getDefaultStack())) {
-                    validItems = item;
-                    break;
-                }
+            boolean canCraft = false;
+            for (ItemStack stack : ingredient.toDisplay().getStacks(worldContext)) {
+                // cant craft
+                if (tempMap.getInt(stack.getItem()) <= 0) continue;
+                canCraft = true;
+                tempMap.addTo(stack.getItem(), -1);
+                break;
             }
-
-            if (validItems.equals(Items.AIR)) return 0;
-            ingredientMatches.addTo(validItems,1);
-
+            if (!canCraft) return false;
         }
 
-        // 3. Crafting Simulation
-        int maxCraftableStacks = 64;
-        for (Map.Entry<Item, Integer> set : ingredientMatches.object2IntEntrySet()) {
-            // min(var,avaliable/need,max stackable ingredient)
-            maxCraftableStacks=Math.min(Math.min(maxCraftableStacks,avaliableItemMap.getInt(set.getKey())/set.getValue()),set.getKey().getMaxCount());
-        }
-
-        return maxCraftableStacks;
+        return true;
     }
 
     private void addUnusualRecipe(){
