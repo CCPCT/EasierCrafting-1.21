@@ -13,13 +13,13 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    strategy:
+      matrix:
+        # Define your versions here
+        mc_version: ["1.21.2", "1.21.4", "1.21.6"]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -28,11 +28,34 @@ jobs:
           distribution: 'temurin'
 
       - name: Build Mod
-        # --no-daemon ensures the process doesn't get killed for memory leaks
-        # GRADLE_OPTS gives the runner enough RAM to decompile MC from scratch
-        run: ./gradlew build --no-daemon
+        # Uses the matrix variable for the target flag
+        run: ./gradlew clean build --no-daemon -Ptarget=${{ matrix.mc_version }}
         env:
           GRADLE_OPTS: -Xmx4G -XX:+UseParallelGC
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          # Unique name for each version's jar
+          name: mod-jar-${{ matrix.mc_version }}
+          path: build/libs/*.jar
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-jars
+          merge-multiple: true
 
       - name: Get Commit Message
         id: commit_message
@@ -50,6 +73,7 @@ jobs:
           name: "${{ github.event.inputs.tag_name || github.ref_name }} for 1.21.2-8"
           tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
           body: ${{ steps.commit_message.outputs.msg }}
-          files: build/libs/*.jar
+          # Points to the folder where all parallel jars were collected
+          files: all-jars/*.jar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

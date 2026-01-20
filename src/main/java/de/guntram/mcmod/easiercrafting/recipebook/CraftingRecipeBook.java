@@ -331,7 +331,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
         List<Ingredient> ingredients= entry.craftingRequirements().get();
 
         for (Ingredient ingredient : ingredients) {
-            if (ingredient.isEmpty()) continue;
+            if (ingredient.toDisplay().getFirst(worldContext).isEmpty()) continue;
             boolean canCraft = false;
             for (ItemStack stack : ingredient.toDisplay().getStacks(worldContext)) {
                 // cant craft
