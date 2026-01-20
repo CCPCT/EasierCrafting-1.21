@@ -446,10 +446,9 @@ public abstract class AbstractRecipeBook {
         int y = slot.y;
         context.drawItem(stack, x, y);
         // fill transparent colour of grid to make items look transparent
+        context.drawStackOverlay(textRenderer,stack,x,y);
         context.fill(x, y, x+itemSize, y+itemSize, 0x808b8b8b);
-        if (stack.getCount()>1){
-            context.drawStackOverlay(textRenderer,stack,x,y);
-        }
+
     }
 
     // other getters

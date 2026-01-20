@@ -121,6 +121,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
         int recipeWidth;
         List<SlotDisplay> ingredients;
         int maxCraftableStacks=1;
+        Slot resultSlot = screenHandler.getSlot(resultSlotNo);
         switch (underMouse.display()) {
             case ShapedCraftingRecipeDisplay shaped -> {
                 recipeWidth = shaped.width();
@@ -133,8 +134,15 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
                 if (hasShiftDown()) maxCraftableStacks = getMaxCraftable(ingredients);
             }
             case RepairCraftingRecipeDisplay repairDisplay -> {
-                ingredients = repairDisplay.ingredients();
-                recipeWidth = 2;
+                // repair formular: durability = min(Item A uses + Item B uses + floor(Max uses / 20), Max uses) (from wiki)
+                // damage = max(max-((max-damage a)+(max-damage b)+floor(Max/20)),0)
+                // damage = max(damage a + damage b - floor(Max/20) - max , 0)
+                // so best and easiest approach would be adding items with min durability
+                drawHoloItem(context, resultSlot, repairDisplay.result().getFirst(worldContext));
+                drawHoloItem(context, screenHandler.getSlot(firstCraftSlotNo), repairDisplay.ingredients().getFirst().getFirst(worldContext));
+                drawHoloItem(context, screenHandler.getSlot(firstCraftSlotNo+1), repairDisplay.ingredients().get(1).getFirst(worldContext));
+
+                return;
             }
             case null, default -> {
                 return;
@@ -143,8 +151,10 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
 
         // render result
         ItemStack resultStack = underMouse.display().result().getFirst(worldContext).copy();
-        resultStack.setCount(maxCraftableStacks);
-        Slot resultSlot = screenHandler.getSlot(resultSlotNo);
+        if (!(underMouse.display() instanceof RepairCraftingRecipeDisplay)) {
+            resultStack.setCount(maxCraftableStacks*resultStack.getCount());
+        }
+
         boolean canCraft = canCraft(underMouse);
         drawHoloItem(context, resultSlot, resultStack);
         if (!canCraft) context.fill(resultSlot.x-2,resultSlot.y-2,resultSlot.x+itemSize+2,resultSlot.y+itemSize+2,0x60FF0000);
@@ -211,6 +221,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
         boolean[] removal = new boolean[ingredients.size()];
 
         // move item on crafting grid
+        boolean repairOccupied = false;
         for (int i = 0; i < ingredients.size(); i++) {
             int remaining = maxCraftableStacks;
             SlotDisplay ingredient = ingredients.get(i);
@@ -218,14 +229,25 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
 
             for (int slot = firstInventorySlotNo; remaining > 0 && slot < 36 + firstInventorySlotNo; slot++) {
                 ItemStack slotcontent = screenHandler.getSlot(slot).getStack();
-                if (canActAsIngredient(ingredient, slotcontent)) {
-                    transfer(slot, i + firstCraftSlotNo + rowadjust, remaining);
-                    ItemStack inCraftSlot = screenHandler.getSlot(i + firstCraftSlotNo + rowadjust).getStack();
-                    remaining = maxCraftableStacks - inCraftSlot.getCount();
-                    if (!inCraftSlot.getRecipeRemainder().isEmpty()) {
-                        removal[i] = true;
-                    }
+                // yes awful nested if statements... find a better logic for me then... but bare in mind mine works :3
+                if (entry.display() instanceof RepairCraftingRecipeDisplay recipe){
+                    if (slotcontent.getItem()!=recipe.result().getFirst(worldContext).getItem()) continue;
+                    if (slotcontent.getDamage()>=recipe.ingredients().get(1).getFirst(worldContext).getDamage()){
+                        // not as damage as most damaged
+                        if (slotcontent.getDamage()<recipe.ingredients().getFirst().getFirst(worldContext).getDamage()){
+                            if (repairOccupied) continue;
+                            repairOccupied = true;
+                        }
+                    } else continue;
                 }
+                else if (!canActAsIngredient(ingredient, slotcontent)) continue;
+                transfer(slot, i + firstCraftSlotNo + rowadjust, remaining);
+                ItemStack inCraftSlot = screenHandler.getSlot(i + firstCraftSlotNo + rowadjust).getStack();
+                remaining = maxCraftableStacks - inCraftSlot.getCount();
+                if (!inCraftSlot.getRecipeRemainder().isEmpty()) {
+                    removal[i] = true;
+                }
+
             }
             if (recipeWidth > 0 && (i + 1) % recipeWidth == 0) {
                 rowadjust += gridSize - recipeWidth;
@@ -388,15 +410,40 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
         for (Map.Entry<Item, Integer> set : item.object2IntEntrySet()) {
             if (set.getValue()<2) continue;
 
+            Item ingredient = set.getKey();
+            ItemStack resultStack = ingredient.getDefaultStack();
+            ItemStack ingredientA = ingredient.getDefaultStack();
+            ItemStack ingredientB = ingredient.getDefaultStack();
+
+            int damageA = 0;
+            int damageB = 0;
+            // find 2 slot with max damage
+            for (int slot = firstInventorySlotNo; slot < 36 + firstInventorySlotNo; slot++) {
+                ItemStack slotContent = screenHandler.getSlot(slot).getStack();
+                if (slotContent.getItem()!=ingredient||slotContent.hasEnchantments()) continue;
+                if (slotContent.getDamage() > damageA) {
+                    damageB = damageA;
+                    damageA = slotContent.getDamage();
+                } else if (slotContent.getDamage() > damageB) {
+                    damageB = slotContent.getDamage();
+                }
+            }
+
+            ingredientA.setDamage(damageA);
+            ingredientB.setDamage(damageB);
+            resultStack.setDamage(Integer.max(damageA + damageB - resultStack.getMaxDamage()/20 - resultStack.getMaxDamage() , 0));
+
+
             // add the repairRecipe
             RepairCraftingRecipeDisplay display = new RepairCraftingRecipeDisplay(
-                    Collections.nCopies(2,new SlotDisplay.StackSlotDisplay(new ItemStack(set.getKey()))),
-                    new SlotDisplay.StackSlotDisplay(new ItemStack(set.getKey())),
+                    List.of(new SlotDisplay.StackSlotDisplay(ingredientA),new SlotDisplay.StackSlotDisplay(ingredientB)),
+                    new SlotDisplay.StackSlotDisplay(resultStack),
                     craftingBlock
             );
 
             RecipeDisplayEntry entry = new RecipeDisplayEntry(
-                    new NetworkRecipeId(6767), // dont care abt if it repeat
+                    // use hash code of the item
+                    new NetworkRecipeId(set.getKey().hashCode()+resultStack.getDamage()),
                     display,
                     OptionalInt.empty(),
                     SPECIAL_CAT,
