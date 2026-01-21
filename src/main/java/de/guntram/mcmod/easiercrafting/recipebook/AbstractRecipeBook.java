@@ -61,6 +61,7 @@ public abstract class AbstractRecipeBook {
     protected final SlotDisplay craftingBlock;
     protected ClientRecipeBook recipeBook;
     protected final TextRenderer textRenderer;
+    public int screenYOffset = 0;
 
 
     public final ObjectArrayList<RecipeDisplayEntry> craftableRecipes = new ObjectArrayList<>();
@@ -110,7 +111,7 @@ public abstract class AbstractRecipeBook {
         this.gridSize = gridsize;
         this.resultSlotNo = resultSlot;
         this.firstInventorySlotNo = firstInventorySlot;
-        this.pattern = new TextFieldWidget(textRenderer, 0, 0, 10, 20, Text.literal("")); // update width later
+        this.pattern = new TextFieldWidget(textRenderer, 0, screenYOffset, 10, 20, Text.literal("")); // update width later
         this.underMouse = null;
         this.player = client.player;
         this.worldContext = SlotDisplayContexts.createParameters(world);
@@ -244,7 +245,7 @@ public abstract class AbstractRecipeBook {
             }
         }
 
-        int ypos = 0;
+        int ypos = screenYOffset;
         int neededHeight = patternListSize + listSize + displayItemSize; // + search box
 
         if (neededHeight > height) {

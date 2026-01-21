@@ -19,7 +19,7 @@ public class ExtendedGuiCrafting extends CraftingScreen implements SlotClickAcce
     public ExtendedGuiCrafting(CraftingScreenHandler container, PlayerInventory lowerInv, Text title) {
         super(container, lowerInv, title);
     }
-    
+
     @Override
     protected void init() {
         super.init();
@@ -27,6 +27,7 @@ public class ExtendedGuiCrafting extends CraftingScreen implements SlotClickAcce
             // just remove recipe book button
             this.children().removeIf(entry -> entry instanceof RecipeBookWidget);
         }
+        this.recipeBook.screenYOffset = -super.y;
         this.recipeBook.afterInitGui();
     }
 

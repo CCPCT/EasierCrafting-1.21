@@ -27,6 +27,7 @@ public class ExtendedGuiStonecutter extends StonecutterScreen implements SlotCli
             // just remove recipe book button
             this.children().removeIf(entry -> entry instanceof RecipeBookWidget);
         }
+        this.recipeBook.screenYOffset = -super.y;
         this.recipeBook.afterInitGui();
     }
 
