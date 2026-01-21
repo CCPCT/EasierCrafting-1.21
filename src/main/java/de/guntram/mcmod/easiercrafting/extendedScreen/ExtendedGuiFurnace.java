@@ -29,6 +29,7 @@ public class ExtendedGuiFurnace extends FurnaceScreen implements SlotClickAccept
             // just remove recipe book button
             this.children().removeIf(entry -> entry instanceof RecipeBookWidget);
         }
+        this.recipeBook.screenYOffset = -super.y;
         this.recipeBook.afterInitGui();
     }
 
