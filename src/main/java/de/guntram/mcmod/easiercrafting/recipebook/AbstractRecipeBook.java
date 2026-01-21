@@ -1,5 +1,6 @@
 package de.guntram.mcmod.easiercrafting.recipebook;
 
+import de.guntram.mcmod.easiercrafting.EasierCrafting;
 import de.guntram.mcmod.easiercrafting.InventoryAccessor;
 import de.guntram.mcmod.easiercrafting.SlotClickAccepter;
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
@@ -14,6 +15,7 @@ import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.recipebook.ClientRecipeBook;
 import net.minecraft.client.resource.language.I18n;
+import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
@@ -400,16 +402,20 @@ public abstract class AbstractRecipeBook {
 
     public boolean keyPressed(int code, int scancode, int modifiers) {
         if (pattern == null) return false;
+
         if (code == GLFW.GLFW_KEY_ENTER || code == GLFW.GLFW_KEY_KP_ENTER || code == GLFW.GLFW_KEY_ESCAPE) {
             pattern.setFocused(false);
             updatePatternMatch();
-            return true;
         } else if (pattern.isFocused()) {
             pattern.keyPressed(code, scancode, modifiers);
             updatePatternMatch();
-            return true;
+        } else if (InputUtil.fromTranslationKey(EasierCrafting.refreshRecipeKey.getBoundKeyTranslationKey()).getCode()==code){
+            // pressed refresh key
+            recipeUpdateTime = System.currentTimeMillis();
+        } else {
+            return false;
         }
-        return false;
+        return true;
     }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
