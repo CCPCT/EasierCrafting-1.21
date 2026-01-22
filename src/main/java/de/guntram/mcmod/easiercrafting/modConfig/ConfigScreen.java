@@ -97,7 +97,7 @@ public class ConfigScreen extends Screen {
                 })
                 .build());
 
-        generalTab.addEntry(entryBuilder.startBooleanToggle(Text.literal("Improve villager trading"), ModConfig.get().enableTrading)
+        generalTab.addEntry(entryBuilder.startBooleanToggle(Text.literal("Enable quick trade"), ModConfig.get().enableTrading)
                 .setSaveConsumer(newValue -> ModConfig.get().enableTrading = newValue)
                 .build());
 

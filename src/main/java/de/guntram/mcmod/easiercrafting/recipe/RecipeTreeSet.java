@@ -5,9 +5,6 @@ import de.guntram.mcmod.easiercrafting.recipebook.AbstractRecipeBook;
 import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import net.minecraft.recipe.RecipeDisplayEntry;
 
-import java.util.TreeSet;
-import java.util.function.Function;
-
 public class RecipeTreeSet extends ObjectAVLTreeSet<RecipeDisplayEntry> {
 
     public RecipeTreeSet() {
