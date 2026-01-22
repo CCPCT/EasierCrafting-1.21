@@ -24,6 +24,7 @@ public class ModConfig {
     public boolean refillFuel = true;
     public boolean recipeBackground = false;
     public int itemDisplaySpacing = 1;
+    public boolean enableTrading = true;
 
     public static ModConfig get() {
         if (INSTANCE==null)
