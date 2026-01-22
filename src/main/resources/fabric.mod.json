@@ -12,6 +12,7 @@
     "mixins": [
       	"mixins.easiercrafting.json"
     ],
+    "accessWidener": "easiercrafting.accesswidener",
     "depends": {
       "fabric-api": "*",
       "fabricloader": "*",

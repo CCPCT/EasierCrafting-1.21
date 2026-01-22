@@ -2,6 +2,7 @@ package de.guntram.mcmod.easiercrafting.mixins;
 
 import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiCrafting;
 import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiFurnace;
+import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiMerchant;
 import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiStonecutter;
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.recipebook.CraftingRecipeBook;
@@ -70,6 +71,14 @@ public abstract class OpenGuiMixin {
             openScreen(client, handler, screen);
             ci.cancel();
         }
+        else if (type == ScreenHandlerType.MERCHANT) {
+            if (!ModConfig.get().modEnabled) return;
+            MerchantScreenHandler handler = ScreenHandlerType.MERCHANT.create(id, client.player.getInventory());
+            ExtendedGuiMerchant screen = new ExtendedGuiMerchant(handler, client.player.getInventory(), title);
+            openScreen(client, handler, screen);
+            ci.cancel();
+        }
+
     }
 
     // Helper to mirror vanilla behavior correctly
