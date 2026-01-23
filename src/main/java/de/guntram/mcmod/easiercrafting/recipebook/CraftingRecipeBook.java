@@ -29,6 +29,7 @@ import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
 
@@ -126,12 +127,12 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
             case ShapedCraftingRecipeDisplay shaped -> {
                 recipeWidth = shaped.width();
                 ingredients = shaped.ingredients();
-                if (hasShiftDown()) maxCraftableStacks = getMaxCraftable(ingredients);
+                if (isHoldingButton(GLFW.GLFW_KEY_LEFT_SHIFT)) maxCraftableStacks = getMaxCraftable(ingredients);
             }
             case ShapelessCraftingRecipeDisplay shapeless -> {
                 ingredients = shapeless.ingredients();
                 recipeWidth = ingredients.size() <= 4 ? 2 : 3;
-                if (hasShiftDown()) maxCraftableStacks = getMaxCraftable(ingredients);
+                if (isHoldingButton(GLFW.GLFW_KEY_LEFT_SHIFT)) maxCraftableStacks = getMaxCraftable(ingredients);
             }
             case RepairCraftingRecipeDisplay repairDisplay -> {
                 // repair formular: durability = min(Item A uses + Item B uses + floor(Max uses / 20), Max uses) (from wiki)
@@ -199,12 +200,12 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
             case ShapedCraftingRecipeDisplay shaped -> {
                 recipeWidth = shaped.width();
                 ingredients = shaped.ingredients();
-                if (hasShiftDown()) maxCraftableStacks = getMaxCraftable(ingredients);
+                if (isHoldingButton(GLFW.GLFW_KEY_LEFT_SHIFT)) maxCraftableStacks = getMaxCraftable(ingredients);
             }
             case ShapelessCraftingRecipeDisplay shapeless -> {
                 ingredients = shapeless.ingredients();
                 recipeWidth = ingredients.size() <= 4 ? 2 : 3;
-                if (hasShiftDown()) maxCraftableStacks = getMaxCraftable(ingredients);
+                if (isHoldingButton(GLFW.GLFW_KEY_LEFT_SHIFT)) maxCraftableStacks = getMaxCraftable(ingredients);
             }
             case RepairCraftingRecipeDisplay repairDisplay -> {
                 ingredients = repairDisplay.ingredients();
@@ -255,8 +256,8 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
         }
 
         // actually craft item
-        if (mouseButton == 0 && !hasControlDown()) {
-            slotClick(resultSlotNo, mouseButton, SlotActionType.QUICK_MOVE);
+        if (mouseButton == 0 && !isHoldingButton(GLFW.GLFW_KEY_LEFT_CONTROL)) {
+            slotClick(resultSlotNo, 1, isHoldingButton(GLFW.GLFW_KEY_Q) ? SlotActionType.THROW : SlotActionType.QUICK_MOVE);
             queueUpdateRecipe();
 
             rowadjust = 0;

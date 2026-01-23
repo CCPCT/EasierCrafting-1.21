@@ -40,7 +40,6 @@ import net.minecraft.util.context.ContextType;
 import net.minecraft.util.math.MathHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 import java.util.Map;
@@ -515,13 +514,8 @@ public abstract class AbstractRecipeBook {
         return craftableRecipes.contains(entry);
     }
 
-    public boolean hasShiftDown(){
-        return InputUtil.isKeyPressed(window, GLFW.GLFW_KEY_LEFT_SHIFT);
+    public boolean isHoldingButton(int button){
+        return InputUtil.isKeyPressed(window, button);
     }
-
-    public boolean hasControlDown(){
-        return InputUtil.isKeyPressed(window, GLFW.GLFW_KEY_LEFT_CONTROL);
-    }
-
 }
 

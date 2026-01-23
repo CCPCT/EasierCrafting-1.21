@@ -18,6 +18,7 @@ import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.StonecutterScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 
@@ -89,7 +90,7 @@ public class StonecutterRecipeBook extends AbstractRecipeBook {
             ItemStack slotContent = container.getSlot(slot).getStack();
             for (ItemStack ingredientStack : recipe.input().getStacks(worldContext)) {
                 if (ingredientStack.getItem().equals(slotContent.getItem())){
-                    if (hasShiftDown()) {
+                    if (isHoldingButton(GLFW.GLFW_KEY_LEFT_SHIFT)) {
                         slotClick(slot, 0, SlotActionType.PICKUP);
                         slotClick(slot, 0, SlotActionType.PICKUP_ALL);
                         slotClick(firstCraftSlotNo, 0, SlotActionType.PICKUP);
@@ -121,8 +122,8 @@ public class StonecutterRecipeBook extends AbstractRecipeBook {
             interactionManager.clickButton(container.syncId, buttonIndex);
 
             // 4. Take the result from the output slot (slot 1) to complete the craft
-            if (hasControlDown()) return;
-            interactionManager.clickSlot(container.syncId, 1, 0, SlotActionType.QUICK_MOVE, player);
+            if (isHoldingButton(GLFW.GLFW_KEY_LEFT_CONTROL)) return;
+            slotClick(1, 0, isHoldingButton(GLFW.GLFW_KEY_Q) ? SlotActionType.THROW : SlotActionType.QUICK_MOVE);
         }
     }
 
@@ -134,7 +135,7 @@ public class StonecutterRecipeBook extends AbstractRecipeBook {
         if (canCraft){
             int i;
             Item item = null;
-            if (hasShiftDown()){
+            if (isHoldingButton(GLFW.GLFW_KEY_LEFT_SHIFT)){
                 for (i=0; i<recipe.input().getStacks(worldContext).size(); i++){
                     item = recipe.input().getStacks(worldContext).get(i).getItem();
                     if (avaliableItemMap.containsKey(item)){
