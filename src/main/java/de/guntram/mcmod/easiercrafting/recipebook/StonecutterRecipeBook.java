@@ -19,6 +19,7 @@ import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.StonecutterScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 
@@ -123,7 +124,7 @@ public class StonecutterRecipeBook extends AbstractRecipeBook {
 
             // 4. Take the result from the output slot (slot 1) to complete the craft
             if (Screen.hasControlDown()) return;
-            interactionManager.clickSlot(container.syncId, 1, 0, SlotActionType.QUICK_MOVE, player);
+            slotClick(1, 0, isHoldingButton(GLFW.GLFW_KEY_Q) ? SlotActionType.THROW : SlotActionType.QUICK_MOVE);
         }
     }
 

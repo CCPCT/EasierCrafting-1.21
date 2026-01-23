@@ -18,6 +18,7 @@ import net.minecraft.screen.FurnaceScreenHandler;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 
@@ -78,9 +79,9 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
         List<ItemStack> inventory = ((InventoryAccessor)player.getInventory()).getCompatMain();
         ItemStack fuelStack = container.slots.get(FUEL_SLOT).getStack();
 
-        // retrieve smelt items
+        // retrieve/ throw smelt items
         if (container.slots.get(resultSlotNo).hasStack() && !Screen.hasControlDown()) {
-            slotClick(resultSlotNo,0,SlotActionType.QUICK_MOVE);
+            slotClick(resultSlotNo,1,isHoldingButton(GLFW.GLFW_KEY_Q) ? SlotActionType.THROW : SlotActionType.QUICK_MOVE);
         }
 
         // replenish fuel if possible, if fuel slot is empty let player decide what fuel to use

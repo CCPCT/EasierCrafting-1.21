@@ -30,6 +30,7 @@ import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
 
@@ -256,9 +257,9 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
             }
         }
 
-        // actually craft item
+        // actually craft item: hold control or right click to not instantly craft, hold q to drop
         if (mouseButton == 0 && !Screen.hasControlDown()) {
-            slotClick(resultSlotNo, mouseButton, SlotActionType.QUICK_MOVE);
+            slotClick(resultSlotNo, 1, isHoldingButton(GLFW.GLFW_KEY_Q) ? SlotActionType.THROW : SlotActionType.QUICK_MOVE);
             queueUpdateRecipe();
 
             rowadjust = 0;

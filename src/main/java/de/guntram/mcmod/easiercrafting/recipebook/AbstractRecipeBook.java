@@ -509,5 +509,10 @@ public abstract class AbstractRecipeBook {
     protected boolean canCraft(RecipeDisplayEntry entry){
         return craftableRecipes.contains(entry);
     }
+
+    public boolean isHoldingButton(int button){
+        long window = client.getWindow().getHandle();
+        return InputUtil.isKeyPressed(window, button);
+    }
 }
 

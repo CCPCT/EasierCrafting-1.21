@@ -4,9 +4,11 @@ import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.MerchantScreen;
+import net.minecraft.client.util.InputUtil;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
+import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -29,9 +31,14 @@ public abstract class MerchantMixin extends Screen {
         if (!ModConfig.get().enableTrading || client.player.currentScreenHandler.getSlot(2).getStack().isEmpty()) return;
 
         MinecraftClient client = MinecraftClient.getInstance();
+        long window = client.getWindow().getHandle();
         if (Screen.hasShiftDown()){
-            client.interactionManager.clickSlot(client.player.currentScreenHandler.syncId,2,0, SlotActionType.QUICK_MOVE,client.player);
+            client.interactionManager.clickSlot(client.player.currentScreenHandler.syncId,2,1, InputUtil.isKeyPressed(window, GLFW.GLFW_KEY_Q) ? SlotActionType.THROW : SlotActionType.QUICK_MOVE,client.player);
         } else {
+            if (InputUtil.isKeyPressed(window, GLFW.GLFW_KEY_Q)){
+                client.interactionManager.clickSlot(client.player.currentScreenHandler.syncId,2,0, SlotActionType.THROW,client.player);
+                return;
+            }
 
             ItemStack fromStack = client.player.currentScreenHandler.getSlot(2).getStack().copy();
             client.interactionManager.clickSlot(client.player.currentScreenHandler.syncId,2,0, SlotActionType.PICKUP,client.player);
