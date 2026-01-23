@@ -17,18 +17,37 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(MerchantScreen.class)
 public abstract class MerchantMixin extends Screen {
+    @Shadow
+    private int selectedIndex;
+
     protected MerchantMixin(Text title) {
         super(title);
     }
-
-    @Shadow private int selectedIndex;
 
     @Inject(
             method = "mouseClicked",
             at = @At(value = "TAIL")
     )
     private void onTradeSelected(double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
-        if (!ModConfig.get().enableTrading || client.player.currentScreenHandler.getSlot(2).getStack().isEmpty()) return;
+        if (!ModConfig.get().enableTrading || Screen.hasControlDown() || client.player.currentScreenHandler.getSlot(2).getStack().isEmpty()) return;
+
+        // ai = leftPos, aj = topPos
+        int ai = (this.width - 276) / 2;
+        int aj = (this.height - 166) / 2;
+
+        int listStartX = ai+5;
+        int listEndX = ai+5 + 88;
+        int listStartY = aj + 16;
+        int listEndY = aj + 16 + 140;
+
+        boolean isOverTradeTab = mouseX >= listStartX && mouseX <= listEndX &&
+                mouseY >= listStartY && mouseY <= listEndY;
+
+
+        System.out.println("requirement: " + (ai+5) + "/" + (aj+16) + " to " + (ai+5+88) + "/" + (aj+16+120));
+        System.out.println(mouseX + "/" + mouseY + " over trade tab: " + isOverTradeTab);
+        System.out.println(this.selectedIndex);
+        if (!isOverTradeTab) return;
 
         MinecraftClient client = MinecraftClient.getInstance();
         long window = client.getWindow().getHandle();
@@ -37,6 +56,10 @@ public abstract class MerchantMixin extends Screen {
         } else {
             if (InputUtil.isKeyPressed(window, GLFW.GLFW_KEY_Q)){
                 client.interactionManager.clickSlot(client.player.currentScreenHandler.syncId,2,0, SlotActionType.THROW,client.player);
+                // move items back from villager
+                client.interactionManager.clickSlot(client.player.currentScreenHandler.syncId,0,0, SlotActionType.QUICK_MOVE,client.player);
+                client.interactionManager.clickSlot(client.player.currentScreenHandler.syncId,1,0, SlotActionType.QUICK_MOVE,client.player);
+
                 return;
             }
 
@@ -46,15 +69,17 @@ public abstract class MerchantMixin extends Screen {
                 ItemStack targetStack = client.player.currentScreenHandler.getSlot(i).getStack();
                 if (targetStack.isEmpty()){
                     client.interactionManager.clickSlot(client.player.currentScreenHandler.syncId,i,0, SlotActionType.PICKUP,client.player);
-                    return;
+                    break;
                 }
                 if (fromStack.getItem() != targetStack.getItem()) continue;
                 if (targetStack.getCount() == targetStack.getMaxCount()) continue;
                 fromStack.setCount(Math.max(0,targetStack.getCount()+fromStack.getCount()-targetStack.getMaxCount()));
                 client.interactionManager.clickSlot(client.player.currentScreenHandler.syncId,i,0, SlotActionType.PICKUP,client.player);
-                if (fromStack.getCount()==0) return;
-
+                if (fromStack.getCount()==0) break;
             }
+            client.interactionManager.clickSlot(client.player.currentScreenHandler.syncId,0,0, SlotActionType.QUICK_MOVE,client.player);
+            client.interactionManager.clickSlot(client.player.currentScreenHandler.syncId,1,0, SlotActionType.QUICK_MOVE,client.player);
+
         }
     }
 }

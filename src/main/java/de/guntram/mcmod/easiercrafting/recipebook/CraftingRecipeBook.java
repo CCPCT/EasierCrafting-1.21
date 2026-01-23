@@ -259,7 +259,34 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
 
         // actually craft item: hold control or right click to not instantly craft, hold q to drop
         if (mouseButton == 0 && !Screen.hasControlDown()) {
-            slotClick(resultSlotNo, 1, isHoldingButton(GLFW.GLFW_KEY_Q) ? SlotActionType.THROW : SlotActionType.QUICK_MOVE);
+            if (isHoldingButton(GLFW.GLFW_KEY_Q)){
+                if (Screen.hasShiftDown()) {
+                    // icl but lazy method works well...
+                    int resultCount = entry.display().result().getFirst(worldContext).getCount();
+//                    int maxCount = entry.display().result().getFirst(worldContext).getMaxCount();
+//                    int increment = 0;
+                    LOGGER.info("bulk craft: "+maxCraftableStacks + " stacks of "+resultCount);
+                    for (int i = 0; i < maxCraftableStacks; i++) {
+//                        increment += resultCount;
+//                        LOGGER.info(increment);
+//                        if (increment >= maxCount) {
+//                            LOGGER.info("try to throw away");
+//                            increment = 0;
+//                            slotClick(firstInventorySlotNo, 0, SlotActionType.PICKUP);
+//                            slotClick(firstInventorySlotNo, 1, SlotActionType.THROW);
+//                        }
+//                        slotClick(resultSlotNo, 0, SlotActionType.PICKUP);
+                        slotClick(resultSlotNo, 1, SlotActionType.THROW);
+                    }
+//                    LOGGER.info("try to throw away");
+//                    slotClick(firstInventorySlotNo, 0, SlotActionType.PICKUP);
+//                    slotClick(firstInventorySlotNo, 1, SlotActionType.THROW);
+                } else {
+                    slotClick(resultSlotNo, 0, SlotActionType.THROW);
+                }
+            } else {
+                slotClick(resultSlotNo, 1, SlotActionType.QUICK_MOVE);
+            }
             queueUpdateRecipe();
 
             rowadjust = 0;

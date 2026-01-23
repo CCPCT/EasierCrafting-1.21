@@ -2,7 +2,6 @@ package de.guntram.mcmod.easiercrafting.recipebook;
 
 import de.guntram.mcmod.easiercrafting.EasierCrafting;
 import de.guntram.mcmod.easiercrafting.InventoryAccessor;
-import de.guntram.mcmod.easiercrafting.SlotClickAccepter;
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.recipe.RecipeTreeSet;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -13,6 +12,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.client.recipebook.ClientRecipeBook;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.client.util.InputUtil;
@@ -62,6 +62,7 @@ public abstract class AbstractRecipeBook {
     protected ClientRecipeBook recipeBook;
     protected final TextRenderer textRenderer;
     public int screenYOffset = 0;
+    protected ClientPlayerInteractionManager interactionManager;
 
 
     public final ObjectArrayList<RecipeDisplayEntry> craftableRecipes = new ObjectArrayList<>();
@@ -119,6 +120,7 @@ public abstract class AbstractRecipeBook {
         this.craftingBlock = craftingBlock;
         this.recipeBook = player.getRecipeBook();
         this.screenHandler = screen.getScreenHandler();
+        this.interactionManager = client.interactionManager;
         itemDisplaySpacing = ModConfig.get().itemDisplaySpacing;
         displayItemSize = itemSize+itemDisplaySpacing*2;
     }
@@ -434,7 +436,7 @@ public abstract class AbstractRecipeBook {
     // --- Helper Methods for Subclasses ---
 
     protected void slotClick(int slot, int mouseButton, SlotActionType clickType) {
-        ((SlotClickAccepter) screen).slotClick(slot, mouseButton, clickType);
+        interactionManager.clickSlot(screenHandler.syncId,slot,mouseButton,clickType,player);
     }
 
     protected void drawHoloItem(DrawContext context, Slot slot, ItemStack stack){

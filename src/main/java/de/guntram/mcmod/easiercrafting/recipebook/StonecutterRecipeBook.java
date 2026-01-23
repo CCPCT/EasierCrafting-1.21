@@ -6,6 +6,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.recipebook.RecipeResultCollection;
+import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -76,7 +77,7 @@ public class StonecutterRecipeBook extends AbstractRecipeBook {
 
     @Override
     protected void onRecipeClicked(RecipeDisplayEntry entry, int mouseButton) {
-        var interactionManager = client.interactionManager;
+        ClientPlayerInteractionManager interactionManager = client.interactionManager;
         if (!(screenHandler instanceof StonecutterScreenHandler container)||!(entry.display() instanceof StonecutterRecipeDisplay recipe)) {
             return;
         }
