@@ -1,7 +1,6 @@
 package de.guntram.mcmod.easiercrafting.recipebook;
 
 import de.guntram.mcmod.easiercrafting.InventoryAccessor;
-import de.guntram.mcmod.easiercrafting.SlotClickAccepter;
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.recipe.RecipeTreeSet;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -16,6 +15,7 @@ import net.minecraft.client.input.CharInput;
 import net.minecraft.client.input.KeyInput;
 import net.minecraft.client.input.MouseInput;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.client.recipebook.ClientRecipeBook;
 import net.minecraft.client.resource.language.I18n;
 import net.minecraft.client.util.InputUtil;
@@ -64,6 +64,7 @@ public abstract class AbstractRecipeBook {
     protected final SlotDisplay craftingBlock;
     protected final TextRenderer textRenderer;
     public int screenYOffset = 0;
+    protected ClientPlayerInteractionManager interactionManager;
 
     protected final ClientRecipeBook recipeBook;
     protected final Window window;
@@ -124,6 +125,7 @@ public abstract class AbstractRecipeBook {
         this.recipeBook = player.getRecipeBook();
         this.screenHandler = screen.getScreenHandler();
         this.window = client.getWindow();
+        this.interactionManager = client.interactionManager;
         itemDisplaySpacing = ModConfig.get().itemDisplaySpacing;
         displayItemSize = itemSize+itemDisplaySpacing*2;
     }
@@ -438,7 +440,7 @@ public abstract class AbstractRecipeBook {
     // --- Helper Methods for Subclasses ---
 
     protected void slotClick(int slot, int mouseButton, SlotActionType clickType) {
-        ((SlotClickAccepter) screen).slotClick(slot, mouseButton, clickType);
+        interactionManager.clickSlot(screenHandler.syncId,slot,mouseButton,clickType,player);
     }
 
     protected void drawHoloItem(DrawContext context, Slot slot, ItemStack stack){
