@@ -101,6 +101,11 @@ public class ConfigScreen extends Screen {
                 .setSaveConsumer(newValue -> ModConfig.get().enableTrading = newValue)
                 .build());
 
+        visualTab.addEntry(entryBuilder.startIntField(Text.literal("Maximum item per row"), ModConfig.get().itemsPerRow)
+                .setMin(2).setMax(20).setDefaultValue(9)
+                .setSaveConsumer(newValue -> ModConfig.get().itemsPerRow = newValue)
+                .build());
+
         return builder.build();
     }
 }
