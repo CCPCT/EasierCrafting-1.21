@@ -31,7 +31,8 @@ public abstract class MerchantMixin extends Screen {
             at = @At(value = "TAIL")
     )
     private void onTradeSelected(Click click, boolean doubled, CallbackInfoReturnable<Boolean> cir) {
-        if (!ModConfig.get().enableTrading || Screen.hasControlDown() || client.player.currentScreenHandler.getSlot(2).getStack().isEmpty()) return;
+        Window window = MinecraftClient.getInstance().getWindow();
+        if (!ModConfig.get().enableTrading || InputUtil.isKeyPressed(window,InputUtil.GLFW_KEY_LEFT_CONTROL) || client.player.currentScreenHandler.getSlot(2).getStack().isEmpty()) return;
 
         // ai = leftPos, aj = topPos
         int ai = (this.width - 276) / 2;
@@ -42,17 +43,16 @@ public abstract class MerchantMixin extends Screen {
         int listStartY = aj + 16;
         int listEndY = aj + 16 + 140;
 
-        boolean isOverTradeTab = mouseX >= listStartX && mouseX <= listEndX &&
-                mouseY >= listStartY && mouseY <= listEndY;
+        boolean isOverTradeTab = click.x() >= listStartX && click.x() <= listEndX &&
+                click.y() >= listStartY && click.y() <= listEndY;
 
 
         System.out.println("requirement: " + (ai+5) + "/" + (aj+16) + " to " + (ai+5+88) + "/" + (aj+16+120));
-        System.out.println(mouseX + "/" + mouseY + " over trade tab: " + isOverTradeTab);
+        System.out.println(click.x() + "/" + click.y() + " over trade tab: " + isOverTradeTab);
         System.out.println(this.selectedIndex);
         if (!isOverTradeTab) return;
 
         MinecraftClient client = MinecraftClient.getInstance();
-        Window window = client.getWindow();
         if (InputUtil.isKeyPressed(window, GLFW.GLFW_KEY_LEFT_SHIFT)){
             client.interactionManager.clickSlot(client.player.currentScreenHandler.syncId,2,0, SlotActionType.QUICK_MOVE,client.player);
         } else {
