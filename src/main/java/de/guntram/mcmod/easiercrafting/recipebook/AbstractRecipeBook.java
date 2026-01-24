@@ -191,7 +191,7 @@ public abstract class AbstractRecipeBook {
         this.containerLeft = (screen.width - 176) / 2;
         this.containerTop = (screen.height - 166) / 2;
 
-        int tempItemsPerRow = 9; // max item per row
+        int tempItemsPerRow = ModConfig.get().itemsPerRow; // max item per row
         int tempXOffset = -displayItemSize * tempItemsPerRow - distanceFromGui;
         if (tempXOffset + containerLeft < 0) {
             tempItemsPerRow = (containerLeft - distanceFromGui) / displayItemSize;
