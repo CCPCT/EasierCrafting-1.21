@@ -26,6 +26,7 @@ public class ModConfig {
     public int itemDisplaySpacing = 1;
     public boolean enableTrading = true;
     public int itemsPerRow = 9;
+    public boolean useRecipeCache = false;
 
     public static ModConfig get() {
         if (INSTANCE==null)

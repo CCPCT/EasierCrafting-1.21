@@ -142,11 +142,10 @@ public abstract class AbstractRecipeBook {
      */
     protected abstract void drawRecipeGridOverlay(DrawContext context);
     /**
-     * Returns all craftable recipes.
+     * if recipe can actually be crafted.
      */
+    protected abstract boolean canCraftScanned(RecipeDisplayEntry entry);
 
-    // return all ingredient from SlotDisplayEntry
-    //protected abstract List<ItemStack> getAllIngredient(SlotDisplay display);
 
     // draw outputs... and set undermouse
     protected int drawSetOfRecipes(DrawContext context, RecipeTreeSet treeSet, int xpos, int ypos, int screenBottom, int mouseX, int mouseY) {
@@ -156,7 +155,8 @@ public abstract class AbstractRecipeBook {
             if (ypos >= minYtoDraw) {
                 int x = xOffset + xpos;
                 int y = ypos - itemLift;
-                if (!canCraft(recipe)) {
+                boolean canCraft = ModConfig.get().useRecipeCache ? canCraft(recipe) : canCraftScanned(recipe);
+                if (!canCraft) {
                     // if cant craft draw red background on the result
                     context.fill(x-itemDisplaySpacing,y-itemDisplaySpacing,x+itemSize+itemDisplaySpacing,y+itemSize+itemDisplaySpacing,0x60FF0000);
                 }
@@ -216,10 +216,8 @@ public abstract class AbstractRecipeBook {
     }
 
     public void drawAllRecipe(DrawContext context, int left, int height, int mouseX, int mouseY) {
-        if (pattern == null) {
-            if (ModConfig.get().autoFocusSearch) {
-                pattern.setFocused(true);
-            }
+        if (pattern == null && ModConfig.get().autoFocusSearch) {
+            pattern.setFocused(true);
         }
 
         // Update logic
@@ -266,7 +264,7 @@ public abstract class AbstractRecipeBook {
         // draw background
         int screenBottom = context.getScaledWindowHeight()-containerTop-5;
         if (ModConfig.get().recipeBackground){
-            context.fill(pattern.getX()-5,pattern.getY()-5,pattern.getX()+textBoxSize+5,screenBottom ,0x50505050);
+            context.fill(xOffset-5,pattern.getY()-5,xOffset+textBoxSize+5,screenBottom ,0x50505050);
         }
 
         // Draw Search box
@@ -388,9 +386,9 @@ public abstract class AbstractRecipeBook {
         if (underMouse == null) return;
 
         // dont craft uncraftable items
-        if (!canCraft(underMouse)) return;
+        if (!canCraftScanned(underMouse)) return;
 
-        // Ensure grid is empty (common check, though subclasses might override behavior)
+        // Ensure grid is empty (common check, though subclasses might override behaviour)
         for (int craftslot = 0; craftslot < gridSize * gridSize; craftslot++) {
             ItemStack stack = screen.getScreenHandler().getSlot(craftslot + firstCraftSlotNo).getStack();
             if (stack != null && !stack.isEmpty()) {

@@ -49,7 +49,7 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
             for (RecipeDisplayEntry entry : collection.getAllRecipes()) {
                 if (!(entry.display() instanceof FurnaceRecipeDisplay recipeDisplay)) continue;
                 // its furnace recipe
-                if (recipeDisplay.craftingStation().getFirst(worldContext).getItem()!=craftingBlock.getFirst(worldContext).getItem()) continue;
+                if (!canCraftScanned(entry)) continue;
                 allRecipes.add(entry);
                 for (ItemStack slotDisplay : recipeDisplay.ingredient().getStacks(worldContext)) {
                     if (avaliableItemMap.containsKey(slotDisplay.getItem())) {
@@ -209,6 +209,11 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
         if (!canCraft) context.fill(resultSlot.x-2,resultSlot.y-2,resultSlot.x+itemSize+2,resultSlot.y+itemSize+2,0x60FF0000);
 
         renderIngredient(context, getIngredients(underMouse), screenHandler.getSlot(firstCraftSlotNo));
+    }
+
+    @Override
+    protected boolean canCraftScanned(RecipeDisplayEntry entry) {
+        return entry.display().craftingStation().getFirst(worldContext).getItem() == craftingBlock.getFirst(worldContext).getItem();
     }
 
     protected List<ItemStack> getIngredients(RecipeDisplayEntry entry) {

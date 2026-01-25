@@ -51,7 +51,6 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
         for (RecipeDisplayEntry entry : craftableRecipes) {
             hashID^=entry.id().index();
         }
-        updateAvailableStacks();
 
         craftableRecipes.clear();
         allRecipes.clear();
@@ -75,7 +74,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
                 }
             }
 
-            if (recipeCraftable(entry)) {
+            if (canCraftScanned(entry)) {
                 craftableRecipes.add(entry);
 //                System.out.println("can craft: " + entry.display().result().getFirst(worldContext).getName().getString()+", cat: "+getCat(entry).getPath());
             }
@@ -158,7 +157,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
             resultStack.setCount(maxCraftableStacks*resultStack.getCount());
         }
 
-        boolean canCraft = canCraft(underMouse);
+        boolean canCraft = ModConfig.get().useRecipeCache ? canCraft(underMouse) : canCraftScanned(underMouse);
         drawHoloItem(context, resultSlot, resultStack);
         if (!canCraft) context.fill(resultSlot.x-2,resultSlot.y-2,resultSlot.x+itemSize+2,resultSlot.y+itemSize+2,0x60FF0000);
 
@@ -169,16 +168,17 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
                 if (y*recipeWidth+x >= ingredients.size()) return;
                 SlotDisplay ingredient = ingredients.get(y*recipeWidth+x);
                 if (ingredient.getFirst(worldContext).isEmpty()) continue;
-                boolean found = false;
+                if (!canCraft){
+                    renderIngredient(context, ingredient.getStacks(worldContext), screenHandler.getSlot(firstCraftSlotNo + y*gridSize+x));
+                    continue;
+                }
                 for (ItemStack stack : ingredient.getStacks(worldContext)){
                     // cant craft
                     if (tempMap.getInt(stack.getItem())<=0) continue;
                     tempMap.addTo(stack.getItem(),-1);
                     renderCraftingIngredient(context,stack,screenHandler.getSlot(firstCraftSlotNo + y*gridSize+x));
-                    found = true;
                     break;
                 }
-                if (!found) renderIngredient(context, ingredient.getStacks(worldContext), screenHandler.getSlot(firstCraftSlotNo + y*gridSize+x));
             }
         }
     }
@@ -263,24 +263,10 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
                 if (Screen.hasShiftDown()) {
                     // icl but lazy method works well...
                     int resultCount = entry.display().result().getFirst(worldContext).getCount();
-//                    int maxCount = entry.display().result().getFirst(worldContext).getMaxCount();
-//                    int increment = 0;
-                    LOGGER.info("bulk craft: "+maxCraftableStacks + " stacks of "+resultCount);
+                    LOGGER.info("bulk craft: {} stacks of {}", maxCraftableStacks, resultCount);
                     for (int i = 0; i < maxCraftableStacks; i++) {
-//                        increment += resultCount;
-//                        LOGGER.info(increment);
-//                        if (increment >= maxCount) {
-//                            LOGGER.info("try to throw away");
-//                            increment = 0;
-//                            slotClick(firstInventorySlotNo, 0, SlotActionType.PICKUP);
-//                            slotClick(firstInventorySlotNo, 1, SlotActionType.THROW);
-//                        }
-//                        slotClick(resultSlotNo, 0, SlotActionType.PICKUP);
                         slotClick(resultSlotNo, 1, SlotActionType.THROW);
                     }
-//                    LOGGER.info("try to throw away");
-//                    slotClick(firstInventorySlotNo, 0, SlotActionType.PICKUP);
-//                    slotClick(firstInventorySlotNo, 1, SlotActionType.THROW);
                 } else {
                     slotClick(resultSlotNo, 0, SlotActionType.THROW);
                 }
@@ -299,6 +285,8 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
                 }
             }
         }
+        // prevent shift craft multiple stack last stack craft wrong
+        updateAvailableStacks();
     }
 
     private boolean canActAsIngredient(SlotDisplay ingredient, ItemStack inventoryItem) {
@@ -353,7 +341,9 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
         return maxCraftableStacks;
     }
 
-    private boolean recipeCraftable(RecipeDisplayEntry entry){
+    @Override
+    protected boolean canCraftScanned(RecipeDisplayEntry entry) {
+        updateAvailableStacks();
         Object2IntOpenHashMap<Item> tempMap = avaliableItemMap.clone();
         if (entry.craftingRequirements().isEmpty()) return false;
         List<Ingredient> ingredients= entry.craftingRequirements().get();
