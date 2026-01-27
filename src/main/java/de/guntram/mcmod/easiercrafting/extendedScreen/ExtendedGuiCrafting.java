@@ -20,6 +20,10 @@ public class ExtendedGuiCrafting extends CraftingScreen implements SlotClickAcce
         super(container, lowerInv, title);
     }
 
+    public void updateRecipe(){
+        this.recipeBook.updateRecipes();
+    }
+
     @Override
     protected void init() {
         super.init();

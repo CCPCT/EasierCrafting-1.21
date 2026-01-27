@@ -44,13 +44,12 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
 
 
     @Override
-    public boolean updateRecipes() {
+    public void updateRecipes() {
         assert MinecraftClient.getInstance().player != null;
 
-        int hashID=0;
-        for (RecipeDisplayEntry entry : craftableRecipes) {
-            hashID^=entry.id().index();
-        }
+        LOGGER.info("called updateRecipes");
+
+        updateAvailableStacks();
 
         craftableRecipes.clear();
         allRecipes.clear();
@@ -60,23 +59,17 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
         }
         for (RecipeDisplayEntry entry : allRecipes) {
             // craftable entries
-            if (screen instanceof ExtendedGuiInventory) {
-                // in player inventory... filter out big recipes
-                if (entry.display() instanceof ShapedCraftingRecipeDisplay recipe) {
-                    if (recipe.width()==3 || recipe.height()==3){
-                        continue;
-                    }
-                }
-                if (entry.display() instanceof ShapelessCraftingRecipeDisplay recipe) {
-                    if (recipe.ingredients().size()>4){
-                        continue;
-                    }
-                }
+            // in player inventory... filter out big recipes
+            if (screen instanceof ExtendedGuiInventory && entry.display() instanceof ShapedCraftingRecipeDisplay recipe && (recipe.width() == 3 || recipe.height() == 3)) {
+                continue;
+            }
+
+            if (entry.display() instanceof ShapelessCraftingRecipeDisplay recipe && recipe.ingredients().size() > gridSize) {
+                continue;
             }
 
             if (canCraftScanned(entry)) {
                 craftableRecipes.add(entry);
-//                System.out.println("can craft: " + entry.display().result().getFirst(worldContext).getName().getString()+", cat: "+getCat(entry).getPath());
             }
         }
 
@@ -89,8 +82,13 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
                     entry.category() == RecipeBookCategories.CRAFTING_MISC && entry.display().result().getFirst(worldContext).getItem()==Items.FIREWORK_ROCKET
             );
         }
+    }
 
+    @Override
+    protected boolean refreshCategories() {
+        LOGGER.info("called refreshCategories");
         craftableCategories.clear();
+        int tempHash = 0;
         for (RecipeDisplayEntry entry : craftableRecipes) {
             String category;
             if (!ModConfig.get().categorizeRecipes) {
@@ -106,15 +104,14 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
             } else {
                 category = getTranslatedItemGroup(entry);
             }
+            //LOGGER.info("added: {} to category {}", entry.display().result().getFirst(worldContext).getName().getString(), category);
             craftableCategories.computeIfAbsent(category, k -> new RecipeTreeSet()).add(entry);
+            tempHash^=entry.id().index();
         }
         recalcListSize();
-
-        for (RecipeDisplayEntry entry : craftableRecipes) {
-            hashID^=entry.id().index();
-        }
-
-        return hashID==0;
+        boolean changed = tempHash==categoryHash;
+        categoryHash=tempHash;
+        return changed;
     }
 
     @Override
@@ -157,7 +154,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
             resultStack.setCount(maxCraftableStacks*resultStack.getCount());
         }
 
-        boolean canCraft = ModConfig.get().useRecipeCache ? canCraft(underMouse) : canCraftScanned(underMouse);
+        boolean canCraft = canCraft(underMouse);
         drawHoloItem(context, resultSlot, resultStack);
         if (!canCraft) context.fill(resultSlot.x-2,resultSlot.y-2,resultSlot.x+itemSize+2,resultSlot.y+itemSize+2,0x60FF0000);
 
@@ -266,13 +263,13 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
                     ItemStack resultStack = entry.display().result().getFirst(worldContext);
                     LOGGER.info("throw craft all: {} {}", maxCraftableStacks, resultStack.getCount());
 
-                    if (resultStack.getCount()*maxCraftableStacks <= resultStack.getMaxCount()) {
+                    if (resultStack.getCount()*maxCraftableStacks <= resultStack.getMaxCount() && screenHandler.getSlot(firstInventorySlotNo+35).getStack().getItem()!=resultStack.getItem()) {
                         // special case where dont need to repeat throw
                         LOGGER.info("trying quick method of quick craft");
                         slotClick(resultSlotNo, 0, SlotActionType.PICKUP);
-                        slotClick(firstInventorySlotNo, 0, SlotActionType.PICKUP);
+                        slotClick(firstInventorySlotNo+35, 0, SlotActionType.PICKUP);
                         slotClick(resultSlotNo, 0, SlotActionType.QUICK_MOVE);
-                        slotClick(firstInventorySlotNo, 0, SlotActionType.PICKUP);
+                        slotClick(firstInventorySlotNo+35, 0, SlotActionType.PICKUP);
                         // -999 = outside screen
                         slotClick(-999, 0, SlotActionType.PICKUP);
 
@@ -302,7 +299,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
             }
         }
         // prevent shift craft multiple stack last stack craft wrong
-        updateAvailableStacks();
+        updateRecipes();
     }
 
     private boolean canActAsIngredient(SlotDisplay ingredient, ItemStack inventoryItem) {
@@ -357,7 +354,6 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
         return maxCraftableStacks;
     }
 
-    @Override
     protected boolean canCraftScanned(RecipeDisplayEntry entry) {
         updateAvailableStacks();
         Object2IntOpenHashMap<Item> tempMap = avaliableItemMap.clone();
@@ -437,7 +433,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
 
     private void addRepairRecipe(){
         Object2IntOpenHashMap<Item> item = new Object2IntOpenHashMap<>(16);
-        for (ItemStack itemStack : ((InventoryAccessor) player.getInventory()).getCompatMain()){
+        for (ItemStack itemStack : ((InventoryAccessor) player.getInventory()).easierCrafting_Reloaded$getCompatMain()){
             if (itemStack.isEmpty()|| !itemStack.isDamaged() || itemStack.hasEnchantments()) continue;
             // have breaking item
             item.addTo(itemStack.getItem(), 1);

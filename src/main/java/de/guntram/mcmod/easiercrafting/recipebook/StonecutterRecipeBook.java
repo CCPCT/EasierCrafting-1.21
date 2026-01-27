@@ -32,18 +32,11 @@ public class StonecutterRecipeBook extends AbstractRecipeBook {
 
 
     @Override
-    public boolean updateRecipes() {
+    public void updateRecipes() {
         updateAvailableStacks();
-
-        // process if craftable changed
-        int hashID=0;
-        for (RecipeDisplayEntry entry : craftableRecipes) {
-            hashID^=entry.id().index();
-        }
 
         craftableRecipes.clear();
         allRecipes.clear();
-        craftableCategories.clear();
 
         // add all recipes
         for (RecipeResultCollection collection : recipeBook.getResultsForCategory(RecipeBookCategories.STONECUTTER)){
@@ -52,20 +45,9 @@ public class StonecutterRecipeBook extends AbstractRecipeBook {
 
         // add craftable recipes
         for (RecipeDisplayEntry entry : allRecipes){
-            if (!(entry.display() instanceof StonecutterRecipeDisplay) || !canCraftScanned(entry)) continue;
+            if (!(entry.display() instanceof StonecutterRecipeDisplay) || !this.canCraft(entry)) continue;
             craftableRecipes.add(entry);
-            craftableCategories.computeIfAbsent(ModConfig.get().categorizeRecipes ?
-                    getIngredients(entry).getFirst().getName().getString() :
-                    I18n.translate("easiercrafting.category.possible"),
-                    k -> new RecipeTreeSet()).add(entry);
         }
-
-
-        recalcListSize();
-        for (RecipeDisplayEntry entry : craftableRecipes) {
-            hashID^=entry.id().index();
-        }
-        return hashID==0;
     }
 
 
@@ -154,13 +136,20 @@ public class StonecutterRecipeBook extends AbstractRecipeBook {
     }
 
     @Override
-    protected boolean canCraftScanned(RecipeDisplayEntry entry) {
-        if (!(entry.display() instanceof StonecutterRecipeDisplay recipe)) return false;
-        for (ItemStack slotDisplay : recipe.input().getStacks(worldContext)){
-            if (!avaliableItemMap.containsKey(slotDisplay.getItem())) continue;
-            return true;
+    protected boolean refreshCategories() {
+        craftableCategories.clear();
+        int tempHash = 0;
+        for (RecipeDisplayEntry entry : craftableRecipes) {
+            craftableCategories.computeIfAbsent(ModConfig.get().categorizeRecipes ?
+                            getTranslatedItemGroup(entry) :
+                            I18n.translate("easiercrafting.category.possible"),
+                    k -> new RecipeTreeSet()).add(entry);
+            tempHash^=entry.id().index();
         }
-        return false;
+        boolean changed = tempHash==categoryHash;
+        categoryHash=tempHash;
+        recalcListSize();
+        return changed;
     }
 
     protected List<ItemStack> getIngredients(RecipeDisplayEntry entry) {

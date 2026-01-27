@@ -19,6 +19,10 @@ public class ExtendedGuiFurnace extends FurnaceScreen implements SlotClickAccept
     public ExtendedGuiFurnace(FurnaceScreenHandler container, PlayerInventory lowerInv, Text title) {
         super(container, lowerInv, title);
     }
+
+    public void updateRecipe(){
+        this.recipeBook.updateRecipes();
+    }
     
     @Override
     public void init() {

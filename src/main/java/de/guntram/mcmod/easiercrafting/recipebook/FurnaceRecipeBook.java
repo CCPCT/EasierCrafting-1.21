@@ -31,52 +31,33 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
     }
 
     @Override
-    public boolean updateRecipes() {
+    public void updateRecipes() {
         updateAvailableStacks();
-
-        // process if craftable changed
-        int hashID=0;
-        for (RecipeDisplayEntry entry : craftableRecipes) {
-            hashID^=entry.id().index();
-        }
 
         craftableRecipes.clear();
         allRecipes.clear();
-        craftableCategories.clear();
 
         // add all and craftable recipes
         for (RecipeResultCollection collection : recipeBook.getOrderedResults()) {
             for (RecipeDisplayEntry entry : collection.getAllRecipes()) {
                 if (!(entry.display() instanceof FurnaceRecipeDisplay recipeDisplay)) continue;
                 // its furnace recipe
-                if (!canCraftScanned(entry)) continue;
+                if (!this.canCraft(entry)) continue;
                 allRecipes.add(entry);
                 for (ItemStack slotDisplay : recipeDisplay.ingredient().getStacks(worldContext)) {
                     if (avaliableItemMap.containsKey(slotDisplay.getItem())) {
                         craftableRecipes.add(entry);
-                        craftableCategories.computeIfAbsent(ModConfig.get().categorizeRecipes ?
-                                getTranslatedItemGroup(entry) :
-                                I18n.translate("easiercrafting.category.possible"),
-                                k -> new RecipeTreeSet()).add(entry);
-                        break;
                     }
                 }
-
             }
         }
 
-
-        recalcListSize();
-        for (RecipeDisplayEntry entry : craftableRecipes) {
-            hashID^=entry.id().index();
-        }
-        return hashID==0;
     }
 
     @Override
     protected void onRecipeClicked(RecipeDisplayEntry entry, int mouseButton) {
         if (!(screenHandler instanceof FurnaceScreenHandler container && entry.display() instanceof FurnaceRecipeDisplay recipe)) return;
-        List<ItemStack> inventory = ((InventoryAccessor)player.getInventory()).getCompatMain();
+        List<ItemStack> inventory = ((InventoryAccessor)player.getInventory()).easierCrafting_Reloaded$getCompatMain();
         ItemStack fuelStack = container.slots.get(FUEL_SLOT).getStack();
 
         // retrieve/ throw smelt items
@@ -212,8 +193,20 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
     }
 
     @Override
-    protected boolean canCraftScanned(RecipeDisplayEntry entry) {
-        return entry.display().craftingStation().getFirst(worldContext).getItem() == craftingBlock.getFirst(worldContext).getItem();
+    protected boolean refreshCategories() {
+        craftableCategories.clear();
+        int tempHash = 0;
+        for (RecipeDisplayEntry entry : craftableRecipes) {
+            craftableCategories.computeIfAbsent(ModConfig.get().categorizeRecipes ?
+                            getTranslatedItemGroup(entry) :
+                            I18n.translate("easiercrafting.category.possible"),
+                    k -> new RecipeTreeSet()).add(entry);
+            tempHash^=entry.id().index();
+        }
+        boolean changed = tempHash==categoryHash;
+        categoryHash=tempHash;
+        recalcListSize();
+        return changed;
     }
 
     protected List<ItemStack> getIngredients(RecipeDisplayEntry entry) {

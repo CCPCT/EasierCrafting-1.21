@@ -106,11 +106,6 @@ public class ConfigScreen extends Screen {
                 .setSaveConsumer(newValue -> ModConfig.get().itemsPerRow = newValue)
                 .build());
 
-        generalTab.addEntry(entryBuilder.startBooleanToggle(Text.literal("Use Cache"), ModConfig.get().useRecipeCache)
-                .setTooltip(Text.literal("Enable to improve performance\nDisable to see instant craftable change"))
-                .setSaveConsumer(newValue -> ModConfig.get().useRecipeCache = newValue)
-                .build());
-
         return builder.build();
     }
 }

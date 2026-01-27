@@ -1,10 +1,16 @@
 package de.guntram.mcmod.easiercrafting;
 
+import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiCrafting;
+import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiFurnace;
+import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiInventory;
+import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiStonecutter;
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.recipebook.FurnaceRecipeBook;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.recipe.book.RecipeBookCategory;
@@ -22,6 +28,7 @@ public class EasierCrafting implements ClientModInitializer
     public static final String MODNAME="EasierCrafting";
     public static RecipeBookCategory SPECIAL_CAT;
     private static Logger LOGGER;
+    public static boolean updateAllowed = true; // block update when crafting
 
     public static Logger getGeneralLogger(){
         return LOGGER;
@@ -54,5 +61,19 @@ public class EasierCrafting implements ClientModInitializer
             // clear last fuel cache when joined new world/ server
             FurnaceRecipeBook.lastFuelUsed = null;
         });
+    }
+
+    public static void updateRecipe(){
+        if (!updateAllowed) return;
+        Screen currentScreen = MinecraftClient.getInstance().currentScreen;
+        if (currentScreen instanceof ExtendedGuiCrafting screen){
+            screen.updateRecipe();
+        } else if (currentScreen instanceof ExtendedGuiInventory screen) {
+            screen.updateRecipe();
+        } else if (currentScreen instanceof ExtendedGuiFurnace screen) {
+            screen.updateRecipe();
+        } else if (currentScreen instanceof ExtendedGuiStonecutter screen) {
+            screen.updateRecipe();
+        }
     }
 }

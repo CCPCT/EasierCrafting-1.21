@@ -19,6 +19,10 @@ public class ExtendedGuiStonecutter extends StonecutterScreen implements SlotCli
     public ExtendedGuiStonecutter(StonecutterScreenHandler container, PlayerInventory lowerInv, Text title) {
         super(container, lowerInv, title);
     }
+
+    public void updateRecipe(){
+        this.recipeBook.updateRecipes();
+    }
     
     @Override
     protected void init() {

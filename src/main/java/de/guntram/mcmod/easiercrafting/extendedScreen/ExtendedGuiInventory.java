@@ -10,12 +10,16 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.screen.slot.SlotActionType;
 import org.lwjgl.glfw.GLFW;
 
-
 public class ExtendedGuiInventory extends InventoryScreen implements SlotClickAccepter {
 
     private CraftingRecipeBook recipeBook;
+
     public ExtendedGuiInventory(PlayerEntity player) {
         super(player);
+    }
+
+    public void updateRecipe(){
+        this.recipeBook.updateRecipes();
     }
     
     @Override

@@ -63,6 +63,7 @@ public abstract class AbstractRecipeBook {
     protected final TextRenderer textRenderer;
     public int screenYOffset = 0;
     protected ClientPlayerInteractionManager interactionManager;
+    protected int categoryHash = 0;
 
 
     public final ObjectArrayList<RecipeDisplayEntry> craftableRecipes = new ObjectArrayList<>();
@@ -130,7 +131,7 @@ public abstract class AbstractRecipeBook {
     /**
      * Called to update all avaliable and craftable recipes (the 2 sets). Return if not updated anything/ remain unchanged
      */
-    public abstract boolean updateRecipes();
+    public abstract void updateRecipes();
 
     /**
      * Called when a recipe in the list is clicked.
@@ -142,9 +143,9 @@ public abstract class AbstractRecipeBook {
      */
     protected abstract void drawRecipeGridOverlay(DrawContext context);
     /**
-     * if recipe can actually be crafted.
+     * refresh display catagory of craftable.
      */
-    protected abstract boolean canCraftScanned(RecipeDisplayEntry entry);
+    protected abstract boolean refreshCategories();
 
 
     // draw outputs... and set undermouse
@@ -155,7 +156,7 @@ public abstract class AbstractRecipeBook {
             if (ypos >= minYtoDraw) {
                 int x = xOffset + xpos;
                 int y = ypos - itemLift;
-                boolean canCraft = ModConfig.get().useRecipeCache ? canCraft(recipe) : canCraftScanned(recipe);
+                boolean canCraft = canCraft(recipe);
                 if (!canCraft) {
                     // if cant craft draw red background on the result
                     context.fill(x-itemDisplaySpacing,y-itemDisplaySpacing,x+itemSize+itemDisplaySpacing,y+itemSize+itemDisplaySpacing,0x60FF0000);
@@ -208,6 +209,7 @@ public abstract class AbstractRecipeBook {
         updatePatternMatch();
         mouseScroll = 0;
         updateRecipes();
+        refreshCategories();
 
         pattern.setX(xOffset);
         textBoxSize=itemsPerRow*displayItemSize;
@@ -224,7 +226,8 @@ public abstract class AbstractRecipeBook {
         if (recipeUpdateTime != 0 && System.currentTimeMillis() > recipeUpdateTime) {
             recipeUpdateTime = 0;
             // call update recipe here
-            if (!updateRecipes()){
+            updateRecipes();
+            if (!refreshCategories()){
                 // before and after not same
                 LOGGER.info("Update recipe");
                 mouseScroll=0;
@@ -293,7 +296,7 @@ public abstract class AbstractRecipeBook {
         avaliableItemMap.clear();
         if (player==null) return;
         // Iterate through slots (usually 0-35 for player inventory)
-        for (ItemStack itemStack : ((InventoryAccessor) player.getInventory()).getCompatMain()) {
+        for (ItemStack itemStack : ((InventoryAccessor) player.getInventory()).easierCrafting_Reloaded$getCompatMain()) {
             if (itemStack.isEmpty()) continue;
             avaliableItemMap.merge(itemStack.getItem(), itemStack.getCount(), Integer::sum);
         }
@@ -376,17 +379,13 @@ public abstract class AbstractRecipeBook {
         }
 
         // Scroll bar area click
-        if (mouseY > 0 && mouseY < 20 && mouseX > xOffset + containerLeft && mouseX < xOffset + containerLeft + textBoxSize) {
-            LOGGER.info("Try to scroll...");
-            if (mouseX < xOffset + containerLeft + 20) scrollBy(-1);
-            else if (mouseX > xOffset + containerLeft + textBoxSize - 20) scrollBy(1);
-            return;
-        }
+        // goodbye scroll bar idk if u existed
 
         if (underMouse == null) return;
+        EasierCrafting.updateAllowed = false;
 
         // dont craft uncraftable items
-        if (!canCraftScanned(underMouse)) return;
+        if (!this.canCraft(underMouse)) return;
 
         // Ensure grid is empty (common check, though subclasses might override behaviour)
         for (int craftslot = 0; craftslot < gridSize * gridSize; craftslot++) {
@@ -399,6 +398,7 @@ public abstract class AbstractRecipeBook {
 
         onRecipeClicked(underMouse, mouseButton);
         queueUpdateRecipe();
+        EasierCrafting.updateAllowed = true;
     }
 
     public boolean keyPressed(int code, int scancode, int modifiers) {
