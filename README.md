@@ -3,7 +3,9 @@ The definitive unofficial port of [EasierCrafting](https://modrinth.com/mod/easi
 
 Easier Crafting replace the vanilla recipe book with a custom recipe display (like ones in rei) that only shows what you can craft, and can br categorized. Click on those recipes to craft items instantly. Search for items you cant craft. Should work with most mods.
 
-## ✨ Key Features
+![inventory](https://cdn.modrinth.com/data/cached_images/82509e8518b9fff3c28352132403ee3c711920ab.png)
+
+## Key Features
 Smart Recipe List: Automatically displays all recipes you can currently craft based on your inventory.
 
 Quick Crafting: **Left Click** to crafts the item once immediately.
@@ -16,30 +18,43 @@ Ingredient Tooltips: Hover over a item to see exactly which materials you need/ 
 
 Config: Includes a detailed configuration screen with multi-language support. (using cloth config and ai translation, may not be 100% accurate)
 
-## 📦 Supported Inventories
-The mod integrates seamlessly with the most common workbenches:
+## Version
 
-Crafting Table (3x3 grid)
+| Version | Avaliability |
+| -------- | -------- |
+| 1.21.11 | ✅ | 
+| 1.21.10 | ✅ |
+| 1.21.9 | ✅ |
+| 1.21.6-8 | 🔥 |
+| 1.21.5 | 🔥 |
+| 1.21.4 | 🔥 |
+| 1.21.2-3 | 🔥 |
+| 1.21.1 | ✅* |
+| 1.21 | ✅* |
+| 1.20 and below | ❌ |
 
-Player Inventory (2x2 grid)
+✅: available, major update available  
+🔥: rapid development -> get alpha/beta build in github  
+❌: unavailable: use original author's version  
 
-Stonecutter (Instant recipe selection)
+\* Minecraft 1.21 - 1.21.1: This version is a fork of taoge407's work ([github page](https://github.com/taoge407/EasierCrafting-Reloaded)), featuring additional improvements and bug fixes. Support for these versions is now limited to major bug fixes only.
 
-Furnaces (Also blast Furnaces and Smokers supported)
 
-## 📜 Version Support & History
-Minecraft 1.21.2 - 1.21.8: These are the current focus of development. Due to significant internal changes in how Mojang handles recipes in 1.21.2+, the recipe system has been completely rewritten.
-
-Minecraft 1.21 - 1.21.1: This version is a fork of taoge407's work ([github page](https://github.com/taoge407/EasierCrafting-Reloaded)), featuring additional improvements and bug fixes. Support for these versions is now limited to major bug fixes only.
-
-## 🛠️ State of the Mod
-This mod is currently in active development.
+<details>
+<summary>Note</summary>
 
 Rewritten Logic: Because of the 1.21.2 recipe overhaul, some older features are still being ported to the newer versions. Most of the features are restored currently. Newer versions are considered testing builds and may contain bugs. Your feedback is essential!
 
-## 🐞 Bug Reports & Community
+</details>
+
+## Bug Reports & Community
 If you encounter any issues or have suggestions, please reach out via:
 
 [Discord](https://discord.gg/chd39EdsxZ): Join our community
 
 [GitHub](https://github.com/CCPCT/EasierCrafting-1.21/issues): Report issues or view source
+Use github for latest updates and beta.
+
+if its a bug report pls include:
+- minecraft and mod version
+- crash report (to make sure its my mod causing the crash)
