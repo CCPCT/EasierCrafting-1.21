@@ -259,11 +259,26 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
 
         // actually craft item: hold control or right click to not instantly craft, hold q to drop
         if (mouseButton == 0 && !Screen.hasControlDown()) {
+            craft:
             if (isHoldingButton(GLFW.GLFW_KEY_Q)){
                 if (Screen.hasShiftDown()) {
                     // icl but lazy method works well...
-                    int resultCount = entry.display().result().getFirst(worldContext).getCount();
-                    LOGGER.info("bulk craft: {} stacks of {}", maxCraftableStacks, resultCount);
+                    ItemStack resultStack = entry.display().result().getFirst(worldContext);
+                    LOGGER.info("throw craft all: {} {}", maxCraftableStacks, resultStack.getCount());
+
+                    if (resultStack.getCount()*maxCraftableStacks <= resultStack.getMaxCount()) {
+                        // special case where dont need to repeat throw
+                        LOGGER.info("trying quick method of quick craft");
+                        slotClick(resultSlotNo, 0, SlotActionType.PICKUP);
+                        slotClick(firstInventorySlotNo, 0, SlotActionType.PICKUP);
+                        slotClick(resultSlotNo, 0, SlotActionType.QUICK_MOVE);
+                        slotClick(firstInventorySlotNo, 0, SlotActionType.PICKUP);
+                        // -999 = outside screen
+                        slotClick(-999, 0, SlotActionType.PICKUP);
+
+                        break craft;
+                    }
+
                     for (int i = 0; i < maxCraftableStacks; i++) {
                         slotClick(resultSlotNo, 1, SlotActionType.THROW);
                     }
@@ -276,6 +291,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
             queueUpdateRecipe();
 
             rowadjust = 0;
+            // remove leftover
             for (int i = 0; i < removal.length; i++) {
                 if (removal[i]) {
                     slotClick(firstCraftSlotNo + i + rowadjust, 0, SlotActionType.QUICK_MOVE);
