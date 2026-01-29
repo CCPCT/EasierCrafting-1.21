@@ -60,11 +60,11 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
         for (RecipeDisplayEntry entry : allRecipes) {
             // craftable entries
             // in player inventory... filter out big recipes
-            if (screen instanceof ExtendedGuiInventory && entry.display() instanceof ShapedCraftingRecipeDisplay recipe && (recipe.width() == 3 || recipe.height() == 3)) {
+            if (screen instanceof ExtendedGuiInventory && entry.display() instanceof ShapedCraftingRecipeDisplay recipe && (recipe.width() > gridSize || recipe.height() > gridSize)) {
                 continue;
             }
 
-            if (entry.display() instanceof ShapelessCraftingRecipeDisplay recipe && recipe.ingredients().size() > gridSize) {
+            if (entry.display() instanceof ShapelessCraftingRecipeDisplay recipe && recipe.ingredients().size() > gridSize*gridSize) {
                 continue;
             }
 
@@ -129,7 +129,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
             }
             case ShapelessCraftingRecipeDisplay shapeless -> {
                 ingredients = shapeless.ingredients();
-                recipeWidth = ingredients.size() <= 4 ? 2 : 3;
+                recipeWidth = gridSize;
                 if (Screen.hasShiftDown()) maxCraftableStacks = getMaxCraftable(ingredients);
             }
             case RepairCraftingRecipeDisplay repairDisplay -> {
