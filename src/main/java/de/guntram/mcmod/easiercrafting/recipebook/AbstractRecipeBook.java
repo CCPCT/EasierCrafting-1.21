@@ -64,6 +64,7 @@ public abstract class AbstractRecipeBook {
     public int screenYOffset = 0;
     protected ClientPlayerInteractionManager interactionManager;
     protected int categoryHash = 0;
+    public final String DEFAULT_CAT = I18n.translate("easiercrafting.category.possible");
 
 
     public final ObjectArrayList<RecipeDisplayEntry> craftableRecipes = new ObjectArrayList<>();
@@ -146,6 +147,9 @@ public abstract class AbstractRecipeBook {
      * refresh display catagory of craftable.
      */
     protected abstract boolean refreshCategories();
+
+    // see if recipe can actually be crafted (not by checking can craft tab)
+    protected abstract boolean canCraftScanned(RecipeDisplayEntry entry);
 
 
     // draw outputs... and set undermouse

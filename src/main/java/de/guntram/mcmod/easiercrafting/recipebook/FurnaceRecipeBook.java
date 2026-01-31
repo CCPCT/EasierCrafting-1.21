@@ -7,7 +7,6 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.recipebook.RecipeResultCollection;
-import net.minecraft.client.resource.language.I18n;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -42,7 +41,7 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
             for (RecipeDisplayEntry entry : collection.getAllRecipes()) {
                 if (!(entry.display() instanceof FurnaceRecipeDisplay recipeDisplay)) continue;
                 // its furnace recipe
-                if (!this.canCraft(entry)) continue;
+                if (!this.canCraftScanned(entry)) continue;
                 allRecipes.add(entry);
                 for (ItemStack slotDisplay : recipeDisplay.ingredient().getStacks(worldContext)) {
                     if (avaliableItemMap.containsKey(slotDisplay.getItem())) {
@@ -199,7 +198,7 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
         for (RecipeDisplayEntry entry : craftableRecipes) {
             craftableCategories.computeIfAbsent(ModConfig.get().categorizeRecipes ?
                             getTranslatedItemGroup(entry) :
-                            I18n.translate("easiercrafting.category.possible"),
+                            DEFAULT_CAT,
                     k -> new RecipeTreeSet()).add(entry);
             tempHash^=entry.id().index();
         }
@@ -207,6 +206,15 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
         categoryHash=tempHash;
         recalcListSize();
         return changed;
+    }
+
+    @Override
+    protected boolean canCraftScanned(RecipeDisplayEntry entry) {
+        if (!(entry.display() instanceof FurnaceRecipeDisplay recipe)) return false;
+        for (ItemStack i : recipe.ingredient().getStacks(worldContext)) {
+            if (avaliableItemMap.containsKey(i.getItem())) return true;
+        }
+        return false;
     }
 
     protected List<ItemStack> getIngredients(RecipeDisplayEntry entry) {

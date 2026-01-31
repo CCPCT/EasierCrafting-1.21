@@ -45,7 +45,7 @@ public class StonecutterRecipeBook extends AbstractRecipeBook {
 
         // add craftable recipes
         for (RecipeDisplayEntry entry : allRecipes){
-            if (!(entry.display() instanceof StonecutterRecipeDisplay) || !this.canCraft(entry)) continue;
+            if (!(entry.display() instanceof StonecutterRecipeDisplay) || !this.canCraftScanned(entry)) continue;
             craftableRecipes.add(entry);
         }
     }
@@ -140,9 +140,10 @@ public class StonecutterRecipeBook extends AbstractRecipeBook {
         craftableCategories.clear();
         int tempHash = 0;
         for (RecipeDisplayEntry entry : craftableRecipes) {
+            if (!(entry.display() instanceof StonecutterRecipeDisplay recipe)) continue;
             craftableCategories.computeIfAbsent(ModConfig.get().categorizeRecipes ?
-                            getTranslatedItemGroup(entry) :
-                            I18n.translate("easiercrafting.category.possible"),
+                            I18n.translate(recipe.input().getFirst(worldContext).getItem().getTranslationKey()) :
+                            DEFAULT_CAT,
                     k -> new RecipeTreeSet()).add(entry);
             tempHash^=entry.id().index();
         }
@@ -150,6 +151,15 @@ public class StonecutterRecipeBook extends AbstractRecipeBook {
         categoryHash=tempHash;
         recalcListSize();
         return changed;
+    }
+
+    @Override
+    protected boolean canCraftScanned(RecipeDisplayEntry entry) {
+        if (!(entry.display() instanceof StonecutterRecipeDisplay recipe)) return false;
+        for (ItemStack i : recipe.input().getStacks(worldContext)) {
+            if (avaliableItemMap.containsKey(i.getItem())) return true;
+        }
+        return false;
     }
 
     protected List<ItemStack> getIngredients(RecipeDisplayEntry entry) {

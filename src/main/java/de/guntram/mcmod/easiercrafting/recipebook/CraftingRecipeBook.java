@@ -93,7 +93,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
             String category;
             if (!ModConfig.get().categorizeRecipes) {
                 // dont categorize recipes
-                category = I18n.translate("easiercrafting.category.possible");
+                category = DEFAULT_CAT;
             } else if (Objects.requireNonNull(getCat(entry)).getNamespace().startsWith(EasierCrafting.MODID)) {
                 // generated recipe
                 if (entry.display() instanceof RepairCraftingRecipeDisplay){
@@ -354,6 +354,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
         return maxCraftableStacks;
     }
 
+    @Override
     protected boolean canCraftScanned(RecipeDisplayEntry entry) {
         updateAvailableStacks();
         Object2IntOpenHashMap<Item> tempMap = avaliableItemMap.clone();
