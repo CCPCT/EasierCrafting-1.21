@@ -2,10 +2,12 @@ package de.guntram.mcmod.easiercrafting.mixins;
 
 import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiCrafting;
 import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiFurnace;
+import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiLoom;
 import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiStonecutter;
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.recipebook.CraftingRecipeBook;
 import de.guntram.mcmod.easiercrafting.recipebook.FurnaceRecipeBook;
+import de.guntram.mcmod.easiercrafting.recipebook.LoomRecipeBook;
 import de.guntram.mcmod.easiercrafting.recipebook.StonecutterRecipeBook;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -67,6 +69,14 @@ public abstract class OpenGuiMixin {
             FurnaceScreenHandler handler = ScreenHandlerType.FURNACE.create(id, client.player.getInventory());
             ExtendedGuiFurnace screen = new ExtendedGuiFurnace(handler, client.player.getInventory(), title);
             screen.setRecipeBook(new FurnaceRecipeBook(screen, getSlotDisplayFromItem(Items.BLAST_FURNACE)));
+            openScreen(client, handler, screen);
+            ci.cancel();
+        }
+        // Loom
+        else if (type == ScreenHandlerType.LOOM) {
+            LoomScreenHandler handler = ScreenHandlerType.LOOM.create(id, client.player.getInventory());
+            ExtendedGuiLoom screen = new ExtendedGuiLoom(handler, client.player.getInventory(), title);
+            screen.setRecipeBook(new LoomRecipeBook(screen));
             openScreen(client, handler, screen);
             ci.cancel();
         }

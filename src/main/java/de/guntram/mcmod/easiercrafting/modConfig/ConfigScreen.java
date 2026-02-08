@@ -24,7 +24,12 @@ public class ConfigScreen extends Screen {
 
         ConfigCategory generalTab = builder.getOrCreateCategory(Text.translatable("easiercrafting.config.general"));
         ConfigCategory visualTab = builder.getOrCreateCategory(Text.literal("visual"));
-        ConfigCategory recipeTab = builder.getOrCreateCategory(Text.literal("recipe"));
+        //ConfigCategory recipeTab = builder.getOrCreateCategory(Text.literal("recipe"));
+        ConfigCategory craftingTab = builder.getOrCreateCategory(Text.literal("Crafting"));
+        ConfigCategory furnaceTab = builder.getOrCreateCategory(Text.literal("Furnace"));
+        //ConfigCategory stonecutterTab = builder.getOrCreateCategory(Text.literal("StoneCutter"));
+        ConfigCategory traidingTab = builder.getOrCreateCategory(Text.literal("Yrading"));
+        ConfigCategory loomTab = builder.getOrCreateCategory(Text.literal("Loom"));
 
 
         // General settings
@@ -32,7 +37,7 @@ public class ConfigScreen extends Screen {
                 .setSaveConsumer(newValue -> ModConfig.get().modEnabled = newValue)
                 .build());
 
-        visualTab.addEntry(entryBuilder.startBooleanToggle(Text.translatable("easiercrafting.config.autofocus"), ModConfig.get().autoFocusSearch)
+        generalTab.addEntry(entryBuilder.startBooleanToggle(Text.translatable("easiercrafting.config.autofocus"), ModConfig.get().autoFocusSearch)
                 .setTooltip(Text.translatable("easiercrafting.config.tt.autofocus"))
                 .setSaveConsumer(newValue -> ModConfig.get().autoFocusSearch = newValue)
                 .build());
@@ -53,12 +58,12 @@ public class ConfigScreen extends Screen {
                 .setSaveConsumer(newValue -> ModConfig.get().showGuiRight = newValue)
                 .build());
 
-        recipeTab.addEntry(entryBuilder.startBooleanToggle(Text.translatable("easiercrafting.config.specialrecipes"), ModConfig.get().allowGeneratedRecipes)
+        craftingTab.addEntry(entryBuilder.startBooleanToggle(Text.translatable("easiercrafting.config.specialrecipes"), ModConfig.get().allowGeneratedRecipes)
                 .setTooltip(Text.translatable("easiercrafting.config.tt.specialrecipes"))
                 .setSaveConsumer(newValue -> ModConfig.get().allowGeneratedRecipes = newValue)
                 .build());
 
-        recipeTab.addEntry(entryBuilder.startIntField(Text.translatable("easiercrafting.config.maxenchants"), ModConfig.get().maxEnchantsAllowedForRepair)
+        craftingTab.addEntry(entryBuilder.startIntField(Text.translatable("easiercrafting.config.maxenchants"), ModConfig.get().maxEnchantsAllowedForRepair)
                 .setTooltip(Text.translatable("easiercrafting.config.tt.maxenchants"))
                 .setMin(0).setMax(10)
                 .setSaveConsumer(newValue -> ModConfig.get().maxEnchantsAllowedForRepair = newValue)
@@ -80,7 +85,7 @@ public class ConfigScreen extends Screen {
                 .setSaveConsumer(newValue -> ModConfig.get().showAllRecipes = newValue)
                 .build());
 
-        generalTab.addEntry(entryBuilder.startBooleanToggle(Text.literal("Refill fuel for furnaces"), ModConfig.get().refillFuel)
+        furnaceTab.addEntry(entryBuilder.startBooleanToggle(Text.literal("Refill fuel for furnaces"), ModConfig.get().refillFuel)
                 .setSaveConsumer(newValue -> ModConfig.get().refillFuel = newValue)
                 .build());
 
@@ -97,8 +102,13 @@ public class ConfigScreen extends Screen {
                 })
                 .build());
 
-        generalTab.addEntry(entryBuilder.startBooleanToggle(Text.literal("Enable quick trade"), ModConfig.get().enableTrading)
+        traidingTab.addEntry(entryBuilder.startBooleanToggle(Text.literal("Enable quick trade"), ModConfig.get().enableTrading)
                 .setSaveConsumer(newValue -> ModConfig.get().enableTrading = newValue)
+                .build());
+
+        loomTab.addEntry(entryBuilder.startBooleanToggle(Text.literal("Permanently store crafted banner recipes"), ModConfig.get().storeYarnRecipes)
+                .setTooltip(Text.literal("Will be stored even when quit world/server"))
+                .setSaveConsumer(newValue -> ModConfig.get().storeYarnRecipes = newValue)
                 .build());
 
         visualTab.addEntry(entryBuilder.startIntField(Text.literal("Maximum item per row"), ModConfig.get().itemsPerRow)

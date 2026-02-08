@@ -26,6 +26,7 @@ public class ModConfig {
     public int itemDisplaySpacing = 1;
     public boolean enableTrading = true;
     public int itemsPerRow = 9;
+    public boolean storeYarnRecipes = false;
 
     public static ModConfig get() {
         if (INSTANCE==null)
@@ -58,7 +59,7 @@ public class ModConfig {
         try {
             Files.writeString(CONFIG_PATH, GSON.toJson(get()));
         } catch (IOException e) {
-            EasierCrafting.getGeneralLogger().error("Unable to save EasierCrafting config!");
+            EasierCrafting.warn("Unable to save EasierCrafting config!");
         }
     }
 }

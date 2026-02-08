@@ -441,14 +441,15 @@ public abstract class AbstractRecipeBook {
         interactionManager.clickSlot(screenHandler.syncId,slot,mouseButton,clickType,player);
     }
 
-    protected void drawHoloItem(DrawContext context, Slot slot, ItemStack stack){
-        int x = slot.x;
-        int y = slot.y;
+    protected void drawHoloItem(DrawContext context, int x, int y, ItemStack stack){
         context.drawItem(stack, x, y);
-        // fill transparent colour of grid to make items look transparent
         context.drawStackOverlay(textRenderer,stack,x,y);
         context.fill(x, y, x+itemSize, y+itemSize, 0x808b8b8b);
+    }
 
+
+    protected void drawHoloItem(DrawContext context, Slot slot, ItemStack stack){
+        drawHoloItem(context,slot.x,slot.y,stack);
     }
 
     // other getters

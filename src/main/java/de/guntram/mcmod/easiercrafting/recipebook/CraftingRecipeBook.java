@@ -488,4 +488,6 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
         }
 
     }
+
+
 }
