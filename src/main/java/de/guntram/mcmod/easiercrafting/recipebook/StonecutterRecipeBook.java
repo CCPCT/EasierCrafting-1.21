@@ -63,18 +63,18 @@ public class StonecutterRecipeBook extends AbstractRecipeBook {
 
         // move item to crafting slot
         search:
-        for (int slot = firstInventorySlotNo; slot < 36 + firstInventorySlotNo; slot++) {
+        for (int slot = FIRST_INV_SLOT; slot < 36 + FIRST_INV_SLOT; slot++) {
             ItemStack slotContent = container.getSlot(slot).getStack();
             for (ItemStack ingredientStack : recipe.input().getStacks(worldContext)) {
                 if (ingredientStack.getItem().equals(slotContent.getItem())){
                     if (Screen.hasShiftDown()) {
                         slotClick(slot, 0, SlotActionType.PICKUP);
                         slotClick(slot, 0, SlotActionType.PICKUP_ALL);
-                        slotClick(firstCraftSlotNo, 0, SlotActionType.PICKUP);
+                        slotClick(FIRST_CRAFT_SLOT, 0, SlotActionType.PICKUP);
                         slotClick(slot, 0, SlotActionType.PICKUP);
                     } else {
                         slotClick(slot, 0, SlotActionType.PICKUP);
-                        slotClick(firstCraftSlotNo, 1, SlotActionType.PICKUP);
+                        slotClick(FIRST_CRAFT_SLOT, 1, SlotActionType.PICKUP);
                         slotClick(slot, 0, SlotActionType.PICKUP);
                     }
                     break search;
@@ -126,12 +126,12 @@ public class StonecutterRecipeBook extends AbstractRecipeBook {
         }
 
         // draw result
-        Slot resultSlot = screenHandler.getSlot(resultSlotNo);
+        Slot resultSlot = screenHandler.getSlot(FIRST_RESULT_SLOT);
         drawHoloItem(context,resultSlot,result);
 
-        if (!canCraft) context.fill(resultSlot.x-2,resultSlot.y-2,resultSlot.x+itemSize+2,resultSlot.y+itemSize+2,0x60FF0000);
+        if (!canCraft) context.fill(resultSlot.x-2,resultSlot.y-2,resultSlot.x+ ITEM_SIZE +2,resultSlot.y+ ITEM_SIZE +2,0x60FF0000);
 
-        renderIngredient(context, getIngredients(underMouse), screenHandler.getSlot(firstCraftSlotNo));
+        renderIngredient(context, getIngredients(underMouse), screenHandler.getSlot(FIRST_CRAFT_SLOT));
     }
 
     @Override

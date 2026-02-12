@@ -60,11 +60,11 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
         for (RecipeDisplayEntry entry : allRecipes) {
             // craftable entries
             // in player inventory... filter out big recipes
-            if (screen instanceof ExtendedGuiInventory && entry.display() instanceof ShapedCraftingRecipeDisplay recipe && (recipe.width() > gridSize || recipe.height() > gridSize)) {
+            if (screen instanceof ExtendedGuiInventory && entry.display() instanceof ShapedCraftingRecipeDisplay recipe && (recipe.width() > GRID_SIZE || recipe.height() > GRID_SIZE)) {
                 continue;
             }
 
-            if (entry.display() instanceof ShapelessCraftingRecipeDisplay recipe && recipe.ingredients().size() > gridSize*gridSize) {
+            if (entry.display() instanceof ShapelessCraftingRecipeDisplay recipe && recipe.ingredients().size() > GRID_SIZE * GRID_SIZE) {
                 continue;
             }
 
@@ -120,7 +120,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
         int recipeWidth;
         List<SlotDisplay> ingredients;
         int maxCraftableStacks=1;
-        Slot resultSlot = screenHandler.getSlot(resultSlotNo);
+        Slot resultSlot = screenHandler.getSlot(FIRST_RESULT_SLOT);
         switch (underMouse.display()) {
             case ShapedCraftingRecipeDisplay shaped -> {
                 recipeWidth = shaped.width();
@@ -129,7 +129,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
             }
             case ShapelessCraftingRecipeDisplay shapeless -> {
                 ingredients = shapeless.ingredients();
-                recipeWidth = gridSize;
+                recipeWidth = GRID_SIZE;
                 if (Screen.hasShiftDown()) maxCraftableStacks = getMaxCraftable(ingredients);
             }
             case RepairCraftingRecipeDisplay repairDisplay -> {
@@ -138,8 +138,8 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
                 // damage = max(damage a + damage b - floor(Max/20) - max , 0)
                 // so best and easiest approach would be adding items with min durability
                 drawHoloItem(context, resultSlot, repairDisplay.result().getFirst(worldContext));
-                drawHoloItem(context, screenHandler.getSlot(firstCraftSlotNo), repairDisplay.ingredients().getFirst().getFirst(worldContext));
-                drawHoloItem(context, screenHandler.getSlot(firstCraftSlotNo+1), repairDisplay.ingredients().get(1).getFirst(worldContext));
+                drawHoloItem(context, screenHandler.getSlot(FIRST_CRAFT_SLOT), repairDisplay.ingredients().getFirst().getFirst(worldContext));
+                drawHoloItem(context, screenHandler.getSlot(FIRST_CRAFT_SLOT +1), repairDisplay.ingredients().get(1).getFirst(worldContext));
 
                 return;
             }
@@ -156,7 +156,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
 
         boolean canCraft = canCraft(underMouse);
         drawHoloItem(context, resultSlot, resultStack);
-        if (!canCraft) context.fill(resultSlot.x-2,resultSlot.y-2,resultSlot.x+itemSize+2,resultSlot.y+itemSize+2,0x60FF0000);
+        if (!canCraft) context.fill(resultSlot.x-2,resultSlot.y-2,resultSlot.x+ ITEM_SIZE +2,resultSlot.y+ ITEM_SIZE +2,0x60FF0000);
 
         Object2IntOpenHashMap<Item> tempMap = avaliableItemMap.clone();
 
@@ -166,14 +166,14 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
                 SlotDisplay ingredient = ingredients.get(y*recipeWidth+x);
                 if (ingredient.getFirst(worldContext).isEmpty()) continue;
                 if (!canCraft){
-                    renderIngredient(context, ingredient.getStacks(worldContext), screenHandler.getSlot(firstCraftSlotNo + y*gridSize+x));
+                    renderIngredient(context, ingredient.getStacks(worldContext), screenHandler.getSlot(FIRST_CRAFT_SLOT + y* GRID_SIZE +x));
                     continue;
                 }
                 for (ItemStack stack : ingredient.getStacks(worldContext)){
                     // cant craft
                     if (tempMap.getInt(stack.getItem())<=0) continue;
                     tempMap.addTo(stack.getItem(),-1);
-                    renderCraftingIngredient(context,stack,screenHandler.getSlot(firstCraftSlotNo + y*gridSize+x));
+                    renderCraftingIngredient(context,stack,screenHandler.getSlot(FIRST_CRAFT_SLOT + y* GRID_SIZE +x));
                     break;
                 }
             }
@@ -215,7 +215,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
             }
         }
 
-        if (recipeWidth > gridSize) return;
+        if (recipeWidth > GRID_SIZE) return;
 
         // remove leftovers e.g. bucket/ glass bottles
         boolean[] removal = new boolean[ingredients.size()];
@@ -227,7 +227,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
             SlotDisplay ingredient = ingredients.get(i);
             if (ingredient.getStacks(worldContext).isEmpty()) continue;
 
-            for (int slot = firstInventorySlotNo; remaining > 0 && slot < 36 + firstInventorySlotNo; slot++) {
+            for (int slot = FIRST_INV_SLOT; remaining > 0 && slot < 36 + FIRST_INV_SLOT; slot++) {
                 ItemStack slotcontent = screenHandler.getSlot(slot).getStack();
                 // yes awful nested if statements... find a better logic for me then... but bare in mind mine works :3
                 if (entry.display() instanceof RepairCraftingRecipeDisplay recipe){
@@ -241,8 +241,8 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
                     } else continue;
                 }
                 else if (!canActAsIngredient(ingredient, slotcontent)) continue;
-                transfer(slot, i + firstCraftSlotNo + rowadjust, remaining);
-                ItemStack inCraftSlot = screenHandler.getSlot(i + firstCraftSlotNo + rowadjust).getStack();
+                transfer(slot, i + FIRST_CRAFT_SLOT + rowadjust, remaining);
+                ItemStack inCraftSlot = screenHandler.getSlot(i + FIRST_CRAFT_SLOT + rowadjust).getStack();
                 remaining = maxCraftableStacks - inCraftSlot.getCount();
                 if (!inCraftSlot.getRecipeRemainder().isEmpty()) {
                     removal[i] = true;
@@ -250,7 +250,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
 
             }
             if (recipeWidth > 0 && (i + 1) % recipeWidth == 0) {
-                rowadjust += gridSize - recipeWidth;
+                rowadjust += GRID_SIZE - recipeWidth;
             }
         }
 
@@ -263,13 +263,13 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
                     ItemStack resultStack = entry.display().result().getFirst(worldContext);
                     LOGGER.info("throw craft all: {} {}", maxCraftableStacks, resultStack.getCount());
 
-                    if (resultStack.getCount()*maxCraftableStacks <= resultStack.getMaxCount() && screenHandler.getSlot(firstInventorySlotNo+35).getStack().getItem()!=resultStack.getItem()) {
+                    if (resultStack.getCount()*maxCraftableStacks <= resultStack.getMaxCount() && screenHandler.getSlot(FIRST_INV_SLOT +35).getStack().getItem()!=resultStack.getItem()) {
                         // special case where dont need to repeat throw
                         LOGGER.info("trying quick method of quick craft");
-                        slotClick(resultSlotNo, 0, SlotActionType.PICKUP);
-                        slotClick(firstInventorySlotNo+35, 0, SlotActionType.PICKUP);
-                        slotClick(resultSlotNo, 0, SlotActionType.QUICK_MOVE);
-                        slotClick(firstInventorySlotNo+35, 0, SlotActionType.PICKUP);
+                        slotClick(FIRST_RESULT_SLOT, 0, SlotActionType.PICKUP);
+                        slotClick(FIRST_INV_SLOT +35, 0, SlotActionType.PICKUP);
+                        slotClick(FIRST_RESULT_SLOT, 0, SlotActionType.QUICK_MOVE);
+                        slotClick(FIRST_INV_SLOT +35, 0, SlotActionType.PICKUP);
                         // -999 = outside screen
                         slotClick(-999, 0, SlotActionType.PICKUP);
 
@@ -277,13 +277,13 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
                     }
 
                     for (int i = 0; i < maxCraftableStacks; i++) {
-                        slotClick(resultSlotNo, 1, SlotActionType.THROW);
+                        slotClick(FIRST_RESULT_SLOT, 1, SlotActionType.THROW);
                     }
                 } else {
-                    slotClick(resultSlotNo, 0, SlotActionType.THROW);
+                    slotClick(FIRST_RESULT_SLOT, 0, SlotActionType.THROW);
                 }
             } else {
-                slotClick(resultSlotNo, 1, SlotActionType.QUICK_MOVE);
+                slotClick(FIRST_RESULT_SLOT, 1, SlotActionType.QUICK_MOVE);
             }
             queueUpdateRecipe();
 
@@ -291,10 +291,10 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
             // remove leftover
             for (int i = 0; i < removal.length; i++) {
                 if (removal[i]) {
-                    slotClick(firstCraftSlotNo + i + rowadjust, 0, SlotActionType.QUICK_MOVE);
+                    slotClick(FIRST_CRAFT_SLOT + i + rowadjust, 0, SlotActionType.QUICK_MOVE);
                 }
                 if (recipeWidth > 0 && (i + 1) % recipeWidth == 0) {
-                    rowadjust += gridSize - recipeWidth;
+                    rowadjust += GRID_SIZE - recipeWidth;
                 }
             }
         }
@@ -412,7 +412,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
                     ShapelessCraftingRecipeDisplay display = new ShapelessCraftingRecipeDisplay(
                             ingredientsDisplay,
                             new SlotDisplay.StackSlotDisplay(resultItem),
-                            craftingBlock
+                            CRAFTING_STATION
                     );
 
                     // 5. Add to your results list
@@ -451,7 +451,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
             int damageA = 0;
             int damageB = 0;
             // find 2 slot with max damage
-            for (int slot = firstInventorySlotNo; slot < 36 + firstInventorySlotNo; slot++) {
+            for (int slot = FIRST_INV_SLOT; slot < 36 + FIRST_INV_SLOT; slot++) {
                 ItemStack slotContent = screenHandler.getSlot(slot).getStack();
                 if (slotContent.getItem()!=ingredient||slotContent.hasEnchantments()) continue;
                 if (slotContent.getDamage() > damageA) {
@@ -471,7 +471,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
             RepairCraftingRecipeDisplay display = new RepairCraftingRecipeDisplay(
                     List.of(new SlotDisplay.StackSlotDisplay(ingredientA),new SlotDisplay.StackSlotDisplay(ingredientB)),
                     new SlotDisplay.StackSlotDisplay(resultStack),
-                    craftingBlock
+                    CRAFTING_STATION
             );
 
             RecipeDisplayEntry entry = new RecipeDisplayEntry(

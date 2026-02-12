@@ -1,0 +1,14 @@
+{
+  "name": "template",
+  "baseBanner": "minecraft:white_banner",
+  "steps": [
+    {
+      "dye": "red",
+      "pattern": "minecraft:stripe_top"
+    },
+    {
+      "dye": "red",
+      "pattern": "minecraft:mojang"
+    }
+  ]
+}

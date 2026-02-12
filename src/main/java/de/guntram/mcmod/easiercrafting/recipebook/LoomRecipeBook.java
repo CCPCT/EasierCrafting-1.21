@@ -5,6 +5,7 @@ import de.guntram.mcmod.easiercrafting.recipe.LoomRecipe;
 import de.guntram.mcmod.easiercrafting.recipe.LoomRecipeDisplay;
 import de.guntram.mcmod.easiercrafting.recipe.LoomRecipeHandler;
 import de.guntram.mcmod.easiercrafting.recipe.RecipeTreeSet;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.block.entity.BannerPattern;
 import net.minecraft.client.MinecraftClient;
@@ -179,7 +180,7 @@ public class LoomRecipeBook extends AbstractRecipeBook {
         int bannerSlot = findEmptyBanner(ingredient.getFirst().toDisplay().getFirst(worldContext).getItem());
         if (bannerSlot==-1) return;
         LoomTask.click(bannerSlot,0, SlotActionType.PICKUP);
-        LoomTask.click(firstCraftSlotNo,1, SlotActionType.PICKUP);
+        LoomTask.click(FIRST_CRAFT_SLOT,1, SlotActionType.PICKUP);
         LoomTask.click(bannerSlot,0, SlotActionType.PICKUP);
 
 
@@ -193,27 +194,27 @@ public class LoomRecipeBook extends AbstractRecipeBook {
             LoomTask.click(dyeSlot,0,SlotActionType.PICKUP);
 
             LOGGER.info(recipe.pattern().get(i));
-            boolean requirePatternItem = true;
             LOGGER.info(ingredient.get(ingredientIndex).toDisplay().getFirst(worldContext).getItem().getName());
-            if (ingredient.size()<=ingredientIndex || ingredient.get(ingredientIndex).toDisplay().getFirst(worldContext).getItem() instanceof DyeItem) {
-                requirePatternItem = false;
+            Item pattern = SPECIAL_PATTERNS.get(recipe.pattern().get(i));
+            if (pattern != null) {
+                int patternSlot = findItem(pattern);
+                LoomTask.click(patternSlot,0,SlotActionType.QUICK_MOVE);
+            } else {
+                LoomTask.button(Identifier.of(recipe.pattern().get(i)));
                 ingredientIndex--;
             }
 
-            if (requirePatternItem) {
-                LOGGER.warn("g o g!");
-            } else {
-                LoomTask.button(Identifier.of(recipe.pattern().get(i)));
+            LoomTask.click(FIRST_RESULT_SLOT,0,SlotActionType.PICKUP);
+            LoomTask.click(FIRST_CRAFT_SLOT,0,SlotActionType.PICKUP);
+
+            if (pattern != null) {
+                LoomTask.click(PATTERN_SLOT,0,SlotActionType.QUICK_MOVE);
             }
-
-            LoomTask.click(3,0,SlotActionType.PICKUP);
-            LoomTask.click(firstCraftSlotNo,0,SlotActionType.PICKUP);
-
-
 
             ingredientIndex+=2;
         }
-        LoomTask.click(firstCraftSlotNo,0,SlotActionType.QUICK_MOVE);
+        LoomTask.click(FIRST_CRAFT_SLOT,0,SlotActionType.QUICK_MOVE);
+        LoomTask.update();
     }
 
     public record LoomTask(int slot, int button, SlotActionType type, Identifier buttonID) {
@@ -226,6 +227,11 @@ public class LoomRecipeBook extends AbstractRecipeBook {
         public static void button(Identifier buttonId) {
             actionQueue.add(new LoomTask(0, 0, null, buttonId));
         }
+
+        // update
+        public static void update() {
+            actionQueue.add(new LoomTask(0, 0, null, null));
+        }
     }
 
     public static void onTick() {
@@ -233,9 +239,14 @@ public class LoomRecipeBook extends AbstractRecipeBook {
             updatable = true;
             return;
         }
-        updatable=false;
         LoomTask task = actionQueue.poll();
         if (task==null) return;
+        if (task.type == null && task.buttonID == null) {
+            EasierCrafting.updateRecipe();
+            return;
+        }
+        updatable=false;
+
 
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
         if (player==null) return;
@@ -252,7 +263,6 @@ public class LoomRecipeBook extends AbstractRecipeBook {
                     EasierCrafting.info(availablePatterns.get(j).getIdAsString());
                     return;
                 }
-                EasierCrafting.warn("Cant find buttonnnn");
             }
         } else {
             // slot
@@ -266,26 +276,43 @@ public class LoomRecipeBook extends AbstractRecipeBook {
         ItemStack result = recipe.result().getFirst(worldContext).copy();
         boolean canCraft = canCraft(underMouse);
 
-        final int y = -itemSize-1;
+        final int y = -ITEM_SIZE -1;
         if (underMouse.craftingRequirements().isEmpty()) return;
         List<Ingredient> ingredients = underMouse.craftingRequirements().get();
         if (ingredients.isEmpty()) return;
 
-        drawHoloItem(context,screenHandler.getSlot(0), ingredients.getFirst().toDisplay().getFirst(worldContext));
+        // banner
+        ItemStack bannerIngredient = ingredients.getFirst().toDisplay().getFirst(worldContext);
+        drawHoloItem(context,screenHandler.getSlot(0), bannerIngredient);
+        if (findEmptyBanner(bannerIngredient.getItem()) == -1) {
+            context.fill(screenHandler.getSlot(0).x,
+                    screenHandler.getSlot(0).y,
+                    screenHandler.getSlot(0).x+ITEM_SIZE,
+                    screenHandler.getSlot(0).y+ITEM_SIZE,
+                    CANT_CRAFT_COLOUR
+                    );
+        }
+
+        Object2IntOpenHashMap<Item> inventory = avaliableItemMap.clone();
 
         for (int i = 1; i < ingredients.size(); i++) {
-            int x = (i-1)*(itemSize + itemDisplaySpacing);
+            int x = (i-1)*(ITEM_SIZE + itemDisplaySpacing);
             ItemStack stack = ingredients.get(i).toDisplay().getFirst(worldContext);
 
-            context.drawItem(stack, (i-1)*(itemSize + itemDisplaySpacing), y);
+            context.drawItem(stack, x, y);
             context.drawStackOverlay(textRenderer,stack,x,y);
+            if (inventory.getInt(stack.getItem()) <= 0) {
+                context.fill(x, y, x + ITEM_SIZE, y + ITEM_SIZE, CANT_CRAFT_COLOUR);
+            } else {
+                inventory.addTo(stack.getItem(),-1);
+            }
         }
 
         // draw result
-        Slot resultSlot = screenHandler.getSlot(resultSlotNo);
+        Slot resultSlot = screenHandler.getSlot(FIRST_RESULT_SLOT);
         drawHoloItem(context,resultSlot,result);
 
-        if (!canCraft) context.fill(resultSlot.x-2,resultSlot.y-2,resultSlot.x+itemSize+2,resultSlot.y+itemSize+2,0x60FF0000);
+        if (!canCraft) context.fill(resultSlot.x-2,resultSlot.y-2,resultSlot.x+ ITEM_SIZE +2,resultSlot.y+ ITEM_SIZE +2,0x60FF0000);
 
         //renderIngredient(context, getIngredients(underMouse), screenHandler.getSlot(firstCraftSlotNo));
     }

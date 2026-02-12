@@ -54,11 +54,11 @@ public abstract class AbstractRecipeBook {
 
     // Protected fields for subclasses
     public final HandledScreen<? extends ScreenHandler> screen;
-    protected final int firstCraftSlotNo;
-    protected final int gridSize;
-    protected final int resultSlotNo;
-    protected final int firstInventorySlotNo;
-    protected final SlotDisplay craftingBlock;
+    protected final int FIRST_CRAFT_SLOT;
+    protected final int GRID_SIZE;
+    protected final int FIRST_RESULT_SLOT;
+    protected final int FIRST_INV_SLOT;
+    protected final SlotDisplay CRAFTING_STATION;
     protected ClientRecipeBook recipeBook;
     protected final TextRenderer textRenderer;
     public int screenYOffset = 0;
@@ -78,9 +78,9 @@ public abstract class AbstractRecipeBook {
     protected final ScreenHandler screenHandler;
 
     // Layout
-    public static final int itemSize = 16;
+    public static final int ITEM_SIZE = 16;
     public static int itemDisplaySpacing = ModConfig.get().itemDisplaySpacing;
-    public static int displayItemSize = itemSize+itemDisplaySpacing*2;
+    public static int displayItemSize = ITEM_SIZE +itemDisplaySpacing*2;
     protected final int itemLift = 5;
     protected int listSize;
     protected int itemsPerRow;
@@ -90,6 +90,7 @@ public abstract class AbstractRecipeBook {
     protected int textBoxSize;
     protected int containerLeft;
     protected int containerTop;
+    protected final int CANT_CRAFT_COLOUR = 0x60FF0000;
 
     // Search & Updates
     protected long recipeUpdateTime = 0;
@@ -110,21 +111,21 @@ public abstract class AbstractRecipeBook {
 
         this.screen = craftScreen;
         this.textRenderer = client.textRenderer;
-        this.firstCraftSlotNo = firstCraftSlotNo;
-        this.gridSize = gridsize;
-        this.resultSlotNo = resultSlot;
-        this.firstInventorySlotNo = firstInventorySlot;
+        this.FIRST_CRAFT_SLOT = firstCraftSlotNo;
+        this.GRID_SIZE = gridsize;
+        this.FIRST_RESULT_SLOT = resultSlot;
+        this.FIRST_INV_SLOT = firstInventorySlot;
         this.pattern = new TextFieldWidget(textRenderer, 0, screenYOffset, 10, 20, Text.literal("")); // update width later
         this.underMouse = null;
         this.player = client.player;
         this.worldContext = SlotDisplayContexts.createParameters(world);
         this.LOGGER = LogManager.getLogger(craftScreen.getScreenHandler());
-        this.craftingBlock = craftingBlock;
+        this.CRAFTING_STATION = craftingBlock;
         this.recipeBook = player.getRecipeBook();
         this.screenHandler = screen.getScreenHandler();
         this.interactionManager = client.interactionManager;
         itemDisplaySpacing = ModConfig.get().itemDisplaySpacing;
-        displayItemSize = itemSize+itemDisplaySpacing*2;
+        displayItemSize = ITEM_SIZE +itemDisplaySpacing*2;
     }
 
     // --- Abstract Methods to be implemented by subclasses ---
@@ -163,7 +164,7 @@ public abstract class AbstractRecipeBook {
                 boolean canCraft = canCraft(recipe);
                 if (!canCraft) {
                     // if cant craft draw red background on the result
-                    context.fill(x-itemDisplaySpacing,y-itemDisplaySpacing,x+itemSize+itemDisplaySpacing,y+itemSize+itemDisplaySpacing,0x60FF0000);
+                    context.fill(x-itemDisplaySpacing,y-itemDisplaySpacing,x+ ITEM_SIZE +itemDisplaySpacing,y+ ITEM_SIZE +itemDisplaySpacing,CANT_CRAFT_COLOUR);
                 }
 
                 renderSingleRecipeOutput(context, textRenderer, recipe.display().result().getFirst(worldContext), x, y);
@@ -174,7 +175,7 @@ public abstract class AbstractRecipeBook {
                 {
                     underMouse = recipe;
                     // render background behind hovered item
-                    context.fill(x-itemDisplaySpacing,y-itemDisplaySpacing,x+itemSize+itemDisplaySpacing,y+itemSize+itemDisplaySpacing,0x50E0E0E0);
+                    context.fill(x-itemDisplaySpacing,y-itemDisplaySpacing,x+ ITEM_SIZE +itemDisplaySpacing,y+ ITEM_SIZE +itemDisplaySpacing,0x50E0E0E0);
                     // render recipe overlay
                     drawRecipeGridOverlay(context);
                 }
@@ -258,7 +259,7 @@ public abstract class AbstractRecipeBook {
         if (neededHeight > height) {
             ypos -= (neededHeight - height) / 2;
             if (ypos < -containerTop) {
-                ypos = -containerTop + itemSize;
+                ypos = -containerTop + ITEM_SIZE;
             } else {
                 mouseScroll = 0;
             }
@@ -319,7 +320,7 @@ public abstract class AbstractRecipeBook {
         int y = slot.y;
         if (!getAvailableItemSet().contains(stacks.getFirst().getItem())){
             // no recipe found
-            context.fill(x,y,x+itemSize,y+itemSize,0x60FF0000);
+            context.fill(x,y,x+ ITEM_SIZE,y+ ITEM_SIZE,CANT_CRAFT_COLOUR);
         }
 
         int toRender = 0;
@@ -392,10 +393,10 @@ public abstract class AbstractRecipeBook {
         if (!this.canCraft(underMouse)) return;
 
         // Ensure grid is empty (common check, though subclasses might override behaviour)
-        for (int craftslot = 0; craftslot < gridSize * gridSize; craftslot++) {
-            ItemStack stack = screen.getScreenHandler().getSlot(craftslot + firstCraftSlotNo).getStack();
+        for (int craftslot = 0; craftslot < GRID_SIZE * GRID_SIZE; craftslot++) {
+            ItemStack stack = screen.getScreenHandler().getSlot(craftslot + FIRST_CRAFT_SLOT).getStack();
             if (stack != null && !stack.isEmpty()) {
-                slotClick(craftslot+firstCraftSlotNo, 0, SlotActionType.QUICK_MOVE);
+                slotClick(craftslot+ FIRST_CRAFT_SLOT, 0, SlotActionType.QUICK_MOVE);
                 if (!stack.isEmpty()) return; // can't move item away (inventory full or locked) stop crafting
             }
         }
@@ -444,7 +445,7 @@ public abstract class AbstractRecipeBook {
     protected void drawHoloItem(DrawContext context, int x, int y, ItemStack stack){
         context.drawItem(stack, x, y);
         context.drawStackOverlay(textRenderer,stack,x,y);
-        context.fill(x, y, x+itemSize, y+itemSize, 0x808b8b8b);
+        context.fill(x, y, x+ ITEM_SIZE, y+ ITEM_SIZE, 0x808b8b8b);
     }
 
 

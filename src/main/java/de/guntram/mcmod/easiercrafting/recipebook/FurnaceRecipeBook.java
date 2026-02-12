@@ -60,8 +60,8 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
         ItemStack fuelStack = container.slots.get(FUEL_SLOT).getStack();
 
         // retrieve/ throw smelt items
-        if (container.slots.get(resultSlotNo).hasStack() && !Screen.hasControlDown()) {
-            slotClick(resultSlotNo,1,isHoldingButton(GLFW.GLFW_KEY_Q) ? SlotActionType.THROW : SlotActionType.QUICK_MOVE);
+        if (container.slots.get(FIRST_RESULT_SLOT).hasStack() && !Screen.hasControlDown()) {
+            slotClick(FIRST_RESULT_SLOT,1,isHoldingButton(GLFW.GLFW_KEY_Q) ? SlotActionType.THROW : SlotActionType.QUICK_MOVE);
         }
 
         // replenish fuel if possible, if fuel slot is empty let player decide what fuel to use
@@ -90,7 +90,7 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
         } else if (lastFuelUsed!=null){
             // refill fuel by last used as empty
             LOGGER.info("try to refill memory: {}",lastFuelUsed.getTranslationKey());
-            for (int slot = firstInventorySlotNo; slot < 36+firstInventorySlotNo; slot++){
+            for (int slot = FIRST_INV_SLOT; slot < 36+ FIRST_INV_SLOT; slot++){
                 ItemStack itemStack = container.slots.get(slot).getStack();
                 if (itemStack.getItem().equals(lastFuelUsed)){
                     LOGGER.info("refilling memory: {}",lastFuelUsed.getTranslationKey());
@@ -104,23 +104,23 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
 
         // move items onto craft spot
         search:
-        for (int slot = firstInventorySlotNo; slot < 36 + firstInventorySlotNo; slot++) {
+        for (int slot = FIRST_INV_SLOT; slot < 36 + FIRST_INV_SLOT; slot++) {
             ItemStack slotContent = container.getSlot(slot).getStack();
             for (ItemStack ingredientStack : recipe.ingredient().getStacks(worldContext)) {
                 if (ingredientStack.getItem().equals(slotContent.getItem())){
                     // remove item if not match recipe
-                    if (ingredientStack.getItem() != container.slots.get(firstCraftSlotNo).getStack().getItem()){
-                        slotClick(firstCraftSlotNo,0,SlotActionType.QUICK_MOVE);
+                    if (ingredientStack.getItem() != container.slots.get(FIRST_CRAFT_SLOT).getStack().getItem()){
+                        slotClick(FIRST_CRAFT_SLOT,0,SlotActionType.QUICK_MOVE);
                     }
                     // move item up
                     if (Screen.hasShiftDown()) {
                         slotClick(slot, 0, SlotActionType.PICKUP);
                         slotClick(slot, 0, SlotActionType.PICKUP_ALL);
-                        slotClick(firstCraftSlotNo, 0, SlotActionType.PICKUP);
+                        slotClick(FIRST_CRAFT_SLOT, 0, SlotActionType.PICKUP);
                         slotClick(slot, 0, SlotActionType.PICKUP);
                     } else {
                         slotClick(slot, 0, SlotActionType.PICKUP);
-                        slotClick(firstCraftSlotNo, 1, SlotActionType.PICKUP);
+                        slotClick(FIRST_CRAFT_SLOT, 1, SlotActionType.PICKUP);
                         slotClick(slot, 0, SlotActionType.PICKUP);
                     }
                     break search;
@@ -183,12 +183,12 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
         }
 
         // draw result
-        Slot resultSlot = screenHandler.getSlot(resultSlotNo);
+        Slot resultSlot = screenHandler.getSlot(FIRST_RESULT_SLOT);
         drawHoloItem(context,resultSlot,result);
 
-        if (!canCraft) context.fill(resultSlot.x-2,resultSlot.y-2,resultSlot.x+itemSize+2,resultSlot.y+itemSize+2,0x60FF0000);
+        if (!canCraft) context.fill(resultSlot.x-2,resultSlot.y-2,resultSlot.x+ ITEM_SIZE +2,resultSlot.y+ ITEM_SIZE +2,0x60FF0000);
 
-        renderIngredient(context, getIngredients(underMouse), screenHandler.getSlot(firstCraftSlotNo));
+        renderIngredient(context, getIngredients(underMouse), screenHandler.getSlot(FIRST_CRAFT_SLOT));
     }
 
     @Override
