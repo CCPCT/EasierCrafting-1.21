@@ -59,9 +59,8 @@ public class StonecutterRecipeBook extends AbstractRecipeBook {
         }
 
         // no item -> return
-        for (ItemStack ingredient : getIngredients(entry)) {
-            if (!avaliableItemMap.containsKey(ingredient.getItem()))return;
-        }
+        if (!canCraft(entry)) return;
+
         // move item to crafting slot
         search:
         for (int slot = firstInventorySlotNo; slot < 36 + firstInventorySlotNo; slot++) {

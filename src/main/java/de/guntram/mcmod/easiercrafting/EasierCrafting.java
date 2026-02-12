@@ -4,7 +4,9 @@ import de.guntram.mcmod.easiercrafting.extendedScreen.*;
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.recipe.LoomRecipeHandler;
 import de.guntram.mcmod.easiercrafting.recipebook.FurnaceRecipeBook;
+import de.guntram.mcmod.easiercrafting.recipebook.LoomRecipeBook;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.MinecraftClient;
@@ -36,7 +38,7 @@ public class EasierCrafting implements ClientModInitializer
         LOGGER = LogManager.getLogger(this.getClass());
 
         ModConfig.load();
-        log("loaded config");
+        info("loaded config");
 
         SPECIAL_CAT = Registry.register(
                 Registries.RECIPE_BOOK_CATEGORY,
@@ -60,10 +62,14 @@ public class EasierCrafting implements ClientModInitializer
             }
 
             LoomRecipeHandler.loadAll(MinecraftClient.getInstance().getResourceManager(), ip);
-            log("Loaded loom recipes: "+ LoomRecipeHandler.LOADED_RECIPES.size());
+            info("Loaded loom recipes: "+ LoomRecipeHandler.LOADED_RECIPES.size());
 
             // clear last fuel cache when joined new world/ server
             FurnaceRecipeBook.lastFuelUsed = null;
+        });
+
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            LoomRecipeBook.onTick();
         });
     }
 
@@ -83,19 +89,19 @@ public class EasierCrafting implements ClientModInitializer
         }
     }
 
-    public static void log(String message){
+    public static void info(String message){
         if (LOGGER==null) return;
-        LOGGER.info("[EasierCrafting+] {}", message);
+        LOGGER.info("[EC+] {}", message);
     }
 
     public static void warn(String message){
         if (LOGGER==null) return;
-        LOGGER.warn("[EasierCrafting+] {}", message);
+        LOGGER.warn("[EC+] {}", message);
     }
 
     public static void error(String message){
         if (LOGGER==null) return;
-        LOGGER.error("[EasierCrafting+] {}", message);
+        LOGGER.error("[EC+] {}", message);
     }
 
     public static String getIp() {

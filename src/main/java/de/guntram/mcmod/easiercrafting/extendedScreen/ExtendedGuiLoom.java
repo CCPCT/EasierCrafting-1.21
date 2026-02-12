@@ -2,7 +2,6 @@ package de.guntram.mcmod.easiercrafting.extendedScreen;
 
 import de.guntram.mcmod.easiercrafting.SlotClickAccepter;
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
-import de.guntram.mcmod.easiercrafting.recipe.LoomRecipeHandler;
 import de.guntram.mcmod.easiercrafting.recipebook.LoomRecipeBook;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.LoomScreen;
@@ -22,7 +21,6 @@ public class ExtendedGuiLoom extends LoomScreen implements SlotClickAccepter {
     }
 
     public void updateRecipe(){
-        LoomRecipeHandler.onPasteButtonClicked();
         this.recipeBook.updateRecipes();
     }
     

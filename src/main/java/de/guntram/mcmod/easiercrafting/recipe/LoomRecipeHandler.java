@@ -17,7 +17,7 @@ import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.*;
 
-import static de.guntram.mcmod.easiercrafting.EasierCrafting.log;
+import static de.guntram.mcmod.easiercrafting.EasierCrafting.info;
 import static de.guntram.mcmod.easiercrafting.EasierCrafting.warn;
 
 public class LoomRecipeHandler {
@@ -40,9 +40,9 @@ public class LoomRecipeHandler {
                 LoomRecipe recipe = GSON.fromJson(reader, LoomRecipe.class);
                 if (recipe.serverIp()==null || !recipe.serverIp().equals(ip)) {
                     LOADED_RECIPES.add(recipe);
-                    log("loading: "+id.getNamespace());
+                    info("loading: "+id.getNamespace());
                 } else {
-                    log("skipped: "+id.getNamespace());
+                    info("skipped: "+id.getNamespace());
                 }
             } catch (Exception e) {
                 warn("Failed to load recipe: " + id);
@@ -68,7 +68,7 @@ public class LoomRecipeHandler {
                 // Apply the same IP filtering logic
                 if (recipe.serverIp() == null || !recipe.serverIp().equals(ip)) {
                     LOADED_RECIPES.add(recipe);
-                    log("Loaded config recipe: " + file.getName());
+                    info("Loaded config recipe: " + file.getName());
                 }
             } catch (Exception e) {
                 warn("Failed to load config recipe: " + file.getName());
@@ -107,7 +107,7 @@ public class LoomRecipeHandler {
 
         try (FileWriter writer = new FileWriter(path.toFile())) {
             prettyGson.toJson(recipe, writer);
-            log("Saved recipe: " + fileName);
+            info("Saved recipe: " + fileName);
         } catch (Exception e) {
             warn("Failed to save: " + fileName);
         }
@@ -156,13 +156,18 @@ public class LoomRecipeHandler {
         LoomRecipe recipe = parseRawList(rawList, EasierCrafting.getIp());
 
         if (recipe != null) {
-            EasierCrafting.log("Found recipe :D");
-            EasierCrafting.log(recipe.baseBanner());
-            EasierCrafting.log(recipe.steps().getFirst().dye());
-            EasierCrafting.log(recipe.steps().getFirst().pattern());
-            LoomRecipeHandler.customRecipes.add(recipe);
+            EasierCrafting.info("Found recipe :D");
+            EasierCrafting.info(recipe.baseBanner());
+            EasierCrafting.info(recipe.steps().getFirst().dye());
+            EasierCrafting.info(recipe.steps().getFirst().pattern());
+            if (LoomRecipeHandler.customRecipes.contains(recipe)) {
+                EasierCrafting.info("Recipe already saved...");
+            } else {
+                EasierCrafting.info("Added recipe to list");
+                LoomRecipeHandler.customRecipes.add(recipe);
+            }
         } else {
-            EasierCrafting.warn("cant find :(");
+            EasierCrafting.warn("cant find recipe in clip board:(");
         }
     }
 }

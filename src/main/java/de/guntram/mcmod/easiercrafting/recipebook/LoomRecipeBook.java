@@ -6,8 +6,12 @@ import de.guntram.mcmod.easiercrafting.recipe.LoomRecipeDisplay;
 import de.guntram.mcmod.easiercrafting.recipe.LoomRecipeHandler;
 import de.guntram.mcmod.easiercrafting.recipe.RecipeTreeSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.minecraft.block.entity.BannerPattern;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.BannerPatternsComponent;
 import net.minecraft.item.DyeItem;
@@ -20,16 +24,16 @@ import net.minecraft.recipe.RecipeDisplayEntry;
 import net.minecraft.recipe.display.SlotDisplay;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.screen.LoomScreenHandler;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
+import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.Identifier;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.OptionalInt;
+import java.util.*;
 
 import static de.guntram.mcmod.easiercrafting.EasierCrafting.SPECIAL_CAT;
 
@@ -42,9 +46,12 @@ public class LoomRecipeBook extends AbstractRecipeBook {
 
     final static int DYE_SLOT = 1;
     final static int PATTERN_SLOT = 2;
+    private static final Queue<LoomTask> actionQueue = new LinkedList<>();
+    private static boolean updatable = true;
 
     @Override
     public void updateRecipes() {
+        if (!updatable) return;
         updateAvailableStacks();
 
         craftableRecipes.clear();
@@ -54,13 +61,14 @@ public class LoomRecipeBook extends AbstractRecipeBook {
             allRecipes.add(recipeToEntry(recipe));
         }
 
+        LoomRecipeHandler.onPasteButtonClicked();
         for (LoomRecipe recipe : LoomRecipeHandler.customRecipes) {
             allRecipes.add(recipeToEntry(recipe));
         }
 
         // add craftable recipes
-        //allRecipes.stream().filter(this::canCraftScanned).forEach(craftableRecipes::add);
-        allRecipes.forEach(craftableRecipes::add);
+        allRecipes.stream().filter(this::canCraftScanned).forEach(craftableRecipes::add);
+        //allRecipes.forEach(craftableRecipes::add);
     }
 
 
@@ -157,56 +165,99 @@ public class LoomRecipeBook extends AbstractRecipeBook {
     @Override
     protected void onRecipeClicked(RecipeDisplayEntry entry, int mouseButton) {
         // todo
-//        ClientPlayerInteractionManager interactionManager = client.interactionManager;
-//        if (!(screenHandler instanceof LoomScreenHandler container)||!(entry.display() instanceof LoomRecipeDisplay recipe)) {
-//            return;
-//        }
-//
-//        // no item -> return
-//        for (ItemStack ingredient : getIngredients(entry)) {
-//            if (!avaliableItemMap.containsKey(ingredient.getItem()))return;
-//        }
-//        // move item to crafting slot
-//        search:
-//        for (int slot = firstInventorySlotNo; slot < 36 + firstInventorySlotNo; slot++) {
-//            ItemStack slotContent = container.getSlot(slot).getStack();
-//            for (ItemStack ingredientStack : recipe.input().getStacks(worldContext)) {
-//                if (ingredientStack.getItem().equals(slotContent.getItem())){
-//                    if (Screen.hasShiftDown()) {
-//                        slotClick(slot, 0, SlotActionType.PICKUP);
-//                        slotClick(slot, 0, SlotActionType.PICKUP_ALL);
-//                        slotClick(firstCraftSlotNo, 0, SlotActionType.PICKUP);
-//                        slotClick(slot, 0, SlotActionType.PICKUP);
-//                    } else {
-//                        slotClick(slot, 0, SlotActionType.PICKUP);
-//                        slotClick(firstCraftSlotNo, 1, SlotActionType.PICKUP);
-//                        slotClick(slot, 0, SlotActionType.PICKUP);
-//                    }
-//                    break search;
-//                }
-//            }
-//        }
-//
-//        // click the recipe button (select the recipe)
-//        List<CuttingRecipeDisplay.GroupEntry<StonecuttingRecipe>> available = container.getAvailableRecipes().entries();
-//        int buttonIndex = -1;
-//
-//        for (int i = 0; i < available.size(); i++) {
-//            // Compare the recipe entries directly.
-//            if (available.get(i).recipe().optionDisplay().equals(recipe.result())) {
-//                buttonIndex = i;
-//                break;
-//            }
-//        }
-//
-//        if (buttonIndex != -1 && interactionManager != null) {
-//            // 3. Select the recipe by clicking the button with the index
-//            interactionManager.clickButton(container.syncId, buttonIndex);
-//
-//            // 4. Take the result from the output slot (slot 1) to complete the craft
-//            if (Screen.hasControlDown()) return;
-//            slotClick(1, 0, isHoldingButton(GLFW.GLFW_KEY_Q) ? SlotActionType.THROW : SlotActionType.QUICK_MOVE);
-//        }
+        if (!(screenHandler instanceof LoomScreenHandler container)||!(entry.display() instanceof LoomRecipeDisplay recipe)) {
+            return;
+        }
+
+        // no item -> return
+        if (!canCraft(entry)) return;
+
+        if (entry.craftingRequirements().isEmpty()) return;
+        var ingredient = entry.craftingRequirements().get();
+
+        // move banner up
+        int bannerSlot = findEmptyBanner(ingredient.getFirst().toDisplay().getFirst(worldContext).getItem());
+        if (bannerSlot==-1) return;
+        LoomTask.click(bannerSlot,0, SlotActionType.PICKUP);
+        LoomTask.click(firstCraftSlotNo,1, SlotActionType.PICKUP);
+        LoomTask.click(bannerSlot,0, SlotActionType.PICKUP);
+
+
+        int ingredientIndex = 1;
+        for (int i = 0; i < recipe.dye().size(); i++) {
+            LOGGER.info("try craft loom, loop {}",i);
+            //move dye
+            int dyeSlot = findItem(recipe.dye().get(i).getFirst(worldContext).getItem());
+            LoomTask.click(dyeSlot,0,SlotActionType.PICKUP);
+            LoomTask.click(DYE_SLOT,1,SlotActionType.PICKUP);
+            LoomTask.click(dyeSlot,0,SlotActionType.PICKUP);
+
+            LOGGER.info(recipe.pattern().get(i));
+            boolean requirePatternItem = true;
+            LOGGER.info(ingredient.get(ingredientIndex).toDisplay().getFirst(worldContext).getItem().getName());
+            if (ingredient.size()<=ingredientIndex || ingredient.get(ingredientIndex).toDisplay().getFirst(worldContext).getItem() instanceof DyeItem) {
+                requirePatternItem = false;
+                ingredientIndex--;
+            }
+
+            if (requirePatternItem) {
+                LOGGER.warn("g o g!");
+            } else {
+                LoomTask.button(Identifier.of(recipe.pattern().get(i)));
+            }
+
+            LoomTask.click(3,0,SlotActionType.PICKUP);
+            LoomTask.click(firstCraftSlotNo,0,SlotActionType.PICKUP);
+
+
+
+            ingredientIndex+=2;
+        }
+        LoomTask.click(firstCraftSlotNo,0,SlotActionType.QUICK_MOVE);
+    }
+
+    public record LoomTask(int slot, int button, SlotActionType type, Identifier buttonID) {
+        // Helper constructor for a standard slot click
+        public static void click(int slot, int button, SlotActionType type) {
+            actionQueue.add(new LoomTask(slot, button, type, null));
+        }
+
+        // Helper constructor for a button press
+        public static void button(Identifier buttonId) {
+            actionQueue.add(new LoomTask(0, 0, null, buttonId));
+        }
+    }
+
+    public static void onTick() {
+        if (actionQueue.isEmpty()) {
+            updatable = true;
+            return;
+        }
+        updatable=false;
+        LoomTask task = actionQueue.poll();
+        if (task==null) return;
+
+        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        if (player==null) return;
+        ClientPlayerInteractionManager interactionManager = MinecraftClient.getInstance().interactionManager;
+        ScreenHandler screenHandler = player.currentScreenHandler;
+
+        if (task.buttonID != null) {
+            //button
+            if (!(screenHandler instanceof LoomScreenHandler container)) return;
+            List<RegistryEntry<BannerPattern>> availablePatterns = container.getBannerPatterns();
+            for (int j = 0; j < availablePatterns.size(); j++) {
+                if (availablePatterns.get(j).matchesId(task.buttonID)) {
+                    interactionManager.clickButton(screenHandler.syncId, j);
+                    EasierCrafting.info(availablePatterns.get(j).getIdAsString());
+                    return;
+                }
+                EasierCrafting.warn("Cant find buttonnnn");
+            }
+        } else {
+            // slot
+            interactionManager.clickSlot(screenHandler.syncId, task.slot, task.button, task.type, player);
+        }
     }
 
     @Override
@@ -216,6 +267,7 @@ public class LoomRecipeBook extends AbstractRecipeBook {
         boolean canCraft = canCraft(underMouse);
 
         final int y = -itemSize-1;
+        if (underMouse.craftingRequirements().isEmpty()) return;
         List<Ingredient> ingredients = underMouse.craftingRequirements().get();
         if (ingredients.isEmpty()) return;
 
@@ -242,8 +294,7 @@ public class LoomRecipeBook extends AbstractRecipeBook {
     protected boolean refreshCategories() {
         craftableCategories.clear();
         int tempHash = 0;
-        for (RecipeDisplayEntry entry : craftableRecipes) {
-            if (!(entry.display() instanceof LoomRecipeDisplay recipe)) continue;
+        for (RecipeDisplayEntry entry : allRecipes) {
             craftableCategories.computeIfAbsent(DEFAULT_CAT,
                     k -> new RecipeTreeSet()).add(entry);
             tempHash^=entry.id().index();
@@ -256,25 +307,46 @@ public class LoomRecipeBook extends AbstractRecipeBook {
 
     @Override
     protected boolean canCraftScanned(RecipeDisplayEntry entry) {
+        if (entry.craftingRequirements().isEmpty()) return false;
+
+        // check if banner is empty
+        Item required = entry.craftingRequirements().get().getFirst().toDisplay().getFirst(worldContext).getItem();
+        if (findEmptyBanner(required)==-1) return false;
+
+        var tempMap = avaliableItemMap.clone();
         for (Ingredient i : entry.craftingRequirements().get()) {
-            if (!avaliableItemMap.containsKey(i.toDisplay().getFirst(worldContext).getItem())) return false;
+            Item ingItem = i.toDisplay().getFirst(worldContext).getItem();
+            if (tempMap.getInt(ingItem)<=0) {
+                return false;
+            }
+            if (ingItem instanceof DyeItem) {
+                tempMap.addTo(ingItem,-1);
+            }
         }
         return true;
     }
 
-    protected List<ItemStack> getIngredients(RecipeDisplayEntry entry) {
-        List<ItemStack> all = entry.craftingRequirements().get().stream()
-                .map(ingredient -> ingredient.toDisplay().getFirst(worldContext))
-                .toList();
-
-        List<ItemStack> craftable = all.stream().filter(stack -> getAvailableItemSet().contains(stack.getItem())).toList();
-
-
-        if (craftable.isEmpty()){
-            return all;
-        } else {
-            return craftable;
+    protected int findEmptyBanner(Item lookFor) {
+        List<Slot> inventory = screen.getScreenHandler().slots;
+        for (int i = 0; i < inventory.size(); i++) {
+            ItemStack stack = inventory.get(i).getStack();
+            if (stack.getItem() == lookFor) {
+                if (stack.get(DataComponentTypes.BANNER_PATTERNS) == null || stack.get(DataComponentTypes.BANNER_PATTERNS).layers().isEmpty()) {
+                    return i;
+                }
+            }
         }
+        return -1;
     }
 
+    protected int findItem(Item lookFor) {
+        List<Slot> inventory = screen.getScreenHandler().slots;
+        for (int i = 0; i < inventory.size(); i++) {
+            if (inventory.get(i).getStack().getItem() == lookFor) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
 }
