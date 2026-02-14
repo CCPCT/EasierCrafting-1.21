@@ -116,36 +116,92 @@ public class LoomRecipeHandler {
     public static LoomRecipe parseRawList(List<String> rawLines, String ip) {
         if (rawLines.isEmpty()) return null;
 
+
+        // Parse by command
+        if (rawLines.size()==1){
+            String line = rawLines.getFirst();
+            if (!line.contains("_banner")) return null;
+            String[] preBannerName = line.substring(0, line.indexOf("_banner")+7).split(" ");
+            String bannerName;
+            if (preBannerName[preBannerName.length-1].contains("minecraft:")) {
+                bannerName = preBannerName[preBannerName.length-1];
+            } else {
+                bannerName = "minecraft:"+preBannerName[preBannerName.length-1];
+            }
+            if (line.contains("banner_patterns=[")){
+                // new command
+                String[] arguments = line.substring(line.indexOf("banner_patterns=[")+85-68,line.indexOf("]")).replaceAll("[ \\[\\]}\"{]", "").split("[,:]");
+                EasierCrafting.info(arguments[0]+arguments[1]);
+                boolean colour = true;
+                List<String> colourList = new ObjectArrayList<>(6);
+                List<String> patternList = new ObjectArrayList<>(6);
+                for (String argument : arguments) {
+                    switch (argument) {
+                        case "minecraft" -> {}
+                        case "color" -> colour = true;
+                        case "pattern" -> colour = false;
+                        default -> {
+                            info(argument);
+                            if (colour) {
+                                colourList.add(argument);
+                            } else {
+                                patternList.add("minecraft:"+argument);
+                            }
+                        }
+                    }
+                }
+
+                if (colourList.size()!=patternList.size()) return null;
+                List<LoomRecipe.BannerStep> bannerSteps = new ObjectArrayList<>(colourList.size());
+                for (int i = 0; i < colourList.size(); i++) {
+                    bannerSteps.add(new LoomRecipe.BannerStep(colourList.get(i), patternList.get(i)));
+                }
+
+                info(bannerName);
+
+                return new LoomRecipe("parsed", ip, bannerName, bannerSteps);
+
+            } else if (line.contains("BlockEntityTag")) {
+                // old command
+
+            }
+            return null;
+        }
+
+        // Parse by NBT
         // 1. Parse the Base Banner (First Line)
         // "light_blue#wall_banner" -> base colour is light_blue
         String[] baseParts = rawLines.getFirst().replaceAll("[ ,\"]", "").split("#");
-        if (baseParts.length != 2 || !Objects.equals(baseParts[1], "wall_banner")) {
-            EasierCrafting.warn("not a loom recipe... ");
-            return null;
-        }
-        String baseColor = baseParts[0];
-        // Map "wall_banner" or "banner" to the actual item ID
-        String baseBannerId = "minecraft:" + baseColor + "_banner";
+        nbt:
+        if (baseParts.length == 2 && Objects.equals(baseParts[1], "wall_banner")) {
+            String baseColor = baseParts[0];
+            // Map "wall_banner" or "banner" to the actual item ID
+            String baseBannerId = "minecraft:" + baseColor + "_banner";
 
-        // 2. Parse the Steps (Remaining Lines)
-        List<LoomRecipe.BannerStep> steps = new ArrayList<>();
-        for (int i = 1; i < rawLines.size(); i++) {
-            String[] stepParts = rawLines.get(i).replaceAll("[ ,\"]", "").split("#");
-            if (stepParts.length != 2) return null;
+            // 2. Parse the Steps (Remaining Lines)
+            List<LoomRecipe.BannerStep> steps = new ArrayList<>();
+            for (int i = 1; i < rawLines.size(); i++) {
+                String[] stepParts = rawLines.get(i).replaceAll("[ ,\"]", "").split("#");
+                if (stepParts.length != 2) break nbt;
 
-            String color = stepParts[0];
-            String pattern = stepParts[1];
+                String color = stepParts[0];
+                String pattern = stepParts[1];
 
-            // Ensure pattern has namespace (e.g., "circle" -> "minecraft:circle")
-            if (!pattern.contains(":")) {
-                pattern = "minecraft:" + pattern;
+                // Ensure pattern has namespace (e.g., "circle" -> "minecraft:circle")
+                if (!pattern.contains(":")) {
+                    pattern = "minecraft:" + pattern;
+                }
+
+                steps.add(new LoomRecipe.BannerStep(color, pattern));
             }
 
-            steps.add(new LoomRecipe.BannerStep(color, pattern));
+            return new LoomRecipe("parsed", ip, baseBannerId, steps);
         }
 
-        return new LoomRecipe("Parsed Banner", ip, baseBannerId, steps);
+        EasierCrafting.warn("Not a loom recipe...");
+        return null;
     }
+
 
     public static void onPasteButtonClicked() {
         String clipboard = MinecraftClient.getInstance().keyboard.getClipboard();
