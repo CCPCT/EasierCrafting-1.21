@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '1.13-SNAPSHOT'
+    id 'fabric-loom' version '1.15-SNAPSHOT'
 }
 
 loom {
@@ -9,17 +9,37 @@ loom {
 }
 
 repositories {
-	maven {url "https://maven.terraformersmc.com/releases/" }
+    maven {url "https://maven.terraformersmc.com/releases/" }
     maven {url "https://maven.shedaniel.me/" }
+}
+
+// 1. Determine which version we are targeting (default to 1.21.2)
+def target = project.hasProperty('target') ? project.property('target') : '26.1'
+
+// 2. Point to the file in the 'versions' folder
+def propsFile = file("versions/${target}.properties")
+
+// 3. Load the properties if the file exists
+if (propsFile.exists()) {
+    def props = new Properties()
+    propsFile.withInputStream { props.load(it) }
+    props.each { key, val ->
+        // This injects the file's values into the project
+        project.ext.set(key, val)
+    }
+} else {
+    throw new GradleException("Could not find version config: ${propsFile}")
 }
 
 version = "${project.minecraft_version}-${project.projectVersion}"
 
 processResources {
     inputs.property "version", project.version
+    inputs.property "minecraft_range", project.minecraft_range
 
     filesMatching("fabric.mod.json") {
-        expand "version": project.version
+        expand "version": project.version,
+                "minecraft_range": project.minecraft_range
     }
 }
 
@@ -30,7 +50,7 @@ dependencies {
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
     modImplementation "com.terraformersmc:modmenu:${project.modmenu_version}"
     modApi ("me.shedaniel.cloth:cloth-config-fabric:${project.clothconfig_version}") {
-        exclude group: "net.fabricmc.fabric-api"
+        exclude (group: "net.fabricmc.fabric-api")
     }
 }
 
@@ -42,7 +62,5 @@ java {
 }
 
 jar {
-	from "LICENSE"
+    from "LICENSE"
 }
-
-

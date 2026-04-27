@@ -1,33 +1,33 @@
 {
-    "schemaVersion": 1,
-    "id": "easiercrafting-updated",
-    "version": "${version}",
-    "environment": "client",
-    "entrypoints": {
-        "client": [ "de.guntram.mcmod.easiercrafting.EasierCrafting" ],
-        "modmenu": [
-          "de.guntram.mcmod.easiercrafting.modConfig.ModMenuHandler"
-        ]
-    },
-    "mixins": [
-      	"mixins.easiercrafting.json"
-    ],
-    "depends": {
-      "fabric-api": "*",
-      "fabricloader": "*",
-      "fabric": "*",
-      "minecraft": "~1.21.9",
-      "java": ">=21",
-      "modmenu": "*",
-      "cloth-config": "*"
-    },
-    "name": "EasierCrafting updated",
-    "description": "One-click Crafting updated",
-    "icon": "icon.png",
-    "authors": [ "Giselbaer","CCPCT"],
-    "contact": {
-        "homepage": "https://modrinth.com/mod/easiercrafting-updated",
-        "sources": "https://github.com/CCPCT/EasierCrafting-updated",
-        "issues": "https://github.com/CCPCT/EasierCrafting-updated/issues"
-    }
+  "schemaVersion": 1,
+  "id": "easiercrafting-updated",
+  "version": "${version}",
+  "environment": "client",
+  "entrypoints": {
+    "client": [ "de.guntram.mcmod.easiercrafting.EasierCrafting" ],
+    "modmenu": [
+      "de.guntram.mcmod.easiercrafting.modConfig.ModMenuHandler"
+    ]
+  },
+  "mixins": [
+    "mixins.easiercrafting.json"
+  ],
+  "depends": {
+    "fabric-api": "*",
+    "fabricloader": "*",
+    "fabric": "*",
+    "minecraft": "${minecraft_range}",
+    "java": ">=21",
+    "modmenu": "*",
+    "cloth-config": "*"
+  },
+  "name": "EasierCrafting updated",
+  "description": "One-click Crafting updated",
+  "icon": "icon.png",
+  "authors": [ "Giselbaer","CCPCT"],
+  "contact": {
+    "homepage": "https://modrinth.com/mod/easiercrafting-updated",
+    "sources": "https://github.com/CCPCT/EasierCrafting-updated",
+    "issues": "https://github.com/CCPCT/EasierCrafting-updated/issues"
+  }
 }
