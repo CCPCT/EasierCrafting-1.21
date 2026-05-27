@@ -275,7 +275,7 @@ public class LoomRecipeBook extends AbstractRecipeBook {
         ItemStack result = recipe.result().resolveForFirstStack(worldContext).copy();
         boolean canCraft = canCraft(underMouse);
 
-        final int y = -ITEM_SIZE -1;
+        final int y = -ITEM_SIZE -1 + containerTop;
         if (underMouse.craftingRequirements().isEmpty()) return;
         List<Ingredient> ingredients = underMouse.craftingRequirements().get();
         if (ingredients.isEmpty()) return;
@@ -284,10 +284,10 @@ public class LoomRecipeBook extends AbstractRecipeBook {
         ItemStack bannerIngredient = ingredients.getFirst().display().resolveForFirstStack(worldContext);
         drawHoloItem(context,screenHandler.getSlot(0), bannerIngredient);
         if (findEmptyBanner(bannerIngredient.getItem()) == -1) {
-            context.fill(screenHandler.getSlot(0).x,
-                    screenHandler.getSlot(0).y,
-                    screenHandler.getSlot(0).x+ITEM_SIZE,
-                    screenHandler.getSlot(0).y+ITEM_SIZE,
+            context.fill(screenHandler.getSlot(0).x+containerLeft,
+                    screenHandler.getSlot(0).y+containerTop,
+                    screenHandler.getSlot(0).x+containerLeft+ITEM_SIZE,
+                    screenHandler.getSlot(0).y+containerTop+ITEM_SIZE,
                     CANT_CRAFT_COLOUR
                     );
         }
@@ -295,7 +295,7 @@ public class LoomRecipeBook extends AbstractRecipeBook {
         Object2IntOpenHashMap<Item> inventory = avaliableItemMap.clone();
 
         for (int i = 1; i < ingredients.size(); i++) {
-            int x = (i-1)*(ITEM_SIZE + itemDisplaySpacing);
+            int x = (i-1)*(ITEM_SIZE + itemDisplaySpacing)+containerLeft;
             ItemStack stack = ingredients.get(i).display().resolveForFirstStack(worldContext);
 
             context.item(stack, x, y);
@@ -311,7 +311,7 @@ public class LoomRecipeBook extends AbstractRecipeBook {
         Slot resultSlot = screenHandler.getSlot(FIRST_RESULT_SLOT);
         drawHoloItem(context,resultSlot,result);
 
-        if (!canCraft) context.fill(resultSlot.x-2,resultSlot.y-2,resultSlot.x+ ITEM_SIZE +2,resultSlot.y+ ITEM_SIZE +2,0x60FF0000);
+        if (!canCraft) context.fill(resultSlot.x+containerLeft-2,resultSlot.y+containerTop-2,resultSlot.x+containerLeft+ ITEM_SIZE +2,resultSlot.y+containerTop+ ITEM_SIZE +2,CANT_CRAFT_COLOUR);
 
         //renderIngredient(context, getIngredients(underMouse), screenHandler.getSlot(firstCraftSlotNo));
     }

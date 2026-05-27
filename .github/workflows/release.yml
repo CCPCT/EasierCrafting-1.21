@@ -70,7 +70,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          name: "${{ github.event.inputs.tag_name || github.ref_name }} for 1.21.9+"
+          name: "${{ github.event.inputs.tag_name || github.ref_name }} for 1.26+"
           tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
           body: ${{ steps.commit_message.outputs.msg }}
           # Points to the folder where all parallel jars were collected
