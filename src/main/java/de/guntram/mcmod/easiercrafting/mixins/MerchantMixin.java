@@ -32,59 +32,75 @@ public abstract class MerchantMixin extends Screen {
             at = @At(value = "TAIL")
     )
     private void onTradeSelected(MouseButtonEvent event, boolean doubleClick, CallbackInfoReturnable<Boolean> cir) {
+        // Only trigger on left-click (button 0) to avoid ghost actions on right/middle click
+        if (event.button() != 0) return;
+
         Window window = Minecraft.getInstance().getWindow();
         Minecraft client = Minecraft.getInstance();
-        if (!ModConfig.get().enableTrading || InputConstants.isKeyDown(window,InputConstants.KEY_LCONTROL) || client.player.containerMenu.getSlot(2).getItem().isEmpty()) return;
 
-        // ai = leftPos, aj = topPos
+        if (!ModConfig.get().enableTrading
+                || InputConstants.isKeyDown(window, InputConstants.KEY_LCONTROL)
+                || client.player.containerMenu.getSlot(2).getItem().isEmpty()) {
+            return;
+        }
+
+        // GUI dimension offsets (ai = leftPos, aj = topPos)
         int ai = (this.width - 276) / 2;
         int aj = (this.height - 166) / 2;
 
-        int listStartX = ai+5;
-        int listEndX = ai+5 + 88;
+        int listStartX = ai + 5;
+        int listEndX = ai + 5 + 88;
         int listStartY = aj + 16;
         int listEndY = aj + 16 + 140;
 
         boolean isOverTradeTab = event.x() >= listStartX && event.x() <= listEndX &&
                 event.y() >= listStartY && event.y() <= listEndY;
 
-        System.out.println("requirement: " + (ai+5) + "/" + (aj+16) + " to " + (ai+5+88) + "/" + (aj+16+120));
-        System.out.println(event.x() + "/" + event.y() + " over trade tab: " + isOverTradeTab);
-        System.out.println(this.shopItem);
         if (!isOverTradeTab) return;
 
         AbstractContainerMenu currentScreenHandler = client.player.containerMenu;
         var syncId = currentScreenHandler.containerId;
+        boolean holdingQ = InputConstants.isKeyDown(window, GLFW.GLFW_KEY_Q);
 
-        if (InputConstants.isKeyDown(window, GLFW.GLFW_KEY_LEFT_SHIFT)){
-            client.gameMode.handleContainerInput(client.player.containerMenu.containerId, 2, 0, ContainerInput.QUICK_MOVE, client.player);
-        } else {
-            if (InputConstants.isKeyDown(window, GLFW.GLFW_KEY_Q)){
-                client.gameMode.handleContainerInput(syncId,2,0, ContainerInput.THROW,client.player);
-                // move items back from villager
-                client.gameMode.handleContainerInput(syncId,0,0, ContainerInput.QUICK_MOVE,client.player);
-                client.gameMode.handleContainerInput(syncId,1,0, ContainerInput.QUICK_MOVE,client.player);
-
+        // 1. Shift Click Behavior (Restored Q-throw functionality)
+        if (InputConstants.isKeyDown(window, GLFW.GLFW_KEY_LEFT_SHIFT)) {
+            ContainerInput action = holdingQ ? ContainerInput.THROW : ContainerInput.QUICK_MOVE;
+            // For throwing a whole stack, standard click data parameter is 1 instead of 0
+            int clickData = holdingQ ? 1 : 0;
+            client.gameMode.handleContainerInput(syncId, 2, clickData, action, client.player);
+        }
+        // 2. Regular Click Behavior
+        else {
+            // Direct Q-press click without shift
+            if (holdingQ) {
+                client.gameMode.handleContainerInput(syncId, 2, 0, ContainerInput.THROW, client.player);
+                // Pull excess ingredients back out of the villager trade slots automatically
+                client.gameMode.handleContainerInput(syncId, 0, 0, ContainerInput.QUICK_MOVE, client.player);
+                client.gameMode.handleContainerInput(syncId, 1, 0, ContainerInput.QUICK_MOVE, client.player);
                 return;
             }
 
+            // Normal click: Smart transfer items into player inventory matching stack sizes
             ItemStack fromStack = currentScreenHandler.getSlot(2).getItem().copy();
-            client.gameMode.handleContainerInput(syncId,2,0, ContainerInput.PICKUP,client.player);
-            for (int i=3; i<39; i++){
+            client.gameMode.handleContainerInput(syncId, 2, 0, ContainerInput.PICKUP, client.player);
+
+            for (int i = 3; i < 39; i++) {
                 ItemStack targetStack = currentScreenHandler.getSlot(i).getItem();
-                if (targetStack.isEmpty()){
-                    client.gameMode.handleContainerInput(syncId,i,0, ContainerInput.PICKUP,client.player);
+                if (targetStack.isEmpty()) {
+                    client.gameMode.handleContainerInput(syncId, i, 0, ContainerInput.PICKUP, client.player);
                     break;
                 }
                 if (fromStack.getItem() != targetStack.getItem()) continue;
                 if (targetStack.getCount() == targetStack.getMaxStackSize()) continue;
-                fromStack.setCount(Math.max(0,targetStack.getCount()+fromStack.getCount()-targetStack.getMaxStackSize()));
-                client.gameMode.handleContainerInput(syncId,i,0, ContainerInput.PICKUP,client.player);
-                if (fromStack.getCount()==0) break;
-            }
-            client.gameMode.handleContainerInput(syncId,0,0, ContainerInput.QUICK_MOVE,client.player);
-            client.gameMode.handleContainerInput(syncId,1,0, ContainerInput.QUICK_MOVE,client.player);
 
+                fromStack.setCount(Math.max(0, targetStack.getCount() + fromStack.getCount() - targetStack.getMaxStackSize()));
+                client.gameMode.handleContainerInput(syncId, i, 0, ContainerInput.PICKUP, client.player);
+                if (fromStack.getCount() == 0) break;
+            }
+
+            // Clean up left-over trade item inputs
+            client.gameMode.handleContainerInput(syncId, 0, 0, ContainerInput.QUICK_MOVE, client.player);
+            client.gameMode.handleContainerInput(syncId, 1, 0, ContainerInput.QUICK_MOVE, client.player);
         }
     }
 }

@@ -2,6 +2,7 @@ package de.guntram.mcmod.easiercrafting.recipebook;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.Window;
+import de.guntram.mcmod.easiercrafting.EasierCrafting;
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.recipe.RecipeTreeSet;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -21,7 +22,9 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.language.I18n;
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.context.ContextKeySet;
@@ -37,14 +40,12 @@ import net.minecraft.world.item.crafting.display.SlotDisplayContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public abstract class AbstractRecipeBook {
+
     protected final Logger LOGGER;
     static final Object2IntOpenHashMap<Item> avaliableItemMap = new Object2IntOpenHashMap<>(36);
     ContextMap worldContext;
@@ -54,17 +55,19 @@ public abstract class AbstractRecipeBook {
 
     // Protected fields for subclasses
     public final AbstractContainerScreen<? extends AbstractContainerMenu> screen;
-    protected final int firstCraftSlotNo;
-    protected final int gridSize;
-    protected final int resultSlotNo;
-    protected final int firstInventorySlotNo;
-    protected final SlotDisplay craftingBlock;
+    protected final int FIRST_CRAFT_SLOT;
+    protected final int GRID_SIZE;
+    protected final int FIRST_RESULT_SLOT;
+    protected final int FIRST_INV_SLOT;
+    protected final SlotDisplay CRAFTING_STATION;
+    protected ClientRecipeBook recipeBook;
     protected final Font textRenderer;
     public int screenYOffset = 0;
     protected MultiPlayerGameMode interactionManager;
+    protected int categoryHash = 0;
+    public final String DEFAULT_CAT = I18n.get("easiercrafting.category.possible");
     List<RecipeBookCategory> RecipeBookCats;
 
-    protected final ClientRecipeBook recipeBook;
     protected final Window window;
 
     public final ObjectArrayList<RecipeDisplayEntry> craftableRecipes = new ObjectArrayList<>();
@@ -78,9 +81,9 @@ public abstract class AbstractRecipeBook {
     protected final AbstractContainerMenu screenHandler;
 
     // Layout
-    public static final int itemSize = 16;
+    public static final int ITEM_SIZE = 16;
     public static int itemDisplaySpacing = ModConfig.get().itemDisplaySpacing;
-    public static int displayItemSize = itemSize+itemDisplaySpacing*2;
+    public static int displayItemSize = ITEM_SIZE +itemDisplaySpacing*2;
     protected final int itemLift = 5;
     protected int listSize;
     protected int itemsPerRow;
@@ -90,6 +93,7 @@ public abstract class AbstractRecipeBook {
     protected int textBoxSize;
     protected int containerLeft;
     protected int containerTop;
+    protected final int CANT_CRAFT_COLOUR = 0x60FF0000;
 
     // Search & Updates
     protected long recipeUpdateTime = 0;
@@ -97,8 +101,6 @@ public abstract class AbstractRecipeBook {
     public EditBox pattern;
     public RecipeTreeSet patternMatchingRecipes;
     public int patternListSize;
-
-
 
     /**
      * Factory method to create the correct RecipeBook instance.
@@ -112,22 +114,22 @@ public abstract class AbstractRecipeBook {
 
         this.screen = craftScreen;
         this.textRenderer = client.font;
-        this.firstCraftSlotNo = firstCraftSlotNo;
-        this.gridSize = gridsize;
-        this.resultSlotNo = resultSlot;
-        this.firstInventorySlotNo = firstInventorySlot;
+        this.FIRST_CRAFT_SLOT = firstCraftSlotNo;
+        this.GRID_SIZE = gridsize;
+        this.FIRST_RESULT_SLOT = resultSlot;
+        this.FIRST_INV_SLOT = firstInventorySlot;
         this.pattern = new EditBox(textRenderer, 0, screenYOffset, 10, 20, Component.empty()); // update width later
         this.underMouse = null;
         this.player = client.player;
         this.worldContext = SlotDisplayContext.fromLevel(world);
         this.LOGGER = LogManager.getLogger(craftScreen.getMenu());
-        this.craftingBlock = craftingBlock;
+        this.CRAFTING_STATION = craftingBlock;
         this.recipeBook = player.getRecipeBook();
         this.screenHandler = screen.getMenu();
         this.window = client.getWindow();
         this.interactionManager = client.gameMode;
         itemDisplaySpacing = ModConfig.get().itemDisplaySpacing;
-        displayItemSize = itemSize+itemDisplaySpacing*2;
+        displayItemSize = ITEM_SIZE +itemDisplaySpacing*2;
     }
 
     // --- Abstract Methods to be implemented by subclasses ---
@@ -135,7 +137,7 @@ public abstract class AbstractRecipeBook {
     /**
      * Called to update all avaliable and craftable recipes (the 2 sets). Return if not updated anything/ remain unchanged
      */
-    public abstract boolean updateRecipes();
+    public abstract void updateRecipes();
 
     /**
      * Called when a recipe in the list is clicked.
@@ -147,11 +149,13 @@ public abstract class AbstractRecipeBook {
      */
     protected abstract void drawRecipeGridOverlay(GuiGraphicsExtractor context);
     /**
-     * Returns all craftable recipes.
+     * refresh display catagory of craftable.
      */
+    protected abstract boolean refreshCategories();
 
-    // return all ingredient from SlotDisplayEntry
-    //protected abstract List<ItemStack> getAllIngredient(SlotDisplay display);
+    // see if recipe can actually be crafted (not by checking can craft tab)
+    protected abstract boolean canCraftScanned(RecipeDisplayEntry entry);
+
 
     // draw outputs... and set undermouse
     protected int drawSetOfRecipes(GuiGraphicsExtractor context, RecipeTreeSet treeSet, int xpos, int ypos, int screenBottom, int mouseX, int mouseY) {
@@ -161,9 +165,10 @@ public abstract class AbstractRecipeBook {
             if (ypos >= minYtoDraw) {
                 int x = xOffset + xpos;
                 int y = ypos - itemLift;
-                if (!canCraft(recipe)) {
+                boolean canCraft = canCraft(recipe);
+                if (!canCraft) {
                     // if cant craft draw red background on the result
-                    context.fill(x-itemDisplaySpacing,y-itemDisplaySpacing,x+itemSize+itemDisplaySpacing,y+itemSize+itemDisplaySpacing,0x60FF0000);
+                    context.fill(x-itemDisplaySpacing,y-itemDisplaySpacing,x+ ITEM_SIZE +itemDisplaySpacing,y+ ITEM_SIZE +itemDisplaySpacing,CANT_CRAFT_COLOUR);
                 }
 
                 renderSingleRecipeOutput(context, textRenderer, recipe.display().result().resolveForFirstStack(worldContext), x, y);
@@ -174,7 +179,7 @@ public abstract class AbstractRecipeBook {
                 {
                     underMouse = recipe;
                     // render background behind hovered item
-                    context.fill(x-itemDisplaySpacing,y-itemDisplaySpacing,x+itemSize+itemDisplaySpacing,y+itemSize+itemDisplaySpacing,0x50E0E0E0);
+                    context.fill(x-itemDisplaySpacing,y-itemDisplaySpacing,x+ ITEM_SIZE +itemDisplaySpacing,y+ ITEM_SIZE +itemDisplaySpacing,0x50E0E0E0);
                     // render recipe overlay
                     drawRecipeGridOverlay(context);
                 }
@@ -213,6 +218,7 @@ public abstract class AbstractRecipeBook {
         updatePatternMatch();
         mouseScroll = 0;
         updateRecipes();
+        refreshCategories();
 
         pattern.setX(xOffset);
         textBoxSize=itemsPerRow*displayItemSize;
@@ -221,17 +227,16 @@ public abstract class AbstractRecipeBook {
     }
 
     public void drawAllRecipe(GuiGraphicsExtractor context, int left, int height, int mouseX, int mouseY) {
-        if (pattern == null) {
-            if (ModConfig.get().autoFocusSearch) {
-                pattern.setFocused(true);
-            }
+        if (pattern == null && ModConfig.get().autoFocusSearch) {
+            pattern.setFocused(true);
         }
 
         // Update logic
         if (recipeUpdateTime != 0 && System.currentTimeMillis() > recipeUpdateTime) {
             recipeUpdateTime = 0;
             // call update recipe here
-            if (!updateRecipes()){
+            updateRecipes();
+            if (!refreshCategories()){
                 // before and after not same
                 LOGGER.info("Update recipe");
                 mouseScroll=0;
@@ -258,7 +263,7 @@ public abstract class AbstractRecipeBook {
         if (neededHeight > height) {
             ypos -= (neededHeight - height) / 2;
             if (ypos < -containerTop) {
-                ypos = -containerTop + itemSize;
+                ypos = -containerTop + ITEM_SIZE;
             } else {
                 mouseScroll = 0;
             }
@@ -271,7 +276,7 @@ public abstract class AbstractRecipeBook {
         // draw background
         int screenBottom = context.guiHeight()-containerTop-5;
         if (ModConfig.get().recipeBackground){
-            context.fill(pattern.getX()-5,pattern.getY()-5,pattern.getX()+textBoxSize+5,screenBottom ,0x50505050);
+            context.fill(xOffset-5,pattern.getY()-5,xOffset+textBoxSize+5,screenBottom ,0x50505050);
         }
 
         // Draw Search box
@@ -312,7 +317,6 @@ public abstract class AbstractRecipeBook {
             if (itemStack.isEmpty()) continue;
             avaliableItemMap.merge(itemStack.getItem(), itemStack.getCount(), Integer::sum);
         }
-
         // populate creative item group so recipes can be grouped
         CreativeModeTabs.tryRebuildTabContents(player.connection.enabledFeatures(), true, world.registryAccess());
         //ItemGroups.updateDisplayContext(player.networkHandler.getEnabledFeatures(), true, world.getRegistryManager());
@@ -329,7 +333,7 @@ public abstract class AbstractRecipeBook {
         int y = slot.y;
         if (!getAvailableItemSet().contains(stacks.getFirst().getItem())){
             // no recipe found
-            context.fill(x,y,x+itemSize,y+itemSize,0x60FF0000);
+            context.fill(x,y,x+ ITEM_SIZE,y+ ITEM_SIZE,CANT_CRAFT_COLOUR);
         }
 
         int toRender = 0;
@@ -380,9 +384,6 @@ public abstract class AbstractRecipeBook {
     }
 
     public void mouseClicked(MouseButtonEvent click, boolean doubled, int guiLeft, int guiTop) {
-        int mouseX = (int) click.x();
-        int mouseY = (int) click.y();
-
         if (pattern != null) {
             boolean clickedPattern = pattern.mouseClicked(new MouseButtonEvent(click.x()-guiLeft,click.y()-guiTop,new MouseButtonInfo(0,0)), doubled);
             pattern.setFocused(clickedPattern);
@@ -396,29 +397,26 @@ public abstract class AbstractRecipeBook {
         }
 
         // Scroll bar area click
-        if (mouseY > 0 && mouseY < 20 && mouseX > xOffset + containerLeft && mouseX < xOffset + containerLeft + textBoxSize) {
-            LOGGER.info("Try to scroll...");
-            if (mouseX < xOffset + containerLeft + 20) scrollBy(-1);
-            else if (mouseX > xOffset + containerLeft + textBoxSize - 20) scrollBy(1);
-            return;
-        }
+        // goodbye scroll bar idk if u existed
 
         if (underMouse == null) return;
+        EasierCrafting.updateAllowed = false;
 
         // dont craft uncraftable items
-        if (!canCraft(underMouse)) return;
+        if (!this.canCraft(underMouse)) return;
 
-        // Ensure grid is empty (common check, though subclasses might override behavior)
-        for (int craftslot = 0; craftslot < gridSize * gridSize; craftslot++) {
-            ItemStack stack = screen.getMenu().getSlot(craftslot + firstCraftSlotNo).getItem();
+        // Ensure grid is empty (common check, though subclasses might override behaviour)
+        for (int craftslot = 0; craftslot < GRID_SIZE * GRID_SIZE; craftslot++) {
+            ItemStack stack = screen.getMenu().getSlot(craftslot + FIRST_CRAFT_SLOT).getItem();
             if (!stack.isEmpty()) {
-                slotClick(craftslot+firstCraftSlotNo, 0, ContainerInput.QUICK_MOVE);
+                slotClick(craftslot+ FIRST_CRAFT_SLOT, 0, ContainerInput.QUICK_MOVE);
                 if (!stack.isEmpty()) return; // can't move item away (inventory full or locked) stop crafting
             }
         }
 
         onRecipeClicked(underMouse, click.button());
         queueUpdateRecipe();
+        EasierCrafting.updateAllowed = true;
     }
 
     public boolean keyPressed(KeyEvent input) {
@@ -426,13 +424,16 @@ public abstract class AbstractRecipeBook {
         if (input.isConfirmation() || input.isEscape()) {
             pattern.setFocused(false);
             updatePatternMatch();
-            return true;
         } else if (pattern.isFocused()) {
             pattern.keyPressed(input);
             updatePatternMatch();
-            return true;
+        } else if (EasierCrafting.refreshRecipeKey.isDown()){
+            // pressed refresh key
+            recipeUpdateTime = System.currentTimeMillis();
+        } else {
+            return false;
         }
-        return false;
+        return true;
     }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
@@ -453,14 +454,15 @@ public abstract class AbstractRecipeBook {
         interactionManager.handleContainerInput(screenHandler.containerId, slot,mouseButton,clickType,player);
     }
 
-    protected void drawHoloItem(GuiGraphicsExtractor context, Slot slot, ItemStack stack){
-        int x = slot.x;
-        int y = slot.y;
+    protected void drawHoloItem(GuiGraphicsExtractor context, int x, int y, ItemStack stack){
         context.item(stack, x, y);
-        // fill transparent colour of grid to make items look transparent
         context.itemDecorations(textRenderer,stack,x,y);
-        context.fill(x, y, x+itemSize, y+itemSize, 0x808b8b8b);
+        context.fill(x, y, x+ ITEM_SIZE, y+ ITEM_SIZE, 0x808b8b8b);
+    }
 
+
+    protected void drawHoloItem(GuiGraphicsExtractor context, Slot slot, ItemStack stack){
+        drawHoloItem(context,slot.x,slot.y,stack);
     }
 
     // other getters
@@ -476,14 +478,13 @@ public abstract class AbstractRecipeBook {
                 .toList();
     }
     public static Identifier getCat(RecipeDisplayEntry entry){
-        var world = Minecraft.getInstance().level;
-        assert world != null;
-        if (BuiltInRegistries.RECIPE_BOOK_CATEGORY.keySet().isEmpty()) return null;
-        return BuiltInRegistries.RECIPE_BOOK_CATEGORY.getKey(entry.category());
+        assert Minecraft.getInstance().level != null;
+        Optional<Holder.Reference<Registry<RecipeBookCategory>>> thing = Minecraft.getInstance().level.registryAccess().get(Registries.RECIPE_BOOK_CATEGORY);
+        return thing.map(registryReference -> registryReference.value().getKey(entry.category())).orElse(null);
     }
 
     public String recipeDisplayName(RecipeDisplayEntry entry) {
-        return getCraftingResult(entry).getFirst().getDisplayName().getString();
+        return getCraftingResult(entry).getFirst().getItem().getDescriptionId();
     }
 
     protected List<ItemStack> getCraftingResult(RecipeDisplayEntry recipe) {

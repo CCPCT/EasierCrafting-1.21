@@ -5,7 +5,8 @@
   "client": [
     "MerchantMixin",
     "OpenGuiInventoryMixin",
-    "OpenGuiMixin"
+    "OpenGuiMixin",
+    "PlayerScreenHandlerMixin"
   ],
   "injectors": {
     "defaultRequire": 1
