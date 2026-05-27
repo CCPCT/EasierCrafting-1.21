@@ -1,6 +1,7 @@
 package de.guntram.mcmod.easiercrafting.extendedScreen;
 
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
+import de.guntram.mcmod.easiercrafting.recipebook.LoomRecipeBook;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.LoomScreen;
 import net.minecraft.client.gui.screens.recipebook.RecipeBookTabButton;
@@ -30,7 +31,11 @@ public class ExtendedLoomScreen extends LoomScreen {
         this.recipeBook.afterInitGui();
     }
 
-    public void setRecipeBook(XXXRecipeBook recipeBook) {
+    public void updateRecipe(){
+        this.recipeBook.updateRecipes();
+    }
+
+    public void setRecipeBook(LoomRecipeBook recipeBook) {
         this.recipeBook=recipeBook;
     }
 

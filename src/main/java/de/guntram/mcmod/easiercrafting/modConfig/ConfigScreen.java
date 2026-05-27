@@ -94,7 +94,7 @@ public class ConfigScreen extends Screen {
                 .setMin(0).setMax(5)
                 .setSaveConsumer(newValue -> {
                     ModConfig.get().itemDisplaySpacing = newValue;
-                    AbstractRecipeBook.displayItemSize = AbstractRecipeBook.itemSize+ModConfig.get().itemDisplaySpacing;
+                    AbstractRecipeBook.displayItemSize = AbstractRecipeBook.ITEM_SIZE+ModConfig.get().itemDisplaySpacing;
                 })
                 .build());
 

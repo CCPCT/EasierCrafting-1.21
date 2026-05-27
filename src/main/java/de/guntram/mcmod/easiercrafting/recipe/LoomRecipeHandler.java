@@ -5,10 +5,10 @@ import com.google.gson.GsonBuilder;
 import de.guntram.mcmod.easiercrafting.EasierCrafting;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.resource.Resource;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
 
 import java.io.File;
 import java.io.FileReader;
@@ -29,14 +29,14 @@ public class LoomRecipeHandler {
         LOADED_RECIPES.clear();
 
         // The Map now holds a List of Resources for each Identifier
-        Map<Identifier, List<Resource>> resourceMap = manager.findAllResources("loom_recipes",
+        Map<Identifier, List<Resource>> resourceMap = manager.listResourceStacks("loom_recipes",
                 id -> id.getPath().endsWith(".json") && !id.getPath().startsWith("_"));
 
         resourceMap.forEach((id, resources) -> {
             // Grab the last one in the list (the one with the highest priority)
             Resource resource = resources.getLast();
 
-            try (InputStreamReader reader = new InputStreamReader(resource.getInputStream())) {
+            try (InputStreamReader reader = new InputStreamReader(resource.open())) {
                 LoomRecipe recipe = GSON.fromJson(reader, LoomRecipe.class);
                 if (recipe.serverIp()==null || !recipe.serverIp().equals(ip)) {
                     LOADED_RECIPES.add(recipe);
@@ -204,7 +204,7 @@ public class LoomRecipeHandler {
 
 
     public static void onPasteButtonClicked() {
-        String clipboard = MinecraftClient.getInstance().keyboard.getClipboard();
+        String clipboard = Minecraft.getInstance().keyboardHandler.getClipboard();
 
         String[] lines = clipboard.split("\\r?\\n");
 

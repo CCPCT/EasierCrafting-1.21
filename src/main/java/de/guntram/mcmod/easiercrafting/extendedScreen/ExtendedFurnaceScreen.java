@@ -1,6 +1,5 @@
 package de.guntram.mcmod.easiercrafting.extendedScreen;
 
-import de.guntram.mcmod.easiercrafting.EasierCrafting;
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.recipebook.FurnaceRecipeBook;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -12,12 +11,10 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.FurnaceMenu;
-import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.NonNull;
 
 public class ExtendedFurnaceScreen extends FurnaceScreen {
     FurnaceRecipeBook recipeBook;
-    Logger LOGGER = EasierCrafting.getGeneralLogger();
 
     public ExtendedFurnaceScreen(FurnaceMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -32,6 +29,10 @@ public class ExtendedFurnaceScreen extends FurnaceScreen {
         }
         this.recipeBook.screenYOffset = -super.topPos;
         this.recipeBook.afterInitGui();
+    }
+
+    public void updateRecipe(){
+        this.recipeBook.updateRecipes();
     }
 
     public void setRecipeBook(FurnaceRecipeBook recipeBook) {

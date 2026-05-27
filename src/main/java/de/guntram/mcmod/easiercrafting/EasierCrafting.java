@@ -1,15 +1,20 @@
 package de.guntram.mcmod.easiercrafting;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import de.guntram.mcmod.easiercrafting.extendedScreen.*;
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
+import de.guntram.mcmod.easiercrafting.recipe.LoomRecipeHandler;
 import de.guntram.mcmod.easiercrafting.recipebook.FurnaceRecipeBook;
+import de.guntram.mcmod.easiercrafting.recipebook.LoomRecipeBook;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.Registry;
-import net.minecraft.core.registries.Registries;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.crafting.RecipeBookCategory;
 import org.apache.logging.log4j.LogManager;
@@ -36,7 +41,7 @@ public class EasierCrafting implements ClientModInitializer
         info("loaded config");
 
         SPECIAL_CAT = Registry.register(
-                Registries.RECIPE_BOOK_CATEGORY,
+                BuiltInRegistries.RECIPE_BOOK_CATEGORY,
                 Identifier.fromNamespaceAndPath(EasierCrafting.MODID, "special"),
                 new RecipeBookCategory()
         );
@@ -45,7 +50,7 @@ public class EasierCrafting implements ClientModInitializer
                 "Refresh Recipe List", // translation key
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_TAB,       // default key
-                KeyMapping.Category.register(Identifier.fromNamespaceAndPath(EasierCrafting.MODID, "Key"))      // category in controls menu
+                KeyMapping.Category.register(Identifier.fromNamespaceAndPath(EasierCrafting.MODID, "keymap"))      // category in controls menu
         ));
 
         // do this when joining server/ world
@@ -56,7 +61,7 @@ public class EasierCrafting implements ClientModInitializer
                 ip = handler.getServerData().ip;
             }
 
-            LoomRecipeHandler.loadAll(MinecraftClient.getInstance().getResourceManager(), ip);
+            LoomRecipeHandler.loadAll(Minecraft.getInstance().getResourceManager(), ip);
             info("Loaded loom recipes: "+ LoomRecipeHandler.LOADED_RECIPES.size());
 
             // clear last fuel cache when joined new world/ server
@@ -70,16 +75,16 @@ public class EasierCrafting implements ClientModInitializer
 
     public static void updateRecipe(){
         if (!updateAllowed) return;
-        Screen currentScreen = MinecraftClient.getInstance().currentScreen;
-        if (currentScreen instanceof ExtendedGuiCrafting screen){
+        Screen currentScreen = Minecraft.getInstance().screen;
+        if (currentScreen instanceof ExtendedCraftingScreen screen){
             screen.updateRecipe();
-        } else if (currentScreen instanceof ExtendedGuiInventory screen) {
+        } else if (currentScreen instanceof ExtendedInventoryScreen screen) {
             screen.updateRecipe();
-        } else if (currentScreen instanceof ExtendedGuiFurnace screen) {
+        } else if (currentScreen instanceof ExtendedFurnaceScreen screen) {
             screen.updateRecipe();
-        } else if (currentScreen instanceof ExtendedGuiStonecutter screen) {
+        } else if (currentScreen instanceof ExtendedStoneCutterScreen screen) {
             screen.updateRecipe();
-        } else if (currentScreen instanceof ExtendedGuiLoom screen) {
+        } else if (currentScreen instanceof ExtendedLoomScreen screen) {
             screen.updateRecipe();
         }
     }

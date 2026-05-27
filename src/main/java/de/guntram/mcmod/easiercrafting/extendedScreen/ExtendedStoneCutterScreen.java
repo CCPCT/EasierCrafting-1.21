@@ -31,6 +31,10 @@ public class ExtendedStoneCutterScreen extends StonecutterScreen {
         this.recipeBook.afterInitGui();
     }
 
+    public void updateRecipe(){
+        this.recipeBook.updateRecipes();
+    }
+
     public void setRecipeBook(StonecutterRecipeBook recipeBook) {
         this.recipeBook=recipeBook;
     }

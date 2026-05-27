@@ -480,7 +480,9 @@ public abstract class AbstractRecipeBook {
     public static Identifier getCat(RecipeDisplayEntry entry){
         assert Minecraft.getInstance().level != null;
         Optional<Holder.Reference<Registry<RecipeBookCategory>>> thing = Minecraft.getInstance().level.registryAccess().get(Registries.RECIPE_BOOK_CATEGORY);
-        return thing.map(registryReference -> registryReference.value().getKey(entry.category())).orElse(null);
+        return thing.map(registryReference ->
+                registryReference.value().getKey(entry.category())
+        ).orElse(null);
     }
 
     public String recipeDisplayName(RecipeDisplayEntry entry) {

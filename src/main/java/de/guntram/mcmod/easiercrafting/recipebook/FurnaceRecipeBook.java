@@ -7,10 +7,9 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.recipebook.RecipeCollection;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.input.MouseButtonInfo;
-import net.minecraft.client.resources.language.I18n;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.AbstractFurnaceMenu;
 import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.FurnaceMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -31,57 +30,38 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
     }
 
     @Override
-    public boolean updateRecipes() {
+    public void updateRecipes() {
         updateAvailableStacks();
-
-        // process if craftable changed
-        int hashID=0;
-        for (RecipeDisplayEntry entry : craftableRecipes) {
-            hashID^=entry.id().index();
-        }
 
         craftableRecipes.clear();
         allRecipes.clear();
-        craftableCategories.clear();
 
         // add all and craftable recipes
         for (RecipeCollection collection : recipeBook.getCollections()) {
             for (RecipeDisplayEntry entry : collection.getRecipes()) {
                 if (!(entry.display() instanceof FurnaceRecipeDisplay recipeDisplay)) continue;
                 // its furnace recipe
-                if (recipeDisplay.craftingStation().resolveForFirstStack(worldContext).getItem()!=craftingBlock.resolveForFirstStack(worldContext).getItem()) continue;
+                if (!this.canCraftScanned(entry)) continue;
                 allRecipes.add(entry);
                 for (ItemStack slotDisplay : recipeDisplay.ingredient().resolveForStacks(worldContext)) {
                     if (avaliableItemMap.containsKey(slotDisplay.getItem())) {
                         craftableRecipes.add(entry);
-                        craftableCategories.computeIfAbsent(ModConfig.get().categorizeRecipes ?
-                                getTranslatedItemGroup(entry) :
-                                I18n.get("easiercrafting.category.possible"),
-                                k -> new RecipeTreeSet()).add(entry);
-                        break;
                     }
                 }
-
             }
         }
 
-
-        recalcListSize();
-        for (RecipeDisplayEntry entry : craftableRecipes) {
-            hashID^=entry.id().index();
-        }
-        return hashID==0;
     }
 
     @Override
     protected void onRecipeClicked(RecipeDisplayEntry entry, int mouseButton) {
-        if (!(screenHandler instanceof AbstractFurnaceMenu container && entry.display() instanceof FurnaceRecipeDisplay recipe)) return;
+        if (!(screenHandler instanceof FurnaceMenu container && entry.display() instanceof FurnaceRecipeDisplay recipe)) return;
         List<ItemStack> inventory = player.getInventory().getNonEquipmentItems();
         ItemStack fuelStack = container.slots.get(FUEL_SLOT).getItem();
 
         // retrieve/ throw smelt items
-        if (container.slots.get(resultSlotNo).hasItem() && !isHoldingButton(GLFW.GLFW_KEY_LEFT_CONTROL)) {
-            slotClick(resultSlotNo,1,isHoldingButton(GLFW.GLFW_KEY_Q) ? ContainerInput.THROW : ContainerInput.QUICK_MOVE);
+        if (container.slots.get(FIRST_RESULT_SLOT).hasItem() && !isHoldingButton(GLFW.GLFW_KEY_LEFT_CONTROL)) {
+            slotClick(FIRST_RESULT_SLOT,1,isHoldingButton(GLFW.GLFW_KEY_Q) ? ContainerInput.THROW : ContainerInput.QUICK_MOVE);
         }
 
         // replenish fuel if possible, if fuel slot is empty let player decide what fuel to use
@@ -110,7 +90,7 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
         } else if (lastFuelUsed!=null){
             // refill fuel by last used as empty
             LOGGER.info("try to refill memory: {}",lastFuelUsed.getDescriptionId());
-            for (int slot = firstInventorySlotNo; slot < 36+firstInventorySlotNo; slot++){
+            for (int slot = FIRST_INV_SLOT; slot < 36+ FIRST_INV_SLOT; slot++){
                 ItemStack itemStack = container.slots.get(slot).getItem();
                 if (itemStack.getItem().equals(lastFuelUsed)){
                     LOGGER.info("refilling memory: {}",lastFuelUsed.getDescriptionId());
@@ -124,23 +104,23 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
 
         // move items onto craft spot
         search:
-        for (int slot = firstInventorySlotNo; slot < 36 + firstInventorySlotNo; slot++) {
+        for (int slot = FIRST_INV_SLOT; slot < 36 + FIRST_INV_SLOT; slot++) {
             ItemStack slotContent = container.getSlot(slot).getItem();
             for (ItemStack ingredientStack : recipe.ingredient().resolveForStacks(worldContext)) {
                 if (ingredientStack.getItem().equals(slotContent.getItem())){
                     // remove item if not match recipe
-                    if (ingredientStack.getItem() != container.slots.get(firstCraftSlotNo).getItem().getItem()){
-                        slotClick(firstCraftSlotNo,0,ContainerInput.QUICK_MOVE);
+                    if (ingredientStack.getItem() != container.slots.get(FIRST_CRAFT_SLOT).getItem().getItem()){
+                        slotClick(FIRST_CRAFT_SLOT,0,ContainerInput.QUICK_MOVE);
                     }
                     // move item up
                     if (isHoldingButton(GLFW.GLFW_KEY_LEFT_SHIFT)) {
                         slotClick(slot, 0, ContainerInput.PICKUP);
                         slotClick(slot, 0, ContainerInput.PICKUP_ALL);
-                        slotClick(firstCraftSlotNo, 0, ContainerInput.PICKUP);
+                        slotClick(FIRST_CRAFT_SLOT, 0, ContainerInput.PICKUP);
                         slotClick(slot, 0, ContainerInput.PICKUP);
                     } else {
                         slotClick(slot, 0, ContainerInput.PICKUP);
-                        slotClick(firstCraftSlotNo, 1, ContainerInput.PICKUP);
+                        slotClick(FIRST_CRAFT_SLOT, 1, ContainerInput.PICKUP);
                         slotClick(slot, 0, ContainerInput.PICKUP);
                     }
                     break search;
@@ -152,10 +132,10 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
     // override as want to stack more items onto instead of take out everytime
     @Override
     public void mouseClicked(MouseButtonEvent click, boolean doubled, int guiLeft, int guiTop) {
-        int mouseX = (int) click.x();
-        int mouseY = (int) click.y();
+        var mouseX = click.x();
+        var mouseY = click.y();
         if (pattern != null) {
-            boolean clickedPattern = pattern.mouseClicked(new MouseButtonEvent(click.x()-guiLeft,click.y()-guiTop,new MouseButtonInfo(0,0)), doubled);
+            boolean clickedPattern = pattern.mouseClicked(new MouseButtonEvent(mouseX-guiLeft,mouseY-guiTop,new MouseButtonInfo(0,0)), doubled);
             pattern.setFocused(clickedPattern);
             if (clickedPattern) {
                 if (click.button() == 1) {
@@ -205,12 +185,38 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
         }
 
         // draw result
-        Slot resultSlot = screenHandler.getSlot(resultSlotNo);
+        Slot resultSlot = screenHandler.getSlot(FIRST_RESULT_SLOT);
         drawHoloItem(context,resultSlot,result);
 
-        if (!canCraft) context.fill(resultSlot.x-2,resultSlot.y-2,resultSlot.x+itemSize+2,resultSlot.y+itemSize+2,0x60FF0000);
+        if (!canCraft) context.fill(resultSlot.x-2,resultSlot.y-2,resultSlot.x+ ITEM_SIZE +2,resultSlot.y+ ITEM_SIZE +2,0x60FF0000);
 
-        renderIngredient(context, getIngredients(underMouse), screenHandler.getSlot(firstCraftSlotNo));
+        renderIngredient(context, getIngredients(underMouse), screenHandler.getSlot(FIRST_CRAFT_SLOT));
+    }
+
+    @Override
+    protected boolean refreshCategories() {
+        craftableCategories.clear();
+        int tempHash = 0;
+        for (RecipeDisplayEntry entry : craftableRecipes) {
+            craftableCategories.computeIfAbsent(ModConfig.get().categorizeRecipes ?
+                            getTranslatedItemGroup(entry) :
+                            DEFAULT_CAT,
+                    k -> new RecipeTreeSet()).add(entry);
+            tempHash^=entry.id().index();
+        }
+        boolean changed = tempHash==categoryHash;
+        categoryHash=tempHash;
+        recalcListSize();
+        return changed;
+    }
+
+    @Override
+    protected boolean canCraftScanned(RecipeDisplayEntry entry) {
+        if (!(entry.display() instanceof FurnaceRecipeDisplay recipe)) return false;
+        for (ItemStack i : recipe.ingredient().resolveForStacks(worldContext)) {
+            if (avaliableItemMap.containsKey(i.getItem())) return true;
+        }
+        return false;
     }
 
     protected List<ItemStack> getIngredients(RecipeDisplayEntry entry) {

@@ -2,10 +2,12 @@ package de.guntram.mcmod.easiercrafting.mixins;
 
 import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedCraftingScreen;
 import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedFurnaceScreen;
+import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedLoomScreen;
 import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedStoneCutterScreen;
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.recipebook.CraftingRecipeBook;
 import de.guntram.mcmod.easiercrafting.recipebook.FurnaceRecipeBook;
+import de.guntram.mcmod.easiercrafting.recipebook.LoomRecipeBook;
 import de.guntram.mcmod.easiercrafting.recipebook.StonecutterRecipeBook;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.MenuScreens;
@@ -47,6 +49,13 @@ public abstract class OpenGuiMixin {
             StonecutterMenu menu = MenuType.STONECUTTER.create(id, inventory);
             ExtendedStoneCutterScreen screen = new ExtendedStoneCutterScreen(menu, inventory, title);
             screen.setRecipeBook(new StonecutterRecipeBook(screen));
+            openScreen(client, menu, screen);
+        }
+        // loom
+        else if (type == MenuType.LOOM) {
+            LoomMenu menu = MenuType.LOOM.create(id, inventory);
+            ExtendedLoomScreen screen = new ExtendedLoomScreen(menu, inventory, title);
+            screen.setRecipeBook(new LoomRecipeBook(screen));
             openScreen(client, menu, screen);
         }
         // furnace

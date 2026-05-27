@@ -29,6 +29,10 @@ public class ExtendedInventoryScreen extends InventoryScreen {
         this.recipeBook.afterInitGui();
     }
 
+    public void updateRecipe(){
+        this.recipeBook.updateRecipes();
+    }
+
     public void setRecipeBook(CraftingRecipeBook recipeBook) {
         this.recipeBook=recipeBook;
     }

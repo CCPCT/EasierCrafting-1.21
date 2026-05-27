@@ -31,18 +31,11 @@ public class StonecutterRecipeBook extends AbstractRecipeBook {
 
 
     @Override
-    public boolean updateRecipes() {
+    public void updateRecipes() {
         updateAvailableStacks();
-
-        // process if craftable changed
-        int hashID=0;
-        for (RecipeDisplayEntry entry : craftableRecipes) {
-            hashID^=entry.id().index();
-        }
 
         craftableRecipes.clear();
         allRecipes.clear();
-        craftableCategories.clear();
 
         // add all recipes
         for (RecipeCollection collection : recipeBook.getCollection(RecipeBookCategories.STONECUTTER)){
@@ -51,26 +44,9 @@ public class StonecutterRecipeBook extends AbstractRecipeBook {
 
         // add craftable recipes
         for (RecipeDisplayEntry entry : allRecipes){
-            if (entry.display() instanceof StonecutterRecipeDisplay recipeDisplay){
-                for (ItemStack slotDisplay : recipeDisplay.input().resolveForStacks(worldContext)){
-                    if (avaliableItemMap.containsKey(slotDisplay.getItem())){
-                        craftableRecipes.add(entry);
-                        craftableCategories.computeIfAbsent(ModConfig.get().categorizeRecipes ?
-                                getIngredients(entry).getFirst().getItem().getDescriptionId() :
-                                I18n.get("easiercrafting.category.possible"),
-                                k -> new RecipeTreeSet()).add(entry);
-                    }
-                }
-
-            }
+            if (!(entry.display() instanceof StonecutterRecipeDisplay) || !this.canCraftScanned(entry)) continue;
+            craftableRecipes.add(entry);
         }
-
-
-        recalcListSize();
-        for (RecipeDisplayEntry entry : craftableRecipes) {
-            hashID^=entry.id().index();
-        }
-        return hashID==0;
     }
 
 
@@ -82,23 +58,22 @@ public class StonecutterRecipeBook extends AbstractRecipeBook {
         }
 
         // no item -> return
-        for (ItemStack ingredient : getIngredients(entry)) {
-            if (!avaliableItemMap.containsKey(ingredient.getItem()))return;
-        }
+        if (!canCraft(entry)) return;
+
         // move item to crafting slot
         search:
-        for (int slot = firstInventorySlotNo; slot < 36 + firstInventorySlotNo; slot++) {
+        for (int slot = FIRST_INV_SLOT; slot < 36 + FIRST_INV_SLOT; slot++) {
             ItemStack slotContent = container.getSlot(slot).getItem();
             for (ItemStack ingredientStack : recipe.input().resolveForStacks(worldContext)) {
                 if (ingredientStack.getItem().equals(slotContent.getItem())){
                     if (isHoldingButton(GLFW.GLFW_KEY_LEFT_SHIFT)) {
                         slotClick(slot, 0, ContainerInput.PICKUP);
                         slotClick(slot, 0, ContainerInput.PICKUP_ALL);
-                        slotClick(firstCraftSlotNo, 0, ContainerInput.PICKUP);
+                        slotClick(FIRST_CRAFT_SLOT, 0, ContainerInput.PICKUP);
                         slotClick(slot, 0, ContainerInput.PICKUP);
                     } else {
                         slotClick(slot, 0, ContainerInput.PICKUP);
-                        slotClick(firstCraftSlotNo, 1, ContainerInput.PICKUP);
+                        slotClick(FIRST_CRAFT_SLOT, 1, ContainerInput.PICKUP);
                         slotClick(slot, 0, ContainerInput.PICKUP);
                     }
                     break search;
@@ -150,12 +125,39 @@ public class StonecutterRecipeBook extends AbstractRecipeBook {
         }
 
         // draw result
-        Slot resultSlot = screenHandler.getSlot(resultSlotNo);
+        Slot resultSlot = screenHandler.getSlot(FIRST_RESULT_SLOT);
         drawHoloItem(context,resultSlot,result);
 
-        if (!canCraft) context.fill(resultSlot.x-2,resultSlot.y-2,resultSlot.x+itemSize+2,resultSlot.y+itemSize+2,0x60FF0000);
+        if (!canCraft) context.fill(resultSlot.x-2,resultSlot.y-2,resultSlot.x+ ITEM_SIZE +2,resultSlot.y+ ITEM_SIZE +2,0x60FF0000);
 
-        renderIngredient(context, getIngredients(underMouse), screenHandler.getSlot(firstCraftSlotNo));
+        renderIngredient(context, getIngredients(underMouse), screenHandler.getSlot(FIRST_CRAFT_SLOT));
+    }
+
+    @Override
+    protected boolean refreshCategories() {
+        craftableCategories.clear();
+        int tempHash = 0;
+        for (RecipeDisplayEntry entry : craftableRecipes) {
+            if (!(entry.display() instanceof StonecutterRecipeDisplay recipe)) continue;
+            craftableCategories.computeIfAbsent(ModConfig.get().categorizeRecipes ?
+                            I18n.get(recipe.input().resolveForFirstStack(worldContext).getItem().getDescriptionId()) :
+                            DEFAULT_CAT,
+                    k -> new RecipeTreeSet()).add(entry);
+            tempHash^=entry.id().index();
+        }
+        boolean changed = tempHash==categoryHash;
+        categoryHash=tempHash;
+        recalcListSize();
+        return changed;
+    }
+
+    @Override
+    protected boolean canCraftScanned(RecipeDisplayEntry entry) {
+        if (!(entry.display() instanceof StonecutterRecipeDisplay recipe)) return false;
+        for (ItemStack i : recipe.input().resolveForStacks(worldContext)) {
+            if (avaliableItemMap.containsKey(i.getItem())) return true;
+        }
+        return false;
     }
 
     protected List<ItemStack> getIngredients(RecipeDisplayEntry entry) {

@@ -2,7 +2,6 @@ package de.guntram.mcmod.easiercrafting.modConfig;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import de.guntram.mcmod.easiercrafting.EasierCrafting;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.IOException;
@@ -58,7 +57,7 @@ public class ModConfig {
         try {
             Files.writeString(CONFIG_PATH, GSON.toJson(get()));
         } catch (IOException e) {
-            EasierCrafting.getGeneralLogger().error("Unable to save EasierCrafting config!");
+            System.err.println("Unable to save EasierCrafting config!");
         }
     }
 }
