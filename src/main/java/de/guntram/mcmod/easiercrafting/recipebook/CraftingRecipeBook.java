@@ -1,34 +1,28 @@
 package de.guntram.mcmod.easiercrafting.recipebook;
 
 import de.guntram.mcmod.easiercrafting.EasierCrafting;
-import de.guntram.mcmod.easiercrafting.InventoryAccessor;
-import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedGuiInventory;
+import de.guntram.mcmod.easiercrafting.extendedScreen.ExtendedScreen;
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.recipe.RecipeTreeSet;
 import de.guntram.mcmod.easiercrafting.recipe.RepairCraftingRecipeDisplay;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.screen.recipebook.RecipeResultCollection;
-import net.minecraft.client.recipebook.RecipeBookType;
-import net.minecraft.client.resource.language.I18n;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.FireworksComponent;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.recipe.NetworkRecipeId;
-import net.minecraft.recipe.RecipeDisplayEntry;
-import net.minecraft.recipe.book.RecipeBookCategories;
-import net.minecraft.recipe.display.ShapedCraftingRecipeDisplay;
-import net.minecraft.recipe.display.ShapelessCraftingRecipeDisplay;
-import net.minecraft.recipe.display.SlotDisplay;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.Fireworks;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.RecipeBookCategories;
+import net.minecraft.world.item.crafting.display.*;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
@@ -37,14 +31,16 @@ import static de.guntram.mcmod.easiercrafting.EasierCrafting.SPECIAL_CAT;
 
 public class CraftingRecipeBook extends AbstractRecipeBook {
 
-    public CraftingRecipeBook(HandledScreen<? extends ScreenHandler> craftScreen, int firstCraftSlotNo, int gridsize, int resultSlot, int firstInventorySlot, SlotDisplay craftingBlock) {
+
+    public CraftingRecipeBook(AbstractContainerScreen<? extends AbstractContainerMenu> craftScreen, int firstCraftSlotNo, int gridsize, int resultSlot, int firstInventorySlot, SlotDisplay craftingBlock) {
         super(craftScreen, firstCraftSlotNo, gridsize, resultSlot, firstInventorySlot, craftingBlock);
+        RecipeBookCats = List.of(RecipeBookCategories.CRAFTING_MISC, RecipeBookCategories.CRAFTING_REDSTONE, RecipeBookCategories.CRAFTING_EQUIPMENT, RecipeBookCategories.CRAFTING_BUILDING_BLOCKS);
     }
 
 
     @Override
     public boolean updateRecipes() {
-        assert MinecraftClient.getInstance().player != null;
+        assert Minecraft.getInstance().player != null;
 
         int hashID=0;
         for (RecipeDisplayEntry entry : craftableRecipes) {
@@ -55,12 +51,11 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
         craftableRecipes.clear();
         allRecipes.clear();
 
-        for (RecipeResultCollection result : MinecraftClient.getInstance().player.getRecipeBook().getResultsForCategory(RecipeBookType.CRAFTING)){
-            allRecipes.addAll(result.getAllRecipes());
-        }
+        populateAllRecipe();
+
         for (RecipeDisplayEntry entry : allRecipes) {
             // craftable entries
-            if (screen instanceof ExtendedGuiInventory) {
+            if (screen instanceof ExtendedScreen<?,?> extendedScreen && extendedScreen.getMenu() instanceof InventoryMenu) {
                 // in player inventory... filter out big recipes
                 if (entry.display() instanceof ShapedCraftingRecipeDisplay recipe) {
                     if (recipe.width()==3 || recipe.height()==3){
@@ -83,10 +78,10 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
         if (ModConfig.get().allowGeneratedRecipes) {
             addUnusualRecipe();
             allRecipes.removeIf(entry ->
-                entry.category() == RecipeBookCategories.CRAFTING_MISC && entry.display().result().getFirst(worldContext).getItem()==Items.FIREWORK_ROCKET
+                entry.category() == RecipeBookCategories.CRAFTING_MISC && entry.display().result().resolveForFirstStack(worldContext).getItem()==Items.FIREWORK_ROCKET
             );
             craftableRecipes.removeIf(entry ->
-                    entry.category() == RecipeBookCategories.CRAFTING_MISC && entry.display().result().getFirst(worldContext).getItem()==Items.FIREWORK_ROCKET
+                    entry.category() == RecipeBookCategories.CRAFTING_MISC && entry.display().result().resolveForFirstStack(worldContext).getItem()== Items.FIREWORK_ROCKET
             );
         }
 
@@ -95,13 +90,13 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
             String category;
             if (!ModConfig.get().categorizeRecipes) {
                 // dont categorize recipes
-                category = I18n.translate("easiercrafting.category.possible");
-            } else if (Objects.requireNonNull(getCat(entry)).getNamespace().startsWith(EasierCrafting.MODID)) {
+                category = I18n.get("easiercrafting.category.possible");
+            } else if (Objects.requireNonNull(getCat(entry)).toString().contains(EasierCrafting.MODID)) {
                 // generated recipe
                 if (entry.display() instanceof RepairCraftingRecipeDisplay){
                     category = "Repair";
                 } else {
-                    category = I18n.translate("easiercrafting.category.special");
+                    category = I18n.get("easiercrafting.category.special");
                 }
             } else {
                 category = getTranslatedItemGroup(entry);
@@ -117,7 +112,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
     }
 
     @Override
-    protected void drawRecipeGridOverlay(DrawContext context) {
+    protected void drawRecipeGridOverlay(GuiGraphicsExtractor context) {
         // get info
         int recipeWidth;
         List<SlotDisplay> ingredients;
@@ -139,19 +134,19 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
                 // damage = max(max-((max-damage a)+(max-damage b)+floor(Max/20)),0)
                 // damage = max(damage a + damage b - floor(Max/20) - max , 0)
                 // so best and easiest approach would be adding items with min durability
-                drawHoloItem(context, resultSlot, repairDisplay.result().getFirst(worldContext));
-                drawHoloItem(context, screenHandler.getSlot(firstCraftSlotNo), repairDisplay.ingredients().getFirst().getFirst(worldContext));
-                drawHoloItem(context, screenHandler.getSlot(firstCraftSlotNo+1), repairDisplay.ingredients().get(1).getFirst(worldContext));
+                drawHoloItem(context, resultSlot, repairDisplay.result().resolveForFirstStack(worldContext));
+                drawHoloItem(context, screenHandler.getSlot(firstCraftSlotNo), repairDisplay.ingredients().getFirst().resolveForFirstStack(worldContext));
+                drawHoloItem(context, screenHandler.getSlot(firstCraftSlotNo+1), repairDisplay.ingredients().get(1).resolveForFirstStack(worldContext));
 
                 return;
             }
-            case null, default -> {
+            default -> {
                 return;
             }
         }
 
         // render result
-        ItemStack resultStack = underMouse.display().result().getFirst(worldContext).copy();
+        ItemStack resultStack = underMouse.display().result().resolveForFirstStack(worldContext).copy();
         if (!(underMouse.display() instanceof RepairCraftingRecipeDisplay)) {
             resultStack.setCount(maxCraftableStacks*resultStack.getCount());
         }
@@ -166,9 +161,9 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
             for (int x = 0; x < recipeWidth; x++) {
                 if (y*recipeWidth+x >= ingredients.size()) return;
                 SlotDisplay ingredient = ingredients.get(y*recipeWidth+x);
-                if (ingredient.getFirst(worldContext).isEmpty()) continue;
+                if (ingredient.resolveForFirstStack(worldContext).isEmpty()) continue;
                 boolean found = false;
-                for (ItemStack stack : ingredient.getStacks(worldContext)){
+                for (ItemStack stack : ingredient.resolveForStacks(worldContext)){
                     // cant craft
                     if (tempMap.getInt(stack.getItem())<=0) continue;
                     tempMap.addTo(stack.getItem(),-1);
@@ -176,12 +171,12 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
                     found = true;
                     break;
                 }
-                if (!found) renderIngredient(context, ingredient.getStacks(worldContext), screenHandler.getSlot(firstCraftSlotNo + y*gridSize+x));
+                if (!found) renderIngredient(context, ingredient.resolveForStacks(worldContext), screenHandler.getSlot(firstCraftSlotNo + y*gridSize+x));
             }
         }
     }
 
-    public void renderCraftingIngredient(DrawContext context, ItemStack stack, Slot slot) {
+    public void renderCraftingIngredient(GuiGraphicsExtractor context, ItemStack stack, Slot slot) {
         if (stack.isEmpty()) return;
         drawHoloItem(context,slot,stack);
     }
@@ -211,7 +206,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
                 ingredients = repairDisplay.ingredients();
                 recipeWidth = 2;
             }
-            case null, default -> {
+            default -> {
                 return;
             }
         }
@@ -226,16 +221,16 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
         for (int i = 0; i < ingredients.size(); i++) {
             int remaining = maxCraftableStacks;
             SlotDisplay ingredient = ingredients.get(i);
-            if (ingredient.getStacks(worldContext).isEmpty()) continue;
+            if (ingredient.resolveForStacks(worldContext).isEmpty()) continue;
 
             for (int slot = firstInventorySlotNo; remaining > 0 && slot < 36 + firstInventorySlotNo; slot++) {
-                ItemStack slotcontent = screenHandler.getSlot(slot).getStack();
-                // yes awful nested if statements... find a better logic for me then... but bare in mind mine works :3
+                ItemStack slotcontent = screenHandler.getSlot(slot).getItem();
+                // yes awful nested if statements... find a better logic for me then... but bear in mind mine works :3
                 if (entry.display() instanceof RepairCraftingRecipeDisplay recipe){
-                    if (slotcontent.getItem()!=recipe.result().getFirst(worldContext).getItem()) continue;
-                    if (slotcontent.getDamage()>=recipe.ingredients().get(1).getFirst(worldContext).getDamage()){
+                    if (slotcontent.getItem()!=recipe.result().resolveForFirstStack(worldContext).getItem()) continue;
+                    if (slotcontent.getDamageValue()>=recipe.ingredients().get(1).resolveForFirstStack(worldContext).getDamageValue()){
                         // not as damage as most damaged
-                        if (slotcontent.getDamage()<recipe.ingredients().getFirst().getFirst(worldContext).getDamage()){
+                        if (slotcontent.getDamageValue()<recipe.ingredients().getFirst().resolveForFirstStack(worldContext).getDamageValue()){
                             if (repairOccupied) continue;
                             repairOccupied = true;
                         }
@@ -243,9 +238,9 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
                 }
                 else if (!canActAsIngredient(ingredient, slotcontent)) continue;
                 transfer(slot, i + firstCraftSlotNo + rowadjust, remaining);
-                ItemStack inCraftSlot = screenHandler.getSlot(i + firstCraftSlotNo + rowadjust).getStack();
+                ItemStack inCraftSlot = screenHandler.getSlot(i + firstCraftSlotNo + rowadjust).getItem();
                 remaining = maxCraftableStacks - inCraftSlot.getCount();
-                if (!inCraftSlot.getRecipeRemainder().isEmpty()) {
+                if (inCraftSlot.getCraftingRemainder()!=null && inCraftSlot.getCraftingRemainder().count()>0) {
                     removal[i] = true;
                 }
 
@@ -260,7 +255,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
             if (isHoldingButton(GLFW.GLFW_KEY_Q)){
                 if (isHoldingButton(GLFW.GLFW_KEY_LEFT_SHIFT)) {
                     // icl but lazy method works well...
-                    int resultCount = entry.display().result().getFirst(worldContext).getCount();
+                    int resultCount = entry.display().result().resolveForFirstStack(worldContext).getCount();
 //                    int maxCount = entry.display().result().getFirst(worldContext).getMaxCount();
 //                    int increment = 0;
                     LOGGER.info("bulk craft: "+maxCraftableStacks + " stacks of "+resultCount);
@@ -270,27 +265,27 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
 //                        if (increment >= maxCount) {
 //                            LOGGER.info("try to throw away");
 //                            increment = 0;
-//                            slotClick(firstInventorySlotNo, 0, SlotActionType.PICKUP);
-//                            slotClick(firstInventorySlotNo, 1, SlotActionType.THROW);
+//                            slotClick(firstInventorySlotNo, 0, ContainerInput.PICKUP);
+//                            slotClick(firstInventorySlotNo, 1, ContainerInput.THROW);
 //                        }
-//                        slotClick(resultSlotNo, 0, SlotActionType.PICKUP);
-                        slotClick(resultSlotNo, 1, SlotActionType.THROW);
+//                        slotClick(resultSlotNo, 0, ContainerInput.PICKUP);
+                        slotClick(resultSlotNo, 1, ContainerInput.THROW);
                     }
 //                    LOGGER.info("try to throw away");
-//                    slotClick(firstInventorySlotNo, 0, SlotActionType.PICKUP);
-//                    slotClick(firstInventorySlotNo, 1, SlotActionType.THROW);
+//                    slotClick(firstInventorySlotNo, 0, ContainerInput.PICKUP);
+//                    slotClick(firstInventorySlotNo, 1, ContainerInput.THROW);
                 } else {
-                    slotClick(resultSlotNo, 0, SlotActionType.THROW);
+                    slotClick(resultSlotNo, 0, ContainerInput.THROW);
                 }
             } else {
-                slotClick(resultSlotNo, 1, SlotActionType.QUICK_MOVE);
+                slotClick(resultSlotNo, 1, ContainerInput.QUICK_MOVE);
             }
             queueUpdateRecipe();
 
             rowadjust = 0;
             for (int i = 0; i < removal.length; i++) {
                 if (removal[i]) {
-                    slotClick(firstCraftSlotNo + i + rowadjust, 0, SlotActionType.QUICK_MOVE);
+                    slotClick(firstCraftSlotNo + i + rowadjust, 0, ContainerInput.QUICK_MOVE);
                 }
                 if (recipeWidth > 0 && (i + 1) % recipeWidth == 0) {
                     rowadjust += gridSize - recipeWidth;
@@ -301,34 +296,34 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
 
     private boolean canActAsIngredient(SlotDisplay ingredient, ItemStack inventoryItem) {
         if (inventoryItem.isEmpty()) return false;
-        List<ItemStack> validStacks = ingredient.getStacks(worldContext);
+        List<ItemStack> validStacks = ingredient.resolveForStacks(worldContext);
         return validStacks.stream().anyMatch(validStack -> validStack.getItem() == inventoryItem.getItem());
     }
 
     public void transfer(int from, int to, int amount) {
         Slot fromSlot = screenHandler.getSlot(from);
-        ItemStack fromContent = fromSlot.getStack();
+        ItemStack fromContent = fromSlot.getItem();
 
-        if (amount >= fromSlot.getStack().getCount()) {
-            slotClick(from, 0, SlotActionType.PICKUP);
-            slotClick(to, 0, SlotActionType.PICKUP);
+        if (amount >= fromSlot.getItem().getCount()) {
+            slotClick(from, 0, ContainerInput.PICKUP);
+            slotClick(to, 0, ContainerInput.PICKUP);
             return;
         }
 
         int transfer;
-        while (amount >= (transfer = ((fromSlot.getStack().getCount() + 1) / 2))) {
-            slotClick(from, 1, SlotActionType.PICKUP);
-            slotClick(to, 0, SlotActionType.PICKUP);
+        while (amount >= (transfer = ((fromSlot.getItem().getCount() + 1) / 2))) {
+            slotClick(from, 1, ContainerInput.PICKUP);
+            slotClick(to, 0, ContainerInput.PICKUP);
             amount -= transfer;
         }
 
         if (amount > 0) {
             int prevCount = fromContent.getCount();
-            slotClick(from, 0, SlotActionType.PICKUP);
+            slotClick(from, 0, ContainerInput.PICKUP);
             for (int i = 0; i < amount; i++)
-                slotClick(to, 1, SlotActionType.PICKUP);
+                slotClick(to, 1, ContainerInput.PICKUP);
             if (prevCount > amount)
-                slotClick(from, 0, SlotActionType.PICKUP);
+                slotClick(from, 0, ContainerInput.PICKUP);
         }
     }
 
@@ -346,7 +341,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
         }
 
         for (Map.Entry<Item, Integer> ingredientSet : ingredientMap.entrySet()) {
-            maxCraftableStacks = Math.min(Math.min(maxCraftableStacks, avaliableItemMap.getInt(ingredientSet.getKey())/ingredientSet.getValue()),ingredientSet.getKey().getMaxCount());
+            maxCraftableStacks = Math.min(Math.min(maxCraftableStacks, avaliableItemMap.getInt(ingredientSet.getKey())/ingredientSet.getValue()),ingredientSet.getKey().getDefaultMaxStackSize());
         }
         return maxCraftableStacks;
     }
@@ -359,7 +354,7 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
         for (Ingredient ingredient : ingredients) {
             if (ingredient.isEmpty()) continue;
             boolean canCraft = false;
-            for (ItemStack stack : ingredient.toDisplay().getStacks(worldContext)) {
+            for (ItemStack stack : ingredient.display().resolveForStacks(worldContext)) {
                 // cant craft
                 if (tempMap.getInt(stack.getItem()) <= 0) continue;
                 canCraft = true;
@@ -376,7 +371,6 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
         addFireworkRecipe();
         addRepairRecipe();
     }
-
     private void addFireworkRecipe(){
         int gunPowerCount = avaliableItemMap.getInt(Items.GUNPOWDER);
         if (avaliableItemMap.containsKey(Items.PAPER) && gunPowerCount > 0) {
@@ -388,17 +382,17 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
 
                     // In 1.21, FireworksComponent is a record: (int flightDuration, List<FireworkExplosionComponent> explosions)
                     // We pass an empty list for explosions if there are none.
-                    resultItem.set(DataComponentTypes.FIREWORKS, new FireworksComponent(power, List.of()));
-                    resultItem.set(DataComponentTypes.CUSTOM_NAME, Text.literal("Firework strength: " + power));
+                    resultItem.set(DataComponents.FIREWORKS, new Fireworks(power, List.of()));
+                    resultItem.set(DataComponents.CUSTOM_NAME, Component.literal("Firework strength: " + power));
 
                     // 3. Prepare the Ingredients List for the Display
                     List<SlotDisplay> ingredientsDisplay = new ArrayList<>();
                     List<Ingredient> ingredients = new ArrayList<>();
-                    ingredients.add(Ingredient.ofItem(Items.PAPER));
-                    ingredientsDisplay.add(new SlotDisplay.StackSlotDisplay(new ItemStack(Items.PAPER)));
+                    ingredients.add(Ingredient.of(Items.PAPER));
+                    ingredientsDisplay.add(getSlotDisplay(Items.PAPER));
                     for (int k = 0; k < power; k++) {
-                        ingredientsDisplay.add(new SlotDisplay.StackSlotDisplay(new ItemStack(Items.GUNPOWDER)));
-                        ingredients.add(Ingredient.ofItem(Items.GUNPOWDER));
+                        ingredientsDisplay.add(getSlotDisplay(Items.GUNPOWDER));
+                        ingredients.add(Ingredient.of(Items.GUNPOWDER));
                     }
 
 
@@ -406,13 +400,13 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
                     // 4. Create the Display logic
                     ShapelessCraftingRecipeDisplay display = new ShapelessCraftingRecipeDisplay(
                             ingredientsDisplay,
-                            new SlotDisplay.StackSlotDisplay(resultItem),
+                            getSlotDisplay(resultItem),
                             craftingBlock
                     );
 
                     // 5. Add to your results list
                     RecipeDisplayEntry entry = new RecipeDisplayEntry(
-                            new NetworkRecipeId(670 + power), // Use unique IDs to avoid UI glitches
+                            new RecipeDisplayId(670 + power), // Use unique IDs to avoid UI glitches
                             display,
                             OptionalInt.empty(),
                             SPECIAL_CAT,
@@ -429,8 +423,8 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
 
     private void addRepairRecipe(){
         Object2IntOpenHashMap<Item> item = new Object2IntOpenHashMap<>(16);
-        for (ItemStack itemStack : ((InventoryAccessor) player.getInventory()).getCompatMain()){
-            if (itemStack.isEmpty()|| !itemStack.isDamaged() || itemStack.hasEnchantments()) continue;
+        for (ItemStack itemStack : player.getInventory().getNonEquipmentItems()){
+            if (itemStack.isEmpty()|| !itemStack.isDamaged() || itemStack.isEnchanted()) continue;
             // have breaking item
             item.addTo(itemStack.getItem(), 1);
         }
@@ -439,43 +433,43 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
             if (set.getValue()<2) continue;
 
             Item ingredient = set.getKey();
-            ItemStack resultStack = ingredient.getDefaultStack();
-            ItemStack ingredientA = ingredient.getDefaultStack();
-            ItemStack ingredientB = ingredient.getDefaultStack();
+            ItemStack resultStack = ingredient.getDefaultInstance();
+            ItemStack ingredientA = ingredient.getDefaultInstance();
+            ItemStack ingredientB = ingredient.getDefaultInstance();
 
             int damageA = 0;
             int damageB = 0;
             // find 2 slot with max damage
             for (int slot = firstInventorySlotNo; slot < 36 + firstInventorySlotNo; slot++) {
-                ItemStack slotContent = screenHandler.getSlot(slot).getStack();
-                if (slotContent.getItem()!=ingredient||slotContent.hasEnchantments()) continue;
-                if (slotContent.getDamage() > damageA) {
+                ItemStack slotContent = screenHandler.getSlot(slot).getItem();
+                if (slotContent.getItem()!=ingredient||slotContent.isEnchanted()) continue;
+                if (slotContent.getDamageValue() > damageA) {
                     damageB = damageA;
-                    damageA = slotContent.getDamage();
-                } else if (slotContent.getDamage() > damageB) {
-                    damageB = slotContent.getDamage();
+                    damageA = slotContent.getDamageValue();
+                } else if (slotContent.getDamageValue() > damageB) {
+                    damageB = slotContent.getDamageValue();
                 }
             }
 
-            ingredientA.setDamage(damageA);
-            ingredientB.setDamage(damageB);
-            resultStack.setDamage(Integer.max(damageA + damageB - resultStack.getMaxDamage()/20 - resultStack.getMaxDamage() , 0));
+            ingredientA.setDamageValue(damageA);
+            ingredientB.setDamageValue(damageB);
+            resultStack.setDamageValue(Integer.max(damageA + damageB - resultStack.getMaxDamage()/20 - resultStack.getMaxDamage() , 0));
 
 
             // add the repairRecipe
             RepairCraftingRecipeDisplay display = new RepairCraftingRecipeDisplay(
-                    List.of(new SlotDisplay.StackSlotDisplay(ingredientA),new SlotDisplay.StackSlotDisplay(ingredientB)),
-                    new SlotDisplay.StackSlotDisplay(resultStack),
+                    List.of(getSlotDisplay(ingredientA),getSlotDisplay(ingredientB)),
+                    getSlotDisplay(resultStack),
                     craftingBlock
             );
 
             RecipeDisplayEntry entry = new RecipeDisplayEntry(
                     // use hash code of the item
-                    new NetworkRecipeId(set.getKey().hashCode()+resultStack.getDamage()),
+                    new RecipeDisplayId(set.getKey().hashCode()+resultStack.getDamageValue()),
                     display,
                     OptionalInt.empty(),
                     SPECIAL_CAT,
-                    Optional.of(Collections.nCopies(2,Ingredient.ofItem(set.getKey())))
+                    Optional.of(Collections.nCopies(2, Ingredient.of(set.getKey())))
             );
 
             allRecipes.add(entry);

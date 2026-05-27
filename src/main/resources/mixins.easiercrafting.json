@@ -1,14 +1,11 @@
 {
   "required": true,
   "package": "de.guntram.mcmod.easiercrafting.mixins",
-  "refmap": "EasierCrafting-refmap.json",
   "minVersion": "0.6",
   "client": [
-    "DelayedSlotClickContinue",
     "MerchantMixin",
     "OpenGuiInventoryMixin",
-    "OpenGuiMixin",
-    "PlayerInventoryMixin"
+    "OpenGuiMixin"
   ],
   "injectors": {
     "defaultRequire": 1

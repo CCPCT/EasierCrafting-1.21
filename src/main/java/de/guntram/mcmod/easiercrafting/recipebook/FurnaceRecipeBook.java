@@ -1,24 +1,23 @@
 package de.guntram.mcmod.easiercrafting.recipebook;
 
-import de.guntram.mcmod.easiercrafting.InventoryAccessor;
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.recipe.RecipeTreeSet;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.screen.recipebook.RecipeResultCollection;
-import net.minecraft.client.input.MouseInput;
-import net.minecraft.client.resource.language.I18n;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.recipe.RecipeDisplayEntry;
-import net.minecraft.recipe.display.FurnaceRecipeDisplay;
-import net.minecraft.recipe.display.SlotDisplay;
-import net.minecraft.screen.FurnaceScreenHandler;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.recipebook.RecipeCollection;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.MouseButtonInfo;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.AbstractFurnaceMenu;
+import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.display.FurnaceRecipeDisplay;
+import net.minecraft.world.item.crafting.display.RecipeDisplayEntry;
+import net.minecraft.world.item.crafting.display.SlotDisplay;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
@@ -27,7 +26,7 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
     public static Item lastFuelUsed;
     protected final int FUEL_SLOT = 1;
 
-    public FurnaceRecipeBook(HandledScreen<? extends ScreenHandler> craftScreen, SlotDisplay craftingBlock) {
+    public FurnaceRecipeBook(AbstractContainerScreen<? extends AbstractContainerMenu> craftScreen, SlotDisplay craftingBlock) {
         super(craftScreen, 0, 1, 2, 3, craftingBlock);
     }
 
@@ -46,18 +45,18 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
         craftableCategories.clear();
 
         // add all and craftable recipes
-        for (RecipeResultCollection collection : recipeBook.getOrderedResults()) {
-            for (RecipeDisplayEntry entry : collection.getAllRecipes()) {
+        for (RecipeCollection collection : recipeBook.getCollections()) {
+            for (RecipeDisplayEntry entry : collection.getRecipes()) {
                 if (!(entry.display() instanceof FurnaceRecipeDisplay recipeDisplay)) continue;
                 // its furnace recipe
-                if (recipeDisplay.craftingStation().getFirst(worldContext).getItem()!=craftingBlock.getFirst(worldContext).getItem()) continue;
+                if (recipeDisplay.craftingStation().resolveForFirstStack(worldContext).getItem()!=craftingBlock.resolveForFirstStack(worldContext).getItem()) continue;
                 allRecipes.add(entry);
-                for (ItemStack slotDisplay : recipeDisplay.ingredient().getStacks(worldContext)) {
+                for (ItemStack slotDisplay : recipeDisplay.ingredient().resolveForStacks(worldContext)) {
                     if (avaliableItemMap.containsKey(slotDisplay.getItem())) {
                         craftableRecipes.add(entry);
                         craftableCategories.computeIfAbsent(ModConfig.get().categorizeRecipes ?
                                 getTranslatedItemGroup(entry) :
-                                I18n.translate("easiercrafting.category.possible"),
+                                I18n.get("easiercrafting.category.possible"),
                                 k -> new RecipeTreeSet()).add(entry);
                         break;
                     }
@@ -76,25 +75,25 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
 
     @Override
     protected void onRecipeClicked(RecipeDisplayEntry entry, int mouseButton) {
-        if (!(screenHandler instanceof FurnaceScreenHandler container && entry.display() instanceof FurnaceRecipeDisplay recipe)) return;
-        List<ItemStack> inventory = ((InventoryAccessor)player.getInventory()).getCompatMain();
-        ItemStack fuelStack = container.slots.get(FUEL_SLOT).getStack();
+        if (!(screenHandler instanceof AbstractFurnaceMenu container && entry.display() instanceof FurnaceRecipeDisplay recipe)) return;
+        List<ItemStack> inventory = player.getInventory().getNonEquipmentItems();
+        ItemStack fuelStack = container.slots.get(FUEL_SLOT).getItem();
 
         // retrieve/ throw smelt items
-        if (container.slots.get(resultSlotNo).hasStack() && !isHoldingButton(GLFW.GLFW_KEY_LEFT_CONTROL)) {
-            slotClick(resultSlotNo,1,isHoldingButton(GLFW.GLFW_KEY_Q) ? SlotActionType.THROW : SlotActionType.QUICK_MOVE);
+        if (container.slots.get(resultSlotNo).hasItem() && !isHoldingButton(GLFW.GLFW_KEY_LEFT_CONTROL)) {
+            slotClick(resultSlotNo,1,isHoldingButton(GLFW.GLFW_KEY_Q) ? ContainerInput.THROW : ContainerInput.QUICK_MOVE);
         }
 
         // replenish fuel if possible, if fuel slot is empty let player decide what fuel to use
         if (ModConfig.get().refillFuel) if (fuelStack.getItem().equals(Items.BUCKET)){
             // just used lava as fuel...
-            slotClick(FUEL_SLOT,0,SlotActionType.QUICK_MOVE);
+            slotClick(FUEL_SLOT,0,ContainerInput.QUICK_MOVE);
 
             for (int slot = 0; slot < 36; slot++){
                 ItemStack itemStack = inventory.get(slot);
                 if (itemStack.getItem().equals(Items.LAVA_BUCKET)){
                     LOGGER.info("try to refill lava");
-                    slotClick(slot,0,SlotActionType.QUICK_MOVE);
+                    slotClick(slot,0,ContainerInput.QUICK_MOVE);
                     lastFuelUsed = Items.LAVA_BUCKET;
                     break;
                 }
@@ -103,21 +102,21 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
             // refill fuel
             if (avaliableItemMap.containsKey(fuelStack.getItem())){
                 lastFuelUsed = fuelStack.getItem();
-                LOGGER.info("try to refill fuel: {}", fuelStack.getName().getString());
-                slotClick(FUEL_SLOT,0,SlotActionType.PICKUP);
-                slotClick(FUEL_SLOT,0,SlotActionType.PICKUP_ALL);
-                slotClick(FUEL_SLOT,0,SlotActionType.PICKUP);
+                LOGGER.info("try to refill fuel: {}", fuelStack.getItem().getDescriptionId());
+                slotClick(FUEL_SLOT,0,ContainerInput.PICKUP);
+                slotClick(FUEL_SLOT,0,ContainerInput.PICKUP_ALL);
+                slotClick(FUEL_SLOT,0,ContainerInput.PICKUP);
             }
         } else if (lastFuelUsed!=null){
             // refill fuel by last used as empty
-            LOGGER.info("try to refill memory: {}",lastFuelUsed.getTranslationKey());
+            LOGGER.info("try to refill memory: {}",lastFuelUsed.getDescriptionId());
             for (int slot = firstInventorySlotNo; slot < 36+firstInventorySlotNo; slot++){
-                ItemStack itemStack = container.slots.get(slot).getStack();
+                ItemStack itemStack = container.slots.get(slot).getItem();
                 if (itemStack.getItem().equals(lastFuelUsed)){
-                    LOGGER.info("refilling memory: {}",lastFuelUsed.getTranslationKey());
-                    slotClick(slot,0,SlotActionType.PICKUP);
-                    slotClick(slot,0,SlotActionType.PICKUP_ALL);
-                    slotClick(FUEL_SLOT,0,SlotActionType.PICKUP);
+                    LOGGER.info("refilling memory: {}",lastFuelUsed.getDescriptionId());
+                    slotClick(slot,0,ContainerInput.PICKUP);
+                    slotClick(slot,0,ContainerInput.PICKUP_ALL);
+                    slotClick(FUEL_SLOT,0,ContainerInput.PICKUP);
                     break;
                 }
             }
@@ -126,23 +125,23 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
         // move items onto craft spot
         search:
         for (int slot = firstInventorySlotNo; slot < 36 + firstInventorySlotNo; slot++) {
-            ItemStack slotContent = container.getSlot(slot).getStack();
-            for (ItemStack ingredientStack : recipe.ingredient().getStacks(worldContext)) {
+            ItemStack slotContent = container.getSlot(slot).getItem();
+            for (ItemStack ingredientStack : recipe.ingredient().resolveForStacks(worldContext)) {
                 if (ingredientStack.getItem().equals(slotContent.getItem())){
                     // remove item if not match recipe
-                    if (ingredientStack.getItem() != container.slots.get(firstCraftSlotNo).getStack().getItem()){
-                        slotClick(firstCraftSlotNo,0,SlotActionType.QUICK_MOVE);
+                    if (ingredientStack.getItem() != container.slots.get(firstCraftSlotNo).getItem().getItem()){
+                        slotClick(firstCraftSlotNo,0,ContainerInput.QUICK_MOVE);
                     }
                     // move item up
                     if (isHoldingButton(GLFW.GLFW_KEY_LEFT_SHIFT)) {
-                        slotClick(slot, 0, SlotActionType.PICKUP);
-                        slotClick(slot, 0, SlotActionType.PICKUP_ALL);
-                        slotClick(firstCraftSlotNo, 0, SlotActionType.PICKUP);
-                        slotClick(slot, 0, SlotActionType.PICKUP);
+                        slotClick(slot, 0, ContainerInput.PICKUP);
+                        slotClick(slot, 0, ContainerInput.PICKUP_ALL);
+                        slotClick(firstCraftSlotNo, 0, ContainerInput.PICKUP);
+                        slotClick(slot, 0, ContainerInput.PICKUP);
                     } else {
-                        slotClick(slot, 0, SlotActionType.PICKUP);
-                        slotClick(firstCraftSlotNo, 1, SlotActionType.PICKUP);
-                        slotClick(slot, 0, SlotActionType.PICKUP);
+                        slotClick(slot, 0, ContainerInput.PICKUP);
+                        slotClick(firstCraftSlotNo, 1, ContainerInput.PICKUP);
+                        slotClick(slot, 0, ContainerInput.PICKUP);
                     }
                     break search;
                 }
@@ -152,15 +151,15 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
 
     // override as want to stack more items onto instead of take out everytime
     @Override
-    public void mouseClicked(Click click, boolean doubled, int guiLeft, int guiTop) {
+    public void mouseClicked(MouseButtonEvent click, boolean doubled, int guiLeft, int guiTop) {
         int mouseX = (int) click.x();
         int mouseY = (int) click.y();
         if (pattern != null) {
-            boolean clickedPattern = pattern.mouseClicked(new Click(click.x()-guiLeft,click.y()-guiTop,new MouseInput(0,0)), doubled);
+            boolean clickedPattern = pattern.mouseClicked(new MouseButtonEvent(click.x()-guiLeft,click.y()-guiTop,new MouseButtonInfo(0,0)), doubled);
             pattern.setFocused(clickedPattern);
             if (clickedPattern) {
                 if (click.button() == 1) {
-                    pattern.setText("");
+                    pattern.setValue("");
                     updatePatternMatch();
                 }
                 return;
@@ -185,18 +184,18 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
     }
 
     @Override
-    protected void drawRecipeGridOverlay(DrawContext context) {
+    protected void drawRecipeGridOverlay(GuiGraphicsExtractor context) {
         if (!(underMouse.display() instanceof FurnaceRecipeDisplay recipe)) return;
-        ItemStack result = recipe.result().getFirst(worldContext).copy();
+        ItemStack result = recipe.result().resolveForFirstStack(worldContext).copy();
         boolean canCraft = canCraft(underMouse);
         if (canCraft){
             int i;
             Item item = null;
             if (isHoldingButton(GLFW.GLFW_KEY_LEFT_SHIFT)){
-                for (i=0; i<recipe.ingredient().getStacks(worldContext).size(); i++){
-                    item = recipe.ingredient().getStacks(worldContext).get(i).getItem();
+                for (i=0; i<recipe.ingredient().resolveForStacks(worldContext).size(); i++){
+                    item = recipe.ingredient().resolveForStacks(worldContext).get(i).getItem();
                     if (avaliableItemMap.containsKey(item)){
-                        result.setCount(Math.min(avaliableItemMap.getInt(item)*result.getCount(),item.getMaxCount()));
+                        result.setCount(Math.min(avaliableItemMap.getInt(item)*result.getCount(),item.getDefaultMaxStackSize()));
                         break;
                     }
                 }
@@ -216,12 +215,12 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
 
     protected List<ItemStack> getIngredients(RecipeDisplayEntry entry) {
         if (!(entry.display() instanceof FurnaceRecipeDisplay recipe)) return null;
-        List<ItemStack> craftable = recipe.ingredient().getStacks(worldContext).stream()
+        List<ItemStack> craftable = recipe.ingredient().resolveForStacks(worldContext).stream()
                 .filter(stack -> getAvailableItemSet().contains(stack.getItem()))
                 .toList();
 
         if (craftable.isEmpty()){
-            return recipe.ingredient().getStacks(worldContext);
+            return recipe.ingredient().resolveForStacks(worldContext);
         } else {
             return craftable;
         }

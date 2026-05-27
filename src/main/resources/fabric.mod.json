@@ -5,9 +5,7 @@
   "environment": "client",
   "entrypoints": {
     "client": [ "de.guntram.mcmod.easiercrafting.EasierCrafting" ],
-    "modmenu": [
-      "de.guntram.mcmod.easiercrafting.modConfig.ModMenuHandler"
-    ]
+    "modmenu": ["de.guntram.mcmod.easiercrafting.modConfig.ModMenuHandler"]
   },
   "mixins": [
     "mixins.easiercrafting.json"
@@ -15,9 +13,8 @@
   "depends": {
     "fabric-api": "*",
     "fabricloader": "*",
-    "fabric": "*",
     "minecraft": "${minecraft_range}",
-    "java": ">=21",
+    "java": ">=25",
     "modmenu": "*",
     "cloth-config": "*"
   },

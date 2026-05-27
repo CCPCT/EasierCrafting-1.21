@@ -1,15 +1,16 @@
 package de.guntram.mcmod.easiercrafting.mixins;
 
+import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.blaze3d.platform.Window;
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.ingame.MerchantScreen;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.client.util.Window;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.MerchantScreen;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -20,9 +21,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(MerchantScreen.class)
 public abstract class MerchantMixin extends Screen {
     @Shadow
-    private int selectedIndex;
+    private int shopItem;
 
-    protected MerchantMixin(Text title) {
+    protected MerchantMixin(Component title) {
         super(title);
     }
 
@@ -30,9 +31,10 @@ public abstract class MerchantMixin extends Screen {
             method = "mouseClicked",
             at = @At(value = "TAIL")
     )
-    private void onTradeSelected(Click click, boolean doubled, CallbackInfoReturnable<Boolean> cir) {
-        Window window = MinecraftClient.getInstance().getWindow();
-        if (!ModConfig.get().enableTrading || InputUtil.isKeyPressed(window,InputUtil.GLFW_KEY_LEFT_CONTROL) || client.player.currentScreenHandler.getSlot(2).getStack().isEmpty()) return;
+    private void onTradeSelected(MouseButtonEvent event, boolean doubleClick, CallbackInfoReturnable<Boolean> cir) {
+        Window window = Minecraft.getInstance().getWindow();
+        Minecraft client = Minecraft.getInstance();
+        if (!ModConfig.get().enableTrading || InputConstants.isKeyDown(window,InputConstants.KEY_LCONTROL) || client.player.containerMenu.getSlot(2).getItem().isEmpty()) return;
 
         // ai = leftPos, aj = topPos
         int ai = (this.width - 276) / 2;
@@ -43,44 +45,45 @@ public abstract class MerchantMixin extends Screen {
         int listStartY = aj + 16;
         int listEndY = aj + 16 + 140;
 
-        boolean isOverTradeTab = click.x() >= listStartX && click.x() <= listEndX &&
-                click.y() >= listStartY && click.y() <= listEndY;
-
+        boolean isOverTradeTab = event.x() >= listStartX && event.x() <= listEndX &&
+                event.y() >= listStartY && event.y() <= listEndY;
 
         System.out.println("requirement: " + (ai+5) + "/" + (aj+16) + " to " + (ai+5+88) + "/" + (aj+16+120));
-        System.out.println(click.x() + "/" + click.y() + " over trade tab: " + isOverTradeTab);
-        System.out.println(this.selectedIndex);
+        System.out.println(event.x() + "/" + event.y() + " over trade tab: " + isOverTradeTab);
+        System.out.println(this.shopItem);
         if (!isOverTradeTab) return;
 
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (InputUtil.isKeyPressed(window, GLFW.GLFW_KEY_LEFT_SHIFT)){
-            client.interactionManager.clickSlot(client.player.currentScreenHandler.syncId,2,0, SlotActionType.QUICK_MOVE,client.player);
+        AbstractContainerMenu currentScreenHandler = client.player.containerMenu;
+        var syncId = currentScreenHandler.containerId;
+
+        if (InputConstants.isKeyDown(window, GLFW.GLFW_KEY_LEFT_SHIFT)){
+            client.gameMode.handleContainerInput(client.player.containerMenu.containerId, 2, 0, ContainerInput.QUICK_MOVE, client.player);
         } else {
-            if (InputUtil.isKeyPressed(window, GLFW.GLFW_KEY_Q)){
-                client.interactionManager.clickSlot(client.player.currentScreenHandler.syncId,2,0, SlotActionType.THROW,client.player);
+            if (InputConstants.isKeyDown(window, GLFW.GLFW_KEY_Q)){
+                client.gameMode.handleContainerInput(syncId,2,0, ContainerInput.THROW,client.player);
                 // move items back from villager
-                client.interactionManager.clickSlot(client.player.currentScreenHandler.syncId,0,0, SlotActionType.QUICK_MOVE,client.player);
-                client.interactionManager.clickSlot(client.player.currentScreenHandler.syncId,1,0, SlotActionType.QUICK_MOVE,client.player);
+                client.gameMode.handleContainerInput(syncId,0,0, ContainerInput.QUICK_MOVE,client.player);
+                client.gameMode.handleContainerInput(syncId,1,0, ContainerInput.QUICK_MOVE,client.player);
 
                 return;
             }
 
-            ItemStack fromStack = client.player.currentScreenHandler.getSlot(2).getStack().copy();
-            client.interactionManager.clickSlot(client.player.currentScreenHandler.syncId,2,0, SlotActionType.PICKUP,client.player);
+            ItemStack fromStack = currentScreenHandler.getSlot(2).getItem().copy();
+            client.gameMode.handleContainerInput(syncId,2,0, ContainerInput.PICKUP,client.player);
             for (int i=3; i<39; i++){
-                ItemStack targetStack = client.player.currentScreenHandler.getSlot(i).getStack();
+                ItemStack targetStack = currentScreenHandler.getSlot(i).getItem();
                 if (targetStack.isEmpty()){
-                    client.interactionManager.clickSlot(client.player.currentScreenHandler.syncId,i,0, SlotActionType.PICKUP,client.player);
+                    client.gameMode.handleContainerInput(syncId,i,0, ContainerInput.PICKUP,client.player);
                     break;
                 }
                 if (fromStack.getItem() != targetStack.getItem()) continue;
-                if (targetStack.getCount() == targetStack.getMaxCount()) continue;
-                fromStack.setCount(Math.max(0,targetStack.getCount()+fromStack.getCount()-targetStack.getMaxCount()));
-                client.interactionManager.clickSlot(client.player.currentScreenHandler.syncId,i,0, SlotActionType.PICKUP,client.player);
+                if (targetStack.getCount() == targetStack.getMaxStackSize()) continue;
+                fromStack.setCount(Math.max(0,targetStack.getCount()+fromStack.getCount()-targetStack.getMaxStackSize()));
+                client.gameMode.handleContainerInput(syncId,i,0, ContainerInput.PICKUP,client.player);
                 if (fromStack.getCount()==0) break;
             }
-            client.interactionManager.clickSlot(client.player.currentScreenHandler.syncId,0,0, SlotActionType.QUICK_MOVE,client.player);
-            client.interactionManager.clickSlot(client.player.currentScreenHandler.syncId,1,0, SlotActionType.QUICK_MOVE,client.player);
+            client.gameMode.handleContainerInput(syncId,0,0, ContainerInput.QUICK_MOVE,client.player);
+            client.gameMode.handleContainerInput(syncId,1,0, ContainerInput.QUICK_MOVE,client.player);
 
         }
     }
