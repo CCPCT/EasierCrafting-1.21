@@ -11,6 +11,7 @@ import java.nio.file.Path;
 public class ModConfig {
 
     public boolean modEnabled = true;
+    public boolean debug = false;
     public boolean autoFocusSearch = false;
     public int autoUpdateRecipeTimer = 20;
     public boolean allowRecipeBook = false;

@@ -148,7 +148,12 @@ public class CraftingRecipeBook extends AbstractRecipeBook {
 
         boolean canCraft = canCraft(underMouse);
         drawHoloItem(context, resultSlot, resultStack);
-        if (!canCraft) context.fill(resultSlot.x-2,resultSlot.y-2,resultSlot.x+ ITEM_SIZE +2,resultSlot.y+ ITEM_SIZE +2,0x60FF0000);
+        if (!canCraft) context.fill(
+                resultSlot.x-2+containerLeft,
+                resultSlot.y-2+containerTop,
+                resultSlot.x+ ITEM_SIZE +2+containerLeft,
+                resultSlot.y+ ITEM_SIZE +2+containerTop,
+                CANT_CRAFT_COLOUR);
 
         Object2IntOpenHashMap<Item> tempMap = avaliableItemMap.clone();
 

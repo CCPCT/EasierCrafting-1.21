@@ -107,6 +107,11 @@ public class ConfigScreen extends Screen {
                 .setSaveConsumer(newValue -> ModConfig.get().itemsPerRow = newValue)
                 .build());
 
+        generalTab.addEntry(entryBuilder.startBooleanToggle(Component.literal("Debug"), ModConfig.get().debug)
+                .setTooltip(Component.literal("ru a mod dev?"))
+                .setSaveConsumer(newValue -> ModConfig.get().debug = newValue)
+                .build());
+
         return builder.build();
     }
 }

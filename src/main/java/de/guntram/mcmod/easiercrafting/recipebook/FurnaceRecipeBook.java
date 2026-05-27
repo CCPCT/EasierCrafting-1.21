@@ -147,9 +147,9 @@ public class FurnaceRecipeBook extends AbstractRecipeBook {
         }
 
         // Scroll bar area click
-        if (mouseY > 0 && mouseY < 20 && mouseX > xOffset + containerLeft && mouseX < xOffset + containerLeft + textBoxSize) {
+        if (mouseY > 0 && mouseY < 20 && mouseX > xOffset + containerLeft && mouseX < xOffset + containerLeft + textBoxWidth) {
             if (mouseX < xOffset + containerLeft + 20) scrollBy(-1);
-            else if (mouseX > xOffset + containerLeft + textBoxSize - 20) scrollBy(1);
+            else if (mouseX > xOffset + containerLeft + textBoxWidth - 20) scrollBy(1);
             return;
         }
 
