@@ -2,15 +2,17 @@ package de.guntram.mcmod.easiercrafting.extendedScreen;
 
 import de.guntram.mcmod.easiercrafting.modConfig.ModConfig;
 import de.guntram.mcmod.easiercrafting.recipebook.FurnaceRecipeBook;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.screens.inventory.FurnaceScreen;
-import net.minecraft.client.gui.screens.recipebook.RecipeBookTabButton;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.FurnaceMenu;
+import net.minecraft.world.inventory.RecipeBookType;
 import org.jspecify.annotations.NonNull;
 
 public class ExtendedFurnaceScreen extends FurnaceScreen {
@@ -25,7 +27,8 @@ public class ExtendedFurnaceScreen extends FurnaceScreen {
         super.init();
         if (!ModConfig.get().allowRecipeBook) {
             // just remove recipe book button
-            this.children().removeIf(entry -> entry instanceof RecipeBookTabButton); //idk whats the widget called
+            this.children().removeIf(entry -> entry instanceof ImageButton); //only disables button
+            Minecraft.getInstance().player.getRecipeBook().getBookSettings().setOpen(RecipeBookType.CRAFTING, false); //might cause the gui to go right? idk
         }
         this.recipeBook.screenYOffset = -super.topPos;
         this.recipeBook.afterInitGui();

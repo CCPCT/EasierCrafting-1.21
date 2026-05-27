@@ -104,6 +104,10 @@ public class EasierCrafting implements ClientModInitializer
         LOGGER.error("[EC+] {}", message);
     }
 
+    public static Logger getLogger() {
+        return LOGGER;
+    }
+
     public static String getIp() {
         return ip;
     }

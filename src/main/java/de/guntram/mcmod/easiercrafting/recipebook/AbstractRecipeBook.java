@@ -90,7 +90,7 @@ public abstract class AbstractRecipeBook {
     protected int itemsPerRow;
     protected int xOffset;
     protected int mouseScroll;
-    protected int minYtoDraw = 0;
+    protected int minYtoDraw = 26;
     protected int textBoxWidth;
     protected int containerLeft;
     protected int containerTop;
@@ -269,7 +269,7 @@ public abstract class AbstractRecipeBook {
         int ypos = 5;
 
         // Set your clipping boundary to match the top of the frame
-        minYtoDraw = ypos;
+        minYtoDraw = 26;
 
         int screenBottom = context.guiHeight() - 5;
 
@@ -301,9 +301,9 @@ public abstract class AbstractRecipeBook {
     }
 
     protected void populateAllRecipe(){
-        assert Minecraft.getInstance().player != null;
+        assert player != null;
         for (RecipeBookCategory cat : RecipeBookCats) {
-            for (RecipeCollection result : Minecraft.getInstance().player.getRecipeBook().getCollection(cat)) {
+            for (RecipeCollection result : player.getRecipeBook().getCollection(cat)) {
                 allRecipes.addAll(result.getRecipes());
             }
         }
@@ -379,8 +379,8 @@ public abstract class AbstractRecipeBook {
     }
 
     public void scrollBy(int ticks) {
-        int maxScrollPos = ((listSize + patternListSize - screen.height + displayItemSize) / displayItemSize) + 3;
-        mouseScroll = clamp(mouseScroll - ticks, 0, maxScrollPos);
+        int maxScrollPos = ((listSize + patternListSize - screen.height + (displayItemSize * 2)) / displayItemSize) + 1;
+        mouseScroll = clamp(mouseScroll - ticks, 0, Math.max(0, maxScrollPos));
     }
 
     int clamp(int val, int a, int b) {
