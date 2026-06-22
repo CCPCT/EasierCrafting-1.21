@@ -75,7 +75,7 @@ public class EasierCrafting implements ClientModInitializer
 
     public static void updateRecipe(){
         if (!updateAllowed) return;
-        Screen currentScreen = Minecraft.getInstance().screen;
+        Screen currentScreen = Minecraft.getInstance().gui.screen();
         if (currentScreen instanceof ExtendedCraftingScreen screen){
             screen.updateRecipe();
         } else if (currentScreen instanceof ExtendedInventoryScreen screen) {
