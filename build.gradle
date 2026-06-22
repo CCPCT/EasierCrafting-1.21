@@ -8,7 +8,7 @@ repositories {
 }
 
 // 1. Determine which version we are targeting (default to 1.21.2)
-def target = project.hasProperty('target') ? project.property('target') : '26.1'
+def target = project.hasProperty('target') ? project.property('target') : '26.2'
 
 // 2. Point to the file in the 'versions' folder
 def propsFile = file("versions/${target}.properties")
@@ -25,7 +25,7 @@ if (propsFile.exists()) {
     throw new GradleException("Could not find version config: ${propsFile}")
 }
 
-version = "${project.minecraft_version}-${project.projectVersion}"
+version = "${project.projectVersion}"
 
 processResources {
     inputs.property "version", project.version

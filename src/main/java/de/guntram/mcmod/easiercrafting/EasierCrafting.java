@@ -42,7 +42,7 @@ public class EasierCrafting implements ClientModInitializer
 
         SPECIAL_CAT = Registry.register(
                 BuiltInRegistries.RECIPE_BOOK_CATEGORY,
-                Identifier.fromNamespaceAndPath(EasierCrafting.MODID, "special"),
+                Identifier.fromNamespaceAndPath(MODID, "special"),
                 new RecipeBookCategory()
         );
 
@@ -50,7 +50,7 @@ public class EasierCrafting implements ClientModInitializer
                 "Refresh Recipe List", // translation key
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_TAB,       // default key
-                KeyMapping.Category.register(Identifier.fromNamespaceAndPath(EasierCrafting.MODID, "keymap"))      // category in controls menu
+                KeyMapping.Category.register(Identifier.fromNamespaceAndPath(MODID, "keymap"))      // category in controls menu
         ));
 
         // do this when joining server/ world
@@ -75,7 +75,7 @@ public class EasierCrafting implements ClientModInitializer
 
     public static void updateRecipe(){
         if (!updateAllowed) return;
-        Screen currentScreen = Minecraft.getInstance().screen;
+        Screen currentScreen = Minecraft.getInstance().gui.screen();
         if (currentScreen instanceof ExtendedCraftingScreen screen){
             screen.updateRecipe();
         } else if (currentScreen instanceof ExtendedInventoryScreen screen) {

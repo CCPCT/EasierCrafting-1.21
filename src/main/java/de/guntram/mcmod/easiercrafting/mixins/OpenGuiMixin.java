@@ -89,6 +89,6 @@ public abstract class OpenGuiMixin {
     private static void openScreen(Minecraft client, AbstractContainerMenu menu, AbstractContainerScreen<?> screen) {
         assert client.player != null;
         client.player.containerMenu = menu;
-        client.setScreen(screen);
+        client.gui.setScreen(screen);
     }
 }

@@ -1,5 +1,6 @@
 {
   "schemaVersion": 1,
+  "name": "EasierCrafting updated",
   "id": "easiercrafting-updated",
   "version": "${version}",
   "environment": "client",
@@ -18,7 +19,6 @@
     "modmenu": "*",
     "cloth-config": "*"
   },
-  "name": "EasierCrafting updated",
   "description": "One-click Crafting updated",
   "icon": "icon.png",
   "authors": [ "Giselbaer","CCPCT"],
