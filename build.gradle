@@ -25,7 +25,7 @@ if (propsFile.exists()) {
     throw new GradleException("Could not find version config: ${propsFile}")
 }
 
-version = "${project.minecraft_version}-${project.projectVersion}"
+version = "${project.projectVersion}"
 
 processResources {
     inputs.property "version", project.version
@@ -53,4 +53,17 @@ java {
 
 jar {
     from "LICENSE"
+}
+
+loom {
+    runs {
+        client {
+            client()
+            name "Minecraft Client"
+            runDir "run"
+
+            // Sets your player name exactly to "Dev"
+            programArgs "--username", "Dev"
+        }
+    }
 }
